@@ -1,14 +1,11 @@
 import {useEffect, useState} from "react";
 import {remult} from "remult";
-import {User} from "@/model/User";
 import {Procedure} from "@/model/Procedure";
 import {ProcedurePreview} from "@/components/ProcedurePreview";
 import {Flex, Grid, TextInput} from "@tremor/react";
 import {useRouter} from "next/router";
 
-const userRepo = remult.repo(User);
 const procedureRepo = remult.repo(Procedure);
-const eventRepo = remult.repo(Event);
 
 
 export default function Home() {

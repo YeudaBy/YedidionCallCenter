@@ -24,17 +24,4 @@ export class Procedure extends IdEntity {
 
     @Field(() => Array<string>)
     keywords: string[] = [];
-
-    toJSON() {
-        return {
-            id: this.id,
-            title: this.title,
-            description: this.description,
-            procedure: this.procedure,
-            views: this.views,
-            createdAt: this.createdAt,
-            updatedAt: this.updatedAt,
-            keywords: this.keywords,
-        };
-    }
 }
