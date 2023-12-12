@@ -50,7 +50,7 @@ export default function ProcedurePage() {
 
         <Text
             onClick={() => copyToClipboard(procedure?.procedure || "")}
-            className={"text-start md:text-xl text-lg w-full bg-gray-50 cursor-pointer rounded-xl" +
+            className={"text-start text-1-2 md:text-xl w-full bg-gray-50 cursor-pointer rounded-xl" +
                 " shadow-md shadow-amber-50 p-5"}>
             {highlightedText(procedure?.procedure || "")}
         </Text>
@@ -119,7 +119,7 @@ export default function ProcedurePage() {
                     {formatDate(procedure?.createdAt)}
                 </Metric>
                 <Text>
-                    נוצר ב
+                    נוצר ב:
                 </Text>
             </Card>
         </Flex>
