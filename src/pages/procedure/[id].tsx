@@ -105,17 +105,17 @@ export default function ProcedurePage() {
         {/*</Text>*/}
 
         <Flex className={"gap-2 mt-20"}>
-            {(procedure?.views && procedure.views > 1) && <Card className={"text-start"}>
-                <Metric color={"amber"}>
+            {(procedure?.views && procedure.views > 1) ? <Card className={"text-start"}>
+                <Metric color={"amber"} className={"text-2xl"}>
                     {procedure.views}
                 </Metric>
                 <Text>
                     צפיות
                 </Text>
-            </Card>}
+            </Card> : null}
 
             <Card className={"text-start"}>
-                <Metric color={"amber"}>
+                <Metric color={"amber"} className={"text-2xl"}>
                     {formatDate(procedure?.createdAt)}
                 </Metric>
                 <Text>
@@ -128,9 +128,9 @@ export default function ProcedurePage() {
 }
 
 function formatDate(date: Date | undefined) {
-    return date?.toLocaleString("he-IW", {
+    return date?.toLocaleString("en-US", {
         day: 'numeric',
-        month: 'short',
+        month: 'numeric',
         year: '2-digit',
     })
 }
