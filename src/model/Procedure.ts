@@ -1,7 +1,11 @@
-import {Entity, Field, Fields, IdEntity} from "remult";
+import {Allow, Entity, Field, Fields, IdEntity, remult} from "remult";
 
 @Entity("procedure", {
-    allowApiCrud: true,
+    allowApiCrud: Allow.authenticated,
+    allowApiRead: true,
+    saving: async (self: Procedure) => {
+        self.owner = `${remult.user?.name} - ${remult.user?.phone}`
+    },
 })
 export class Procedure extends IdEntity {
     @Fields.string()
@@ -24,4 +28,9 @@ export class Procedure extends IdEntity {
 
     @Field(() => Array<string>)
     keywords: string[] = [];
+
+    @Fields.string({
+        includeInApi: false,
+    })
+    owner!: string;
 }
