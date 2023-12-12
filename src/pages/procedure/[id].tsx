@@ -1,12 +1,13 @@
 import {remult} from "remult";
 import {Procedure} from "@/model/Procedure";
-import {useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import {useRouter} from "next/router";
-import {Badge, Flex, Icon, Text} from "@tremor/react";
+import {Badge, Card, Flex, Icon, Metric, Text} from "@tremor/react";
 import {highlightedText} from "@/utils/highlightedText";
 import {ClipboardCopyIcon} from "@heroicons/react/outline";
 import {ShareIcon} from "@heroicons/react/solid";
 import Link from "next/link";
+import {Loading} from "@/components/Spinner";
 
 const procedureRepo = remult.repo(Procedure);
 
@@ -27,6 +28,11 @@ export default function ProcedurePage() {
 
     }, [router.query.id]);
 
+    useEffect(() => {
+        if (!procedure) return
+        Procedure.increaseViews(procedure.id)
+    }, [procedure]);
+
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text)
     }
@@ -36,12 +42,10 @@ export default function ProcedurePage() {
         window.open(url, '_blank')
     }
 
-    if (loading) return <Flex justifyContent={"center"} alignItems={"center"} className={"h-screen"}>
-        <Text className={"text-3xl font-bold"}>טוען...</Text>
-    </Flex>
+    if (loading) return <Loading/>
 
     return <Flex flexDirection={"col"} alignItems={"start"} className={"p-4 gap-2 max-w-3xl m-auto"}>
-        <Text className={"font-bold text-5xl text-center w-full"}>{procedure?.title}</Text>
+        <Text className={"font-bold text-2xl md:text-5xl text-center w-full"}>{procedure?.title}</Text>
         <Text className={"text-center w-full md:text-xl text-lg mb-6"}>{procedure?.description}</Text>
 
         <Text
@@ -93,12 +97,40 @@ export default function ProcedurePage() {
             👆 לחצו על מילת מפתח כדי למצוא נהלים קשורים.
         </Text>
 
-        <Text
-            className={"text-start text-lg mt-10 cursor-pointer text-blue-700 underline"}
-            onClick={() => copyToClipboard(router.asPath)}
-        >
-            לחצו כאן על מנת להעתיק קישור ישיר לנוהל
-        </Text>
+        {/*<Text*/}
+        {/*    className={"text-start text-lg mt-10 cursor-pointer text-blue-700 underline"}*/}
+        {/*    onClick={() => copyToClipboard(window.location.href)}*/}
+        {/*>*/}
+        {/*    לחצו כאן על מנת להעתיק קישור ישיר לנוהל*/}
+        {/*</Text>*/}
+
+        <Flex className={"gap-2 mt-20"}>
+            {(procedure?.views && procedure.views > 1) && <Card className={"text-start"}>
+                <Metric color={"amber"}>
+                    {procedure.views}
+                </Metric>
+                <Text>
+                    צפיות
+                </Text>
+            </Card>}
+
+            <Card className={"text-start"}>
+                <Metric color={"amber"}>
+                    {formatDate(procedure?.createdAt)}
+                </Metric>
+                <Text>
+                    נוצר ב
+                </Text>
+            </Card>
+        </Flex>
 
     </Flex>
+}
+
+function formatDate(date: Date | undefined) {
+    return date?.toLocaleString("he-IW", {
+        day: 'numeric',
+        month: 'short',
+        year: '2-digit',
+    })
 }

@@ -1,4 +1,4 @@
-import {Allow, Entity, Field, Fields, IdEntity, remult} from "remult";
+import {Allow, BackendMethod, Entity, Field, Fields, IdEntity, remult} from "remult";
 
 @Entity("procedure", {
     allowApiCrud: Allow.authenticated,
@@ -17,8 +17,10 @@ export class Procedure extends IdEntity {
     @Fields.string()
     procedure!: string;
 
-    @Fields.number()
-    views: number = 0;
+    @Fields.number({
+        allowApiUpdate: true,
+    })
+    views: number = 1;
 
     @Fields.createdAt()
     createdAt!: Date;
@@ -33,4 +35,11 @@ export class Procedure extends IdEntity {
         includeInApi: false,
     })
     owner!: string;
+
+    @BackendMethod({allowed: true})
+    static async increaseViews(id: string) {
+        let procedure = await remult.repo(Procedure).findId(id);
+        procedure.views++;
+        await procedure.save();
+    }
 }
