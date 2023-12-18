@@ -9,7 +9,7 @@ const superAdmins = [
 
 @Entity("admin", {
     // allowApiCrud: false,
-    allowApiRead: (remult) => {
+    allowApiCrud: (remult) => {
         const isZvi = (remult!.user?.phone == ZVI)
         console.log("isZvi", isZvi, remult!.user)
         return isZvi
