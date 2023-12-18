@@ -13,7 +13,8 @@ export default remultNext({
         const phone = req.headers['phone'] as string
         const adminRepo = remult.repo(Admin)
         if (phone) {
-            remult.user = await adminRepo.findFirst({phone})
+            remult.user = await adminRepo.findFirst({phone}) || Admin.isSuperAdmin(phone)
+            console.log("user", remult.user)
             return
         }
     },
