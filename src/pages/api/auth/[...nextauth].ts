@@ -19,6 +19,7 @@ const auth = NextAuth({
             }
         })
     ],
+    
     callbacks: {
         // @ts-ignore
         session: async (session: Session, user: AdapterUser) => {
