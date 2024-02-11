@@ -1,6 +1,6 @@
 import {Card, Flex, Text} from "@tremor/react";
 import Link from "next/link";
-import {Procedure} from "../model/Procedure";
+import {Procedure} from "@/model/Procedure";
 
 export function ProcedurePreview({procedure}: {
     procedure: Procedure

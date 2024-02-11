@@ -6,7 +6,7 @@ import {Button, Divider, Flex, MultiSelect, MultiSelectItem, Switch, Text} from 
 import {signOut} from "next-auth/react";
 import {useRouter} from "next/router";
 import {SearchIcon} from "@heroicons/react/solid";
-import {Loading} from "@/components/Spinner";
+import {Loading, LoadingSpinner} from "@/components/Spinner";
 import {ProcedurePreview} from "@/components/ProcedurePreview";
 import {District} from "@/model/District";
 import {highlightedText} from "@/utils/highlightedText";
@@ -19,19 +19,26 @@ export default function IndexPage() {
     const [results, setResults] = useState<Procedure[]>()
     const [query, setQuery] = useState<string>()
     const [loading, setLoading] = useState(false)
-    const [current, setCurrent] = useState<Procedure | undefined>()
+    const [current, setCurrent] = useState<Procedure | true | undefined>()
 
     const router = useRouter()
 
     useEffect(() => {
         const q = router.query.q
         if (!q) return
+        setCurrent(true)
         procedureRepo
             .findFirst({id: q})
             .then(procedure => {
                 setCurrent(procedure)
             })
     }, [router.query.q]);
+
+    useEffect(() => {
+        if (!current) {
+            router.push('/')
+        }
+    }, [current, router]);
 
     useEffect(() => {
         setLoading(true)
@@ -71,6 +78,11 @@ export default function IndexPage() {
     }, [query]);
 
     return <Tremor.Flex flexDirection={"col"} className={"p-4 max-w-4xl m-auto"}>
+
+        <Tremor.Button className={"self-end mb-3"} onClick={() => signOut()}>
+            התנתק
+        </Tremor.Button>
+
         <Tremor.TextInput
             color={"amber"}
             className={"w-full"}
@@ -94,8 +106,6 @@ export default function IndexPage() {
             procedureRepo.metadata.apiInsertAllowed() && <AddProcedure/>
         }
 
-        <Tremor.Button onClick={() => signOut()}>Sign Out</Tremor.Button>
-
         <ShowProcedure procedure={current} open={!!current} onClose={(val) => setCurrent(undefined)}/>
 
         {loading ? <Loading/> :
@@ -110,7 +120,7 @@ export default function IndexPage() {
 }
 
 function ShowProcedure({procedure, open, onClose}: {
-    procedure?: Procedure,
+    procedure?: Procedure | true,
     open: boolean,
     onClose: (val: boolean) => void
 }) {
@@ -127,6 +137,14 @@ function ShowProcedure({procedure, open, onClose}: {
     }
 
     if (!procedure) return <></>
+
+    if (procedure === true) return <Tremor.Dialog open={open} onClose={() => onClose(false)}>
+        <Tremor.DialogPanel className={"gap-1.5 text-start flex items-center flex-col"}>
+            <LoadingSpinner className={"ml-4"}/>
+            <Text className={"text-3xl font-bold"}>טוען...</Text>
+        </Tremor.DialogPanel>
+    </Tremor.Dialog>
+
     return <Tremor.Dialog open={open} onClose={() => onClose(false)}>
         <Tremor.DialogPanel className={"gap-1.5 text-start flex items-center flex-col"}>
             <Tremor.Text className={"text-xl"}>{procedure.title}</Tremor.Text>
@@ -205,7 +223,10 @@ function AddProcedure() {
     }
 
     return <>
-        <Tremor.Button onClick={() => setOpen(true)}>הוסף פרוצדורה</Tremor.Button>
+        <Tremor.Button
+            variant={"secondary"}
+            className={"w-full mt-5"}
+            onClick={() => setOpen(true)}>הוסף נוהל</Tremor.Button>
         <Tremor.Dialog open={open} onClose={(val) => setOpen(val)}>
             <Tremor.DialogPanel className={"gap-1.5 flex items-center flex-col"}>
                 <Tremor.TextInput
