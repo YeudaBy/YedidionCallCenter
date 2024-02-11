@@ -21,7 +21,7 @@ export class User extends IdEntity {
     @Fields.object()
     district!: District;
 
-    @Fields.object()
+    @Fields.json()
     roles: UserRole[] = [UserRole.Dispatcher];
 
     get userInfo(): UserInfo {

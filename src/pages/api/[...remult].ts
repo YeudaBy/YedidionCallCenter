@@ -29,5 +29,6 @@ export default api
 
 
 function production() {
+    return true
     return process.env.NODE_ENV !== 'development';
 }
