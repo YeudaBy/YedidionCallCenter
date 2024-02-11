@@ -35,14 +35,16 @@ export default function IndexPage() {
 
     useEffect(() => {
         setLoading(true)
-        return procedureRepo.liveQuery({
+        procedureRepo.find({
             orderBy: {
                 createdAt: 'asc'
             },
             limit: 5,
         })
-            .subscribe(procedures => {
-                setRecent(procedures.applyChanges)
+            .then(procedures => {
+                setRecent(procedures)
+            })
+            .then(() => {
                 setLoading(false)
             })
     }, []);

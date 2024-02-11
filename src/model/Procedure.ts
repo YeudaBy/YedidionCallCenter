@@ -5,9 +5,9 @@ import {tr} from "date-fns/locale";
 
 @Entity("procedure", {
     // allowApiRead: UserRole.Dispatcher,
-    // allowApiInsert: UserRole.Admin,
-    // allowApiUpdate: UserRole.Admin,
-    // allowApiDelete: UserRole.Admin,
+    allowApiInsert: UserRole.Admin,
+    allowApiUpdate: UserRole.Admin,
+    allowApiDelete: UserRole.Admin,
     // allowApiRead: true,
     // allowApiCrud: true,
     allowApiCrud: true,
