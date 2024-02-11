@@ -5,6 +5,7 @@ import {AdapterUser} from "next-auth/adapters";
 import {UserInfo} from "remult";
 
 const auth = NextAuth({
+    secret: process.env.SECRET,
     providers: [
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID!,

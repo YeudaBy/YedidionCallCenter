@@ -29,7 +29,7 @@ export function Auth({children}: { children: ReactNode }) {
                     }
                 })
         }
-    }, [session.data?.user?.email, session.status]);
+    }, [session.data?.user?.email, session.data?.user?.name, session.status]);
 
     if (signedUp) return <>{children}</>;
     if (signedUp === false) return <div>Sign up</div>;
