@@ -2,6 +2,7 @@ import {ReactNode, useEffect, useState} from "react";
 import {signIn, useSession} from "next-auth/react";
 import {remult} from "remult";
 import {User, UserRole} from "@/model/User";
+import {Card} from "@tremor/react";
 
 const userRepo = remult.repo(User);
 
@@ -13,11 +14,11 @@ export function Auth({children}: { children: ReactNode }) {
         if (session.status === "unauthenticated") {
             signIn();
         } else if (session.status === "authenticated") {
-            userRepo.findFirst({email: session.data?.user?.email as string})
+            // @ts-ignore
+            const s = session.data?.session?.user as any
+            userRepo.findFirst({email: s?.email || "0"})
                 .then(user => {
                     if (!user) {
-                        // @ts-ignore
-                        const s = session.data?.session?.user as any
                         console.log(s)
                         userRepo.insert({
                             email: s?.email || "-",
@@ -34,8 +35,10 @@ export function Auth({children}: { children: ReactNode }) {
                     }
                 })
         }
-    }, [session.data?.user?.email, session.data?.user?.name, session.status]);
+    }, [session]);
 
     if (signedUp) return <>{children}</>;
-    if (signedUp === false) return <div>Sign up</div>;
+    else return <Card className={"m-auto mt-5 w-fit"}>
+        אנא פנה למנהל המערכת על מנת לקבל גישה למערכת
+    </Card>;
 }
