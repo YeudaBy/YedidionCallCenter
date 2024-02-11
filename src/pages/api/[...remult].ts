@@ -1,32 +1,17 @@
 import {remultNext} from 'remult/remult-next'
 import {Procedure} from "@/model/Procedure";
-import {createPostgresDataProvider} from "remult/postgres";
-import {JsonDataProvider, remult} from "remult";
-import {JsonEntityFileStorage} from "remult/server";
-import {Admin} from "@/model/Admin";
+import {User} from "@/model/User";
+import {getUserOnServer} from "./auth/[...nextauth]";
 
-export default remultNext({
+export const api = remultNext({
     entities: [
-        Procedure, Admin
+        User, Procedure,
     ],
-    initRequest: async (req, options) => {
-        const phone = req.headers['phone'] as string
-        const adminRepo = remult.repo(Admin)
-        if (phone) {
-            remult.user = await adminRepo.findFirst({phone}) || Admin.isSuperAdmin(phone)
-            console.log("user", remult.user)
-            return
-        }
-    },
-    dataProvider:
-        production() ?
-            createPostgresDataProvider({
-                connectionString: process.env.POSTGRES_URL + "?sslmode=require",
-            }) : async () => {
-                return new JsonDataProvider(new JsonEntityFileStorage("./db"))
-            },
+    // controllers: [
+    //     UsersController
+    // ],
+    getUser: getUserOnServer,
+    logApiEndPoints: true
 })
 
-function production() {
-    return process.env.NODE_ENV !== 'development';
-}
+export default api

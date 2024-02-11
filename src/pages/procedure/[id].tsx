@@ -1,5 +1,5 @@
 import {remult} from "remult";
-import {Procedure} from "@/model/Procedure";
+import {Procedure} from "../../model/Procedure";
 import React, {useEffect, useState} from "react";
 import {useRouter} from "next/router";
 import {Badge, Card, Flex, Icon, Metric, Text} from "@tremor/react";
@@ -7,7 +7,7 @@ import {highlightedText} from "@/utils/highlightedText";
 import {ClipboardCopyIcon} from "@heroicons/react/outline";
 import {ShareIcon} from "@heroicons/react/solid";
 import Link from "next/link";
-import {Loading} from "@/components/Spinner";
+import {Loading} from "../../components/Spinner";
 
 const procedureRepo = remult.repo(Procedure);
 

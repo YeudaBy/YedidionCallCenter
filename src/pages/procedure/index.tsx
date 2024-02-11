@@ -1,4 +1,4 @@
-import {Procedure} from "@/model/Procedure";
+import {Procedure} from "../../model/Procedure";
 import {remult} from "remult";
 
 const procedureRepo = remult.repo(Procedure);
