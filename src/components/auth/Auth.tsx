@@ -16,10 +16,15 @@ export function Auth({children}: { children: ReactNode }) {
             userRepo.findFirst({email: session.data?.user?.email as string})
                 .then(user => {
                     if (!user) {
+                        // @ts-ignore
+                        const s = session.data?.session?.user as any
+                        console.log(s)
                         userRepo.insert({
-                            email: session.data?.user?.email as string,
-                            name: session.data?.user?.name as string,
-                        })
+                            email: s?.email || "-",
+                            name: s?.name || "-|-"
+                        }).then(console.log)
+                    } else {
+                        console.log("exists", user)
                     }
                     if (!!user?.district || user?.roles?.includes(UserRole.SuperAdmin)) {
                         remult.user = user;
