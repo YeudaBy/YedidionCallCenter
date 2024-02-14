@@ -10,7 +10,7 @@ import {Loading, LoadingSpinner} from "@/components/Spinner";
 import {ProcedurePreview} from "@/components/ProcedurePreview";
 import {District} from "@/model/District";
 import {highlightedText} from "@/utils/highlightedText";
-import {UserRole} from "@/model/User";
+import {AdminRoles, UserRole} from "@/model/User";
 
 const procedureRepo = remult.repo(Procedure);
 
@@ -22,6 +22,10 @@ export default function IndexPage() {
     const [current, setCurrent] = useState<Procedure | true | undefined>()
 
     const router = useRouter()
+
+    useEffect(() => {
+        console.log(procedureRepo.metadata)
+    }, []);
 
     useEffect(() => {
         const q = router.query.q
@@ -79,9 +83,23 @@ export default function IndexPage() {
 
     return <Tremor.Flex flexDirection={"col"} className={"p-4 max-w-4xl m-auto"}>
 
-        <Tremor.Button className={"self-end mb-3"} onClick={() => signOut()}>
-            התנתק
-        </Tremor.Button>
+        <Flex className={"gap-1 mb-4"}>
+            {procedureRepo.metadata.apiInsertAllowed() && <AddProcedure/>}
+
+            {
+                !!remult.user?.roles?.length
+                && AdminRoles.includes(remult.user?.roles[0] as UserRole)
+                && <Tremor.Button
+                    className={"grow"}
+                    onClick={() => router.push('/admin')}>
+                    איזור ניהול
+                </Tremor.Button>}
+
+            <Tremor.Button onClick={() => signOut()}>
+                התנתק
+            </Tremor.Button>
+
+        </Flex>
 
         <Tremor.TextInput
             color={"amber"}
@@ -101,10 +119,6 @@ export default function IndexPage() {
             }}
             icon={SearchIcon}
         />
-
-        {
-            procedureRepo.metadata.apiInsertAllowed() && <AddProcedure/>
-        }
 
         <ShowProcedure procedure={current} open={!!current} onClose={(val) => setCurrent(undefined)}/>
 
@@ -225,7 +239,6 @@ function AddProcedure() {
     return <>
         <Tremor.Button
             variant={"secondary"}
-            className={"w-full mt-5"}
             onClick={() => setOpen(true)}>הוסף נוהל</Tremor.Button>
         <Tremor.Dialog open={open} onClose={(val) => setOpen(val)}>
             <Tremor.DialogPanel className={"gap-1.5 flex items-center flex-col"}>

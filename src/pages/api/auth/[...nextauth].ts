@@ -19,14 +19,17 @@ const auth = NextAuth({
             }
         })
     ],
-    
+
     callbacks: {
         // @ts-ignore
-        session: async (session: Session, user: AdapterUser) => {
-            session.user = user
-            console.log("session", session, user)
+        session: async (session: Session) => {
+            session.user = session.user as UserInfo
             return Promise.resolve(session)
         }
+    },
+    session: {
+        strategy: "jwt",
+        maxAge: 30 * 24 * 60 * 60, // 30 days
     }
 })
 
@@ -34,6 +37,5 @@ export default auth
 
 export async function getUserOnServer(): Promise<UserInfo> {
     const session = await getSession()
-    const user = session?.user
-    return user as UserInfo
+    return session?.user as UserInfo
 }

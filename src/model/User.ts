@@ -1,8 +1,21 @@
-import {Entity, Fields, IdEntity, UserInfo} from "remult";
+import {Entity, Fields, IdEntity, remult, UserInfo} from "remult";
 import {District} from "./District";
+
+
+export enum UserRole {
+    Admin = "מנהל",
+    Dispatcher = "מוקדן",
+    SuperAdmin = "מנהל מערכת",
+}
+
+export const AdminRoles = [UserRole.Admin, UserRole.SuperAdmin]
 
 @Entity("users", {
     allowApiCrud: true,
+    // allowApiRead: true,
+    // allowApiUpdate: true,
+    // allowApiDelete: () => !!remult.user?.roles?.length && AdminRoles.includes(remult.user.roles[0] as UserRole),
+    // allowApiInsert: () => !!remult.user?.roles?.length && AdminRoles.includes(remult.user.roles[0] as UserRole),
 })
 export class User extends IdEntity {
 
@@ -19,23 +32,20 @@ export class User extends IdEntity {
     createdAt!: Date;
 
     @Fields.object()
-    district!: District;
+    district?: District;
 
-    @Fields.json()
-    roles: UserRole[] = [UserRole.Dispatcher];
+    @Fields.object()
+    roles: UserRole = UserRole.Dispatcher;
 
     get userInfo(): UserInfo {
         return {
             name: this.email,
             id: this.id,
-            roles: this.roles,
+            roles: [this.roles],
         }
     }
-}
 
-
-export enum UserRole {
-    Admin = "מנהל",
-    Dispatcher = "מוקדן",
-    SuperAdmin = "מנהל מערכת",
+    get isAdmin() {
+        return AdminRoles.includes(this.roles)
+    }
 }
