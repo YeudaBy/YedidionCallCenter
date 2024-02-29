@@ -117,6 +117,7 @@ function AddUserDialog({open, onClose}: {
 }) {
     const [name, setName] = useState<string>()
     const [email, setEmail] = useState<string>()
+    const [phone, setPhone] = useState<string>()
     const [loading, setLoading] = useState(false)
     const [district, setDistrict] = useState<District>()
 
@@ -128,6 +129,14 @@ function AddUserDialog({open, onClose}: {
         })
     }, []);
 
+    const validPhone = () => {
+        if (!phone) return
+        // remove 0 from start
+        const p = parseInt(phone.replace(/^0/, ""))
+        if (isNaN(p)) return
+        return p.toString().length === 9 ? p : undefined
+    }
+
     const save = async () => {
         setLoading(true)
         try {
@@ -135,7 +144,8 @@ function AddUserDialog({open, onClose}: {
                 name,
                 email,
                 roles: UserRole.Dispatcher,
-                district
+                district,
+                phone: validPhone()
             })
             onClose()
         } finally {
@@ -165,19 +175,28 @@ function AddUserDialog({open, onClose}: {
                         ))}
                 </Select>
                 <TextInput
-                    placeholder={"שם"}
+                    placeholder={"*שם:"}
                     type={"text"}
                     value={name}
                     autoFocus
                     onChange={e => setName(e.target.value)}
                 />
                 <TextInput
-                    placeholder={"אימייל"}
+                    placeholder={"*אימייל:"}
                     type={"email"}
 
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                 />
+                <TextInput
+                    placeholder={"טלפון:"}
+                    type={"text"}
+                    value={phone}
+                    onChange={e => setPhone(e.target.value)}
+                />
+                <Text className={"text-xs text-start"}>
+                    מספר הטלפון ישמש לגישה לבוט הוואצאפ, ואינו חובה. יש להזין בפורמט: 0534506559
+                </Text>
 
                 <Flex className={"mt-24 gap-2"}>
                     <Button
@@ -239,7 +258,10 @@ function UserItem({user, setUsers}: {
                     <Text>{user.name}</Text>
                     <CBadge/>
                 </Flex>
-                <Text className={"font-light"}>{user.email}</Text>
+                <Flex className={"gap-1.5"} justifyContent={"start"}>
+                    <Text className={"font-light"}>{user.email}</Text>
+                    <Text className={"font-light"}>∙ {user.phoneFormatted}</Text>
+                </Flex>
             </Flex>
             <Flex className={"w-fit gap-1"}>
                 <EditUser
@@ -263,6 +285,7 @@ function EditUser({user: _user, onSave, onDelete}: {
     const [loading, setLoading] = useState(false)
     const [name, setName] = useState<string>()
     const [active, setActive] = useState<boolean>()
+    const [phone, setPhone] = useState<string>()
     const [district, setDistrict] = useState<District>()
     const [userRoles, setUserRoles] = useState<UserRole>(UserRole.Dispatcher)
 
@@ -271,6 +294,7 @@ function EditUser({user: _user, onSave, onDelete}: {
         setActive(_user.active)
         setDistrict(_user.district)
         setUserRoles(_user.roles)
+        setPhone(_user.phoneFormatted)
     }, [_user]);
 
     const save = async () => {
@@ -279,7 +303,8 @@ function EditUser({user: _user, onSave, onDelete}: {
             name,
             active,
             district,
-            roles: userRoles
+            roles: userRoles,
+            phone: phone ? parseInt(phone.replace(/^0/, "")) : undefined
         }
         // console.log("allowed", usersRepo.metadata.apiUpdateAllowed({..._user, ...nu}))
         const newUser = await usersRepo.update(_user.id, nu)
@@ -304,6 +329,11 @@ function EditUser({user: _user, onSave, onDelete}: {
                         placeholder={"שם"}
                         value={name}
                         onChange={e => setName(e.target.value)}
+                    />
+                    <TextInput
+                        placeholder={"טלפון"}
+                        value={phone}
+                        onChange={e => setPhone(e.target.value)}
                     />
 
                     <Select

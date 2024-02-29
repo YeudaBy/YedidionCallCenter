@@ -1,4 +1,4 @@
-import {Entity, Fields, IdEntity, remult, Remult, UserInfo} from "remult";
+import {BackendMethod, Entity, Fields, IdEntity, remult, Remult, UserInfo} from "remult";
 import {District} from "./District";
 
 
@@ -31,6 +31,9 @@ export class User extends IdEntity {
     @Fields.string()
     email!: string;
 
+    @Fields.number()
+    phone: number | undefined;
+
     @Fields.boolean()
     active: boolean = true;
 
@@ -55,12 +58,22 @@ export class User extends IdEntity {
         return AdminRoles.includes(this.roles)
     }
 
+    get phoneFormatted() {
+        return this.phone ? `0${this.phone}` : undefined
+    }
+
     static isAdmin(remult: Remult) {
         return remult.user && AdminRoles.includes(remult.user.roles![0] as UserRole)
     }
 
     static async signIn(remult: Remult, email: string) {
         const user = await remult.repo(User).findFirst({email})
+        if (user) return buildUserInfo(user)
+    }
+
+    @BackendMethod({allowed: true})
+    static async getByPhone(remult: Remult, phone: number) {
+        const user = await remult.repo(User).findFirst({phone})
         if (user) return buildUserInfo(user)
     }
 }
