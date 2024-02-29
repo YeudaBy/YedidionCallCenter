@@ -154,6 +154,7 @@ function AddUserDialog({open, onClose}: {
                     value={district}
                     // @ts-ignore
                     onChange={setDistrict}
+                    placeholder={"שייך למוקד"}
                     disabled={remult.user?.roles?.includes(UserRole.Admin)}
                 >
                     {Object
