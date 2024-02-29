@@ -1,14 +1,16 @@
 import {Entity, Field, Fields, IdEntity, remult} from "remult";
 import {District} from "./District";
-import {UserRole} from "./User";
+import {AdminRoles, UserRole} from "./User";
 
 @Entity("procedure", {
-    // allowApiRead: UserRole.Dispatcher,
-    // allowApiInsert: [UserRole.SuperAdmin, UserRole.Admin],
-    // allowApiUpdate: [UserRole.SuperAdmin, UserRole.Admin],
-    // allowApiDelete: UserRole.Admin,
-    allowApiCrud: true,
-    allowApiRead: true,
+    allowApiRead: () => {
+        // console.log({remult})
+        return true
+    },
+    allowApiInsert: AdminRoles,
+    allowApiUpdate: AdminRoles,
+    allowApiDelete: AdminRoles,
+    // allowApiCrud: true,
     saving: async (self: Procedure) => {
         self.owner = `${remult.user?.name} - ${remult.user?.name}`
     },

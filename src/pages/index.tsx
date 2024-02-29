@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import {Procedure, ProcedureType} from "@/model/Procedure";
 import {remult} from "remult";
 import * as Tremor from "@tremor/react";
@@ -6,11 +6,12 @@ import {Button, Divider, Flex, MultiSelect, MultiSelectItem, Switch, Text} from 
 import {signOut} from "next-auth/react";
 import {useRouter} from "next/router";
 import {SearchIcon} from "@heroicons/react/solid";
-import {Loading, LoadingSpinner} from "@/components/Spinner";
+import {LoadingSpinner} from "@/components/Spinner";
 import {ProcedurePreview} from "@/components/ProcedurePreview";
 import {District} from "@/model/District";
 import {highlightedText} from "@/utils/highlightedText";
-import {AdminRoles, UserRole} from "@/model/User";
+import {User, UserRole} from "@/model/User";
+import autoAnimate from "@formkit/auto-animate";
 
 const procedureRepo = remult.repo(Procedure);
 
@@ -18,7 +19,7 @@ export default function IndexPage() {
     const [recent, setRecent] = useState<Procedure[]>()
     const [results, setResults] = useState<Procedure[]>()
     const [query, setQuery] = useState<string>()
-    const [loading, setLoading] = useState(false)
+    // const [loading, setLoading] = useState(false)
     const [current, setCurrent] = useState<Procedure | true | undefined>()
 
     const router = useRouter()
@@ -30,7 +31,7 @@ export default function IndexPage() {
     useEffect(() => {
         const q = router.query.q
         if (!q) return
-        setCurrent(true)
+        // setCurrent(true)
         procedureRepo
             .findFirst({id: q})
             .then(procedure => {
@@ -45,7 +46,7 @@ export default function IndexPage() {
     }, [current, router]);
 
     useEffect(() => {
-        setLoading(true)
+        // setLoading(true)
         procedureRepo.find({
             orderBy: {
                 createdAt: 'asc'
@@ -56,13 +57,13 @@ export default function IndexPage() {
                 setRecent(procedures)
             })
             .then(() => {
-                setLoading(false)
+                // setLoading(false)
             })
     }, []);
 
     useEffect(() => {
         if (!query) return
-        setLoading(true)
+        // setLoading(true)
         procedureRepo.find({
             where: {
                 $or: [
@@ -77,19 +78,17 @@ export default function IndexPage() {
         }).then(procedures => {
             setResults(procedures)
         }).then(() => {
-            setLoading(false)
+            // setLoading(false)
         })
     }, [query]);
 
     return <Tremor.Flex flexDirection={"col"} className={"p-4 max-w-4xl m-auto"}>
 
         <Flex className={"gap-1 mb-4"}>
-            {procedureRepo.metadata.apiInsertAllowed() && <AddProcedure/>}
+            {!!User.isAdmin(remult) && <AddProcedure/>}
 
             {
-                !!remult.user?.roles?.length
-                && AdminRoles.includes(remult.user?.roles[0] as UserRole)
-                && <Tremor.Button
+                !!User.isAdmin(remult) && <Tremor.Button
                     className={"grow"}
                     onClick={() => router.push('/admin')}>
                     איזור ניהול
@@ -122,7 +121,8 @@ export default function IndexPage() {
 
         <ShowProcedure procedure={current} open={!!current} onClose={(val) => setCurrent(undefined)}/>
 
-        {loading ? <Loading/> :
+        {
+            // loading ? <Loading/> :
             <Tremor.Grid className={"gap-2 mt-3 w-full"} numItems={1} numItemsSm={2} numItemsLg={3}>
                 {!query ? recent?.map(procedure => {
                     return <ProcedurePreview procedure={procedure} key={procedure.id}/>
@@ -141,6 +141,11 @@ function ShowProcedure({procedure, open, onClose}: {
 
     const [loading, setLoading] = useState(false)
 
+    const dialogRef = useRef<HTMLDivElement>(null)
+    useEffect(() => {
+        dialogRef.current && autoAnimate(dialogRef.current)
+    }, []);
+
     const copy = (text: string) => {
         navigator.clipboard.writeText(text)
     }
@@ -152,59 +157,60 @@ function ShowProcedure({procedure, open, onClose}: {
 
     if (!procedure) return <></>
 
-    if (procedure === true) return <Tremor.Dialog open={open} onClose={() => onClose(false)}>
-        <Tremor.DialogPanel className={"gap-1.5 text-start flex items-center flex-col"}>
-            <LoadingSpinner className={"ml-4"}/>
-            <Text className={"text-3xl font-bold"}>טוען...</Text>
-        </Tremor.DialogPanel>
-    </Tremor.Dialog>
 
     return <Tremor.Dialog open={open} onClose={() => onClose(false)}>
-        <Tremor.DialogPanel className={"gap-1.5 text-start flex items-center flex-col"}>
-            <Tremor.Text className={"text-xl"}>{procedure.title}</Tremor.Text>
-            <Tremor.Text>{procedure.description}</Tremor.Text>
-            <Tremor.Text>
-                {highlightedText(procedure.procedure)}
-            </Tremor.Text>
+        <Tremor.DialogPanel
+            ref={dialogRef}
+            className={"gap-1.5 text-start flex items-center flex-col"}>
+            {procedure == true ?
+                <>
+                    <LoadingSpinner className={"ml-4"}/>
+                    <Text className={"text-3xl font-bold"}>טוען...</Text></>
+                : <>
+                    <Tremor.Text className={"text-xl"}>{procedure.title}</Tremor.Text>
+                    <Tremor.Text>{procedure.description}</Tremor.Text>
+                    <Tremor.Text>
+                        {highlightedText(procedure.procedure)}
+                    </Tremor.Text>
 
-            <Flex alignItems={"center"} justifyContent={"center"} className={"gap-1 p-2"}>
-                <Button
-                    className={"grow"}
-                    onClick={() => copy(procedure.procedure)}>
-                    העתק
-                </Button>
-                <Button
-                    className={"grow"}
-                    onClick={() => share(procedure.procedure)}>
-                    שתף
-                </Button>
-            </Flex>
-
-
-            {remult.user?.roles?.includes(UserRole.Admin) && <>
-                <Divider className={"my-0.5"}/>
-                <Text>
-                    איזור ניהול
-                </Text>
-                <Flex>
-                    <Tremor.Button
-                        onClick={() => procedureRepo.delete(procedure.id!).then(() => onClose(false))}>
-                        מחק
-                    </Tremor.Button>
-                    <Tremor.Button
-                        loading={loading}
-                        onClick={() => {
-                            setLoading(true)
-                            procedureRepo.update(procedure.id!, {
-                                active: !procedure.active
-                            }).then(() => setLoading(false))
-                        }}>
-                        {procedure.active ? "השהה" : "הפעל"}
-                    </Tremor.Button>
-                </Flex>
-            </>}
+                    <Flex alignItems={"center"} justifyContent={"center"} className={"gap-1 p-2"}>
+                        <Button
+                            className={"grow"}
+                            onClick={() => copy(procedure.procedure)}>
+                            העתק
+                        </Button>
+                        <Button
+                            className={"grow"}
+                            onClick={() => share(procedure.procedure)}>
+                            שתף
+                        </Button>
+                    </Flex>
 
 
+                    {remult.user?.roles?.includes(UserRole.Admin) && <>
+                        <Divider className={"my-0.5"}/>
+                        <Text>
+                            איזור ניהול
+                        </Text>
+                        <Flex>
+                            <Tremor.Button
+                                onClick={() => procedureRepo.delete(procedure.id!).then(() => onClose(false))}>
+                                מחק
+                            </Tremor.Button>
+                            <Tremor.Button
+                                loading={loading}
+                                onClick={() => {
+                                    setLoading(true)
+                                    procedureRepo.update(procedure.id!, {
+                                        active: !procedure.active
+                                    }).then(() => setLoading(false))
+                                }}>
+                                {procedure.active ? "השהה" : "הפעל"}
+                            </Tremor.Button>
+                        </Flex>
+                    </>}
+                </>
+            }
         </Tremor.DialogPanel>
     </Tremor.Dialog>
 }

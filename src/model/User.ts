@@ -1,4 +1,4 @@
-import {Entity, Fields, IdEntity, remult, UserInfo} from "remult";
+import {Entity, Fields, IdEntity, Remult, UserInfo} from "remult";
 import {District} from "./District";
 
 
@@ -48,4 +48,18 @@ export class User extends IdEntity {
     get isAdmin() {
         return AdminRoles.includes(this.roles)
     }
+
+    static isAdmin(remult: Remult) {
+        return remult.user && AdminRoles.includes(remult.user.roles![0] as UserRole)
+    }
+
+    static async signIn(remult: Remult, email: string) {
+        const user = await remult.repo(User).findFirst({email})
+        if (user) return buildUserInfo(user)
+    }
+}
+
+
+function buildUserInfo(u: User): UserInfo {
+    return {id: u.id, name: u.name, roles: [u.roles]}
 }

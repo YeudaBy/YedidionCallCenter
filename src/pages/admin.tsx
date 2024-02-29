@@ -23,7 +23,6 @@ import {Loading, LoadingSpinner} from "@/components/Spinner";
 import {RiCheckFill, RiDeleteBin7Fill, RiPencilLine} from "@remixicon/react";
 import {District} from "@/model/District";
 import Link from "next/link";
-import {useSession} from "next-auth/react";
 
 const usersRepo = remult.repo(User)
 
@@ -34,6 +33,8 @@ export default function AdminPage() {
 
     const [query, setQuery] = useState<string>()
     const [filteredUsers, setFilteredUsers] = useState<User[]>([])
+
+    const [showAddUser, setShowAddUser] = useState(false)
 
     useEffect(() => {
         setLoading(true)
@@ -70,6 +71,13 @@ export default function AdminPage() {
                 <Text className={"font-semibold text-center text-xl"}>פאנל ניהול משתמשים</Text>
             </Link>
 
+            <Button
+                variant={"secondary"}
+                onClick={() => setShowAddUser(true)}
+                className={"w-full my-2"}>
+                הוספת משתמש
+            </Button>
+
             <TextInput
                 placeholder={"חיפוש"}
                 value={query}
@@ -94,7 +102,104 @@ export default function AdminPage() {
                 }>
                 <Text>אין לך הרשאה לערוך משתמשים</Text>
             </Callout>}
+
+            <AddUserDialog
+                open={showAddUser}
+                onClose={() => setShowAddUser(false)}
+            />
         </div>
+    )
+}
+
+function AddUserDialog({open, onClose}: {
+    open: boolean,
+    onClose: () => void
+}) {
+    const [name, setName] = useState<string>()
+    const [email, setEmail] = useState<string>()
+    const [loading, setLoading] = useState(false)
+    const [district, setDistrict] = useState<District>()
+
+    useEffect(() => {
+        usersRepo.findFirst({id: remult.user!.id}).then(u => {
+            if (u?.roles === UserRole.Admin) {
+                setDistrict(u.district)
+            }
+        })
+    }, []);
+
+    const save = async () => {
+        setLoading(true)
+        try {
+            await usersRepo.insert({
+                name,
+                email,
+                roles: UserRole.Dispatcher,
+                district
+            })
+            onClose()
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return (
+        <Dialog open={open} unmount={true} onClose={onClose}>
+            <DialogPanel className={"flex flex-col gap-1.5"}>
+                <Text className={"text-center text-xl"}>הוספת משתמש</Text>
+                <Text className={"text-center text-sm mb-5"}>
+                    לאחר הגדרתו, המשתמש יוכל להתחבר למערכת באמצעות המייל שהזנתם.
+                </Text>
+                <Select
+                    value={district}
+                    // @ts-ignore
+                    onChange={setDistrict}
+                    disabled={remult.user?.roles?.includes(UserRole.Admin)}
+                >
+                    {Object
+                        .values(District)
+                        .filter(d => d !== District.General)
+                        .map(d => (
+                            <SelectItem key={d} value={d}>{d}</SelectItem>
+                        ))}
+                </Select>
+                <TextInput
+                    placeholder={"שם"}
+                    type={"text"}
+                    value={name}
+                    autoFocus
+                    onChange={e => setName(e.target.value)}
+                />
+                <TextInput
+                    placeholder={"אימייל"}
+                    type={"email"}
+
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                />
+
+                <Flex className={"mt-24 gap-2"}>
+                    <Button
+                        onClick={save}
+                        variant={"primary"}
+                        disabled={loading || !name || !email || !district}
+                        // icon={RiCheckFill}
+                        loading={loading}
+                        className={"grow"}>
+                        שמור
+                    </Button>
+                    <Button
+                        onClick={onClose}
+                        variant={"secondary"}
+                        disabled={loading}
+                        // icon={RiCheckFill}
+                        loading={loading}
+                        className={"grow"}>
+                        ביטול
+                    </Button>
+                </Flex>
+            </DialogPanel>
+        </Dialog>
     )
 }
 

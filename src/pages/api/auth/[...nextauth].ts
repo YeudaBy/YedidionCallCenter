@@ -1,8 +1,7 @@
-import {getSession} from "next-auth/react"
 import GoogleProvider from "next-auth/providers/google";
 import NextAuth, {Session} from "next-auth";
-import {AdapterUser} from "next-auth/adapters";
-import {UserInfo} from "remult";
+import api from "@/pages/api/[...remult]";
+import {User} from "@/model/User";
 
 const auth = NextAuth({
     secret: process.env.SECRET,
@@ -23,8 +22,22 @@ const auth = NextAuth({
     callbacks: {
         // @ts-ignore
         session: async (session: Session) => {
-            session.user = session.user as UserInfo
-            return Promise.resolve(session)
+            const remult = await api.getRemult({} as any)
+            // @ts-ignore
+            const email = session.session.user?.email
+            console.log({email})
+            if (email) {
+                const user = await User.signIn(remult, email)
+                console.log({user})
+                if (user) {
+                    session.user = user
+                    remult.user = user
+                }
+            }
+            return {
+                ...session,
+                user: await User.signIn(remult, email)
+            }
         }
     },
     session: {
@@ -34,8 +47,3 @@ const auth = NextAuth({
 })
 
 export default auth
-
-export async function getUserOnServer(): Promise<UserInfo> {
-    const session = await getSession()
-    return session?.user as UserInfo
-}

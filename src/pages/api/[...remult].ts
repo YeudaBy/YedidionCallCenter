@@ -1,21 +1,24 @@
 import {remultNext} from 'remult/remult-next'
 import {Procedure} from "@/model/Procedure";
 import {User} from "@/model/User";
-import {getUserOnServer} from "./auth/[...nextauth]";
 import {createPostgresDataProvider} from "remult/postgres";
-import {JsonDataProvider} from "remult";
+import {JsonDataProvider, remult} from "remult";
 import {JsonEntityFileStorage} from "remult/server";
+import {getToken} from "next-auth/jwt";
 
 export const api = remultNext({
     entities: [
         User, Procedure,
     ],
-    // controllers: [
-    //     UsersController
-    // ],
-    getUser: getUserOnServer,
+    getUser: async (req) => {
+        const jwtToken = await getToken({req})
+        console.log({jwtToken})
+        if (!jwtToken?.email) return
+        const user = await User.signIn(remult, jwtToken.email)
+        console.log({user})
+        return user
+    },
     logApiEndPoints: true,
-
     dataProvider:
         production() ?
             createPostgresDataProvider({
