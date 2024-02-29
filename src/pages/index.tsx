@@ -21,6 +21,7 @@ export default function IndexPage() {
     const [query, setQuery] = useState<string>()
     // const [loading, setLoading] = useState(false)
     const [current, setCurrent] = useState<Procedure | true | undefined>()
+    const [edited, setEdited] = useState<Procedure | true | undefined>()
 
     const router = useRouter()
 
@@ -85,7 +86,9 @@ export default function IndexPage() {
     return <Tremor.Flex flexDirection={"col"} className={"p-4 max-w-4xl m-auto"}>
 
         <Flex className={"gap-1 mb-4"}>
-            {!!User.isAdmin(remult) && <AddProcedure/>}
+            {!!User.isAdmin(remult) && <Tremor.Button
+                variant={"secondary"}
+                onClick={() => setEdited(true)}>הוסף נוהל</Tremor.Button>}
 
             {
                 !!User.isAdmin(remult) && <Tremor.Button
@@ -119,7 +122,16 @@ export default function IndexPage() {
             icon={SearchIcon}
         />
 
-        <ShowProcedure procedure={current} open={!!current} onClose={(val) => setCurrent(undefined)}/>
+        <AddProcedure
+            open={!!edited}
+            procedure={edited === true ? undefined : edited}
+            onClose={(val) => setEdited(undefined)}/>
+        <ShowProcedure
+            procedure={current}
+            open={!!current}
+            onClose={(val) => setCurrent(undefined)}
+            onEdit={(procedure) => setEdited(procedure)}
+        />
 
         {
             // loading ? <Loading/> :
@@ -133,10 +145,11 @@ export default function IndexPage() {
     </Tremor.Flex>
 }
 
-function ShowProcedure({procedure, open, onClose}: {
+function ShowProcedure({procedure, open, onClose, onEdit}: {
     procedure?: Procedure | true,
     open: boolean,
-    onClose: (val: boolean) => void
+    onClose: (val: boolean) => void,
+    onEdit: (procedure: Procedure) => void
 }) {
 
     const [loading, setLoading] = useState(false)
@@ -198,6 +211,10 @@ function ShowProcedure({procedure, open, onClose}: {
                                 מחק
                             </Tremor.Button>
                             <Tremor.Button
+                                onClick={() => onEdit(procedure)}>
+                                ערוך
+                            </Tremor.Button>
+                            <Tremor.Button
                                 loading={loading}
                                 onClick={() => {
                                     setLoading(true)
@@ -215,8 +232,11 @@ function ShowProcedure({procedure, open, onClose}: {
     </Tremor.Dialog>
 }
 
-function AddProcedure() {
-    const [open, setOpen] = useState(false)
+function AddProcedure({procedure, open, onClose,}: {
+    open: boolean,
+    onClose: (val: boolean) => void,
+    procedure?: Procedure,
+}) {
     const [loading, setLoading] = useState(false)
     const [title, setTitle] = useState<string>()
     const [description, setDescription] = useState<string>()
@@ -227,26 +247,47 @@ function AddProcedure() {
     const [districts, setDistricts] = useState<District[]>([District.General])
 
 
+    useEffect(() => {
+        if (!!procedure) {
+            setTitle(procedure.title)
+            setDescription(procedure.description)
+            setContent(procedure.procedure)
+            setKeywords(procedure.keywords)
+            setActive(procedure.active)
+            setType(procedure.type)
+            setDistricts(procedure.districts)
+        }
+    }, [procedure]);
+
     const addProcedure = async () => {
         setLoading(true)
-        await procedureRepo.insert({
-            title: title,
-            description: description,
-            procedure: content,
-            active: active,
-            districts: districts,
-            keywords: keywords.map(k => k.trim()),
-            type: type
-        })
+        if (!procedure) {
+            await procedureRepo.insert({
+                title: title,
+                description: description,
+                procedure: content,
+                active: active,
+                districts: districts,
+                keywords: keywords.map(k => k.trim()),
+                type: type
+            })
+        } else {
+            await procedureRepo.update(procedure.id!, {
+                title: title,
+                description: description,
+                procedure: content,
+                active: active,
+                districts: districts,
+                keywords: keywords.map(k => k.trim()),
+                type: type
+            })
+        }
         setLoading(false)
-        setOpen(false)
+        onClose?.(false)
     }
 
     return <>
-        <Tremor.Button
-            variant={"secondary"}
-            onClick={() => setOpen(true)}>הוסף נוהל</Tremor.Button>
-        <Tremor.Dialog open={open} onClose={(val) => setOpen(val)}>
+        <Tremor.Dialog open={open} onClose={(val) => onClose(val)}>
             <Tremor.DialogPanel className={"gap-1.5 flex items-center flex-col"}>
                 <Tremor.TextInput
                     placeholder={"כותרת *"}
@@ -259,32 +300,33 @@ function AddProcedure() {
                     onChange={e => setDescription(e.target.value)}
                 />
 
-                <Flex className={"gap-2"}>
-                    <MultiSelect
-                        placeholder={"בחר/י מוקדים:"}
-                        value={districts}
-                        // @ts-ignore
-                        onChange={e => setDistricts(e)}
-                    >
-                        {Object.values(District).map(value => {
-                            return <MultiSelectItem
-                                key={value}
-                                value={value}
-                            >
-                                {value}
-                            </MultiSelectItem>
-                        })}
-                    </MultiSelect>
+                {/*<Flex className={"gap-2"}>*/}
+                <MultiSelect
+                    placeholder={"בחר/י מוקדים:"}
+                    value={districts}
+                    // @ts-ignore
+                    onChange={e => setDistricts(e)}
+                >
+                    {Object.values(District).map(value => {
+                        return <MultiSelectItem
+                            key={value}
+                            value={value}
+                        >
+                            {value}
+                        </MultiSelectItem>
+                    })}
+                </MultiSelect>
 
-                    <Tremor.Select
-                        value={type}
-                        // @ts-ignore
-                        onChange={e => setType(e)}
-                    >
-                        <Tremor.SelectItem value={ProcedureType.Procedure}>נוהל</Tremor.SelectItem>
-                        <Tremor.SelectItem value={ProcedureType.Guideline}>הנחייה</Tremor.SelectItem>
-                    </Tremor.Select>
-                </Flex>
+                <Tremor.Select
+                    value={type}
+                    // @ts-ignore
+                    onChange={e => setType(e)}
+                >
+                    <Tremor.SelectItem value={ProcedureType.Procedure}>נוהל</Tremor.SelectItem>
+                    <Tremor.SelectItem value={ProcedureType.Guideline}>הנחייה</Tremor.SelectItem>
+                </Tremor.Select>
+                {/*</Flex>*/}
+
 
                 <Tremor.Textarea
                     placeholder={"נוסח הנוהל*: (מינימום 10 תווים)"}
@@ -315,11 +357,9 @@ function AddProcedure() {
                     loading={loading}
                     disabled={!title || !content || content.length < 10}
                     onClick={() => {
-                        addProcedure().then(() => {
-                            setOpen(false)
-                        })
+                        addProcedure()
                     }}>
-                    {"הוסף"}
+                    {procedure ? "עדכן" : "הוסף"}
                 </Tremor.Button>
             </Tremor.DialogPanel>
         </Tremor.Dialog>
