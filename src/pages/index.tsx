@@ -25,6 +25,8 @@ export default function IndexPage() {
 
     const router = useRouter()
 
+    console.log("test1")
+
     useEffect(() => {
         console.log(procedureRepo.metadata)
     }, []);
@@ -39,12 +41,6 @@ export default function IndexPage() {
                 setCurrent(procedure)
             })
     }, [router.query.q]);
-
-    useEffect(() => {
-        if (!current) {
-            router.push('/')
-        }
-    }, [current, router]);
 
     useEffect(() => {
         // setLoading(true)
@@ -78,8 +74,6 @@ export default function IndexPage() {
             }
         }).then(procedures => {
             setResults(procedures)
-        }).then(() => {
-            // setLoading(false)
         })
     }, [query]);
 
@@ -129,7 +123,10 @@ export default function IndexPage() {
         <ShowProcedure
             procedure={current}
             open={!!current}
-            onClose={(val) => setCurrent(undefined)}
+            onClose={(val) => {
+                setCurrent(undefined)
+                router.push('/')
+            }}
             onEdit={(procedure) => setEdited(procedure)}
         />
 
@@ -200,29 +197,15 @@ function ShowProcedure({procedure, open, onClose, onEdit}: {
                     </Flex>
 
 
-                    {remult.user?.roles?.includes(UserRole.Admin) && <>
+                    {User.isAdmin(remult) && <>
                         <Divider className={"my-0.5"}/>
-                        <Text>
-                            איזור ניהול
-                        </Text>
-                        <Flex>
+
+                        <Flex justifyContent={"center"} className={"gap-1.5"}>
                             <Tremor.Button
-                                onClick={() => procedureRepo.delete(procedure.id!).then(() => onClose(false))}>
-                                מחק
-                            </Tremor.Button>
-                            <Tremor.Button
+                                variant={"secondary"}
+                                className={"grow"}
                                 onClick={() => onEdit(procedure)}>
                                 ערוך
-                            </Tremor.Button>
-                            <Tremor.Button
-                                loading={loading}
-                                onClick={() => {
-                                    setLoading(true)
-                                    procedureRepo.update(procedure.id!, {
-                                        active: !procedure.active
-                                    }).then(() => setLoading(false))
-                                }}>
-                                {procedure.active ? "השהה" : "הפעל"}
                             </Tremor.Button>
                         </Flex>
                     </>}
@@ -246,6 +229,7 @@ function AddProcedure({procedure, open, onClose,}: {
     const [type, setType] = useState(ProcedureType.Procedure)
     const [districts, setDistricts] = useState<District[]>([District.General])
 
+    console.log("yest")
 
     useEffect(() => {
         if (!!procedure) {
@@ -319,6 +303,7 @@ function AddProcedure({procedure, open, onClose,}: {
 
                 <Tremor.Select
                     value={type}
+                    placeholder={"בחר/י סוג:"}
                     // @ts-ignore
                     onChange={e => setType(e)}
                 >
@@ -351,16 +336,35 @@ function AddProcedure({procedure, open, onClose,}: {
                         active ? "פעיל" : "לא פעיל"
                     }</label>
                 </Flex>
+                {
+                    remult.user?.roles?.includes(UserRole.SuperAdmin) && !!procedure &&
+                    <Button
+                        onClick={async () => {
+                            await procedureRepo.delete(procedure.id!)
+                            onClose(false)
+                        }}
+                        color={"red"}>
+                        מחק לצמיתות
+                    </Button>
+                }
 
-                <Tremor.Button
-                    className="mt-8 w-full"
-                    loading={loading}
-                    disabled={!title || !content || content.length < 10}
-                    onClick={() => {
-                        addProcedure()
-                    }}>
-                    {procedure ? "עדכן" : "הוסף"}
-                </Tremor.Button>
+
+                <Flex className={"mt-8 gap-1.5"}>
+                    <Tremor.Button
+                        className="grow"
+                        loading={loading}
+                        disabled={!title || !content || content.length < 10}
+                        onClick={() => {
+                            addProcedure()
+                        }}>
+                        {procedure ? "עדכן" : "הוסף"}
+                    </Tremor.Button>
+                    <Button
+                        variant={"secondary"}
+                        onClick={() => onClose(false)}>
+                        ביטול
+                    </Button>
+                </Flex>
             </Tremor.DialogPanel>
         </Tremor.Dialog>
 

@@ -19,8 +19,8 @@ import {
     Text,
     TextInput
 } from "@tremor/react";
-import {Loading, LoadingSpinner} from "@/components/Spinner";
-import {RiCheckFill, RiCheckLine, RiDeleteBin7Fill, RiDeleteBin7Line, RiPencilLine} from "@remixicon/react";
+import {Loading} from "@/components/Spinner";
+import {RiCheckFill, RiCheckLine, RiDeleteBin7Line, RiPencilLine} from "@remixicon/react";
 import {District} from "@/model/District";
 import Link from "next/link";
 
@@ -225,7 +225,6 @@ function UserItem({user, setUsers}: {
     }
 
     const onDelete = async () => {
-        await usersRepo.update(user.id, {active: false})
         setUsers((prev: User[]) => prev.filter(u => u.id !== user.id))
     }
 
@@ -396,16 +395,27 @@ function DeleteUser({user, onDelete}: {
     onDelete: () => void
 }) {
     const [loading, setLoading] = useState(false)
-    const deleteUser = () => {
+    const [show, setShow] = useState(false)
+
+    const active = user.active
+
+    const deactivateUser = () => {
         setLoading(true)
         if (active)
-            onDelete()
+            usersRepo.update(user.id, {active: false})
         else
             usersRepo.update(user.id, {active: true})
         setLoading(false)
     }
 
-    const active = user.active
+    const deleteUser = async () => {
+        setLoading(true)
+        await usersRepo.delete(user.id)
+        onDelete()
+        setLoading(false)
+        setShow(false)
+    }
+
 
     return (
         <>
@@ -414,9 +424,44 @@ function DeleteUser({user, onDelete}: {
                 variant={"light"}
                 color={active ? "red" : "green"}
                 tooltip={active ? "מחיקה" : "הפעלה"}
-                onClick={deleteUser}
+                onClick={() => setShow(true)}
                 className={"cursor-pointer"}/>
-            {loading && <LoadingSpinner/>}
+
+            <Dialog open={show} unmount={true} onClose={() => setShow(false)}>
+                <DialogPanel className={"flex flex-col gap-1.5"}>
+                    <Text className={"text-center text-xl"}>מחיקת משתמש</Text>
+                    <Text className={"text-center text-sm"}>
+                        האם אתה בטוח שברצונך ל{active ? "השהות" : "הפעיל"} את המשתמש {user.name}?
+                    </Text>
+                    <Flex className={"mt-4 gap-2"}>
+                        <Button
+                            onClick={deactivateUser}
+                            color={"red"}
+                            disabled={loading}
+                            loading={loading}
+                            className={"grow"}>
+                            כן
+                        </Button>
+                        <Button
+                            onClick={() => setShow(false)}
+                            variant={"secondary"}
+                            disabled={loading}
+                            loading={loading}
+                            className={"grow"}>
+                            ביטול
+                        </Button>
+                    </Flex>
+                    {remult.user?.roles?.includes(UserRole.SuperAdmin) &&
+                        <Button onClick={deleteUser}
+                                variant={"light"}
+                                color={"red"}
+                                disabled={loading}
+                                loading={loading}
+                                className={"grow"}>
+                            מחק לצמיתות
+                        </Button>}
+                </DialogPanel>
+            </Dialog>
         </>
     )
 }
