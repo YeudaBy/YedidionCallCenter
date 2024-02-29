@@ -20,7 +20,7 @@ import {
     TextInput
 } from "@tremor/react";
 import {Loading, LoadingSpinner} from "@/components/Spinner";
-import {RiCheckFill, RiDeleteBin7Fill, RiPencilLine} from "@remixicon/react";
+import {RiCheckFill, RiCheckLine, RiDeleteBin7Fill, RiDeleteBin7Line, RiPencilLine} from "@remixicon/react";
 import {District} from "@/model/District";
 import Link from "next/link";
 
@@ -66,7 +66,7 @@ export default function AdminPage() {
     }, []);
 
     return (
-        <div className={"p-2"}>
+        <div className={"p-2 max-w-3xl mx-auto"}>
             <Link href={"/"}>
                 <Text className={"font-semibold text-center text-xl"}>פאנל ניהול משתמשים</Text>
             </Link>
@@ -96,7 +96,7 @@ export default function AdminPage() {
                 ))}
             </List> : <Callout
                 color={"red"}
-                className={"w-fit mx-auto my-3.5"}
+                className={"my-3.5"}
                 title={
                     "שגיאת הרשאה"
                 }>
@@ -213,7 +213,7 @@ function UserItem({user, setUsers}: {
     const district = user.district
 
     const CBadge = () => {
-        if (!user.active) return <Badge color={"red"}>לא פעיל</Badge>
+        if (!user.active) return <Badge color={"gray"}>לא פעיל</Badge>
         if (isSuperAdmin) return <Badge color={"amber"}>מנהל מערכת</Badge>
         if (isAdmin) return <>
             <Badge color={"blue"}>מנהל</Badge>
@@ -224,12 +224,12 @@ function UserItem({user, setUsers}: {
     }
 
     const onDelete = async () => {
-        await usersRepo.delete(user.id)
+        await usersRepo.update(user.id, {active: false})
         setUsers((prev: User[]) => prev.filter(u => u.id !== user.id))
     }
 
     return (
-        <ListItem className={"justify-between py-2 max-w-xl mx-auto items-center"}>
+        <ListItem className={"justify-between py-2 max-w-3xl mx-auto items-center"}>
             <Flex
                 flexDirection={"col"}
                 alignItems={"start"}
@@ -397,16 +397,22 @@ function DeleteUser({user, onDelete}: {
     const [loading, setLoading] = useState(false)
     const deleteUser = () => {
         setLoading(true)
-        onDelete()
+        if (active)
+            onDelete()
+        else
+            usersRepo.update(user.id, {active: true})
         setLoading(false)
     }
+
+    const active = user.active
+
     return (
         <>
             <Icon
-                icon={RiDeleteBin7Fill}
+                icon={active ? RiDeleteBin7Line : RiCheckLine}
                 variant={"light"}
-                color={"red"}
-                tooltip={"מחיקה"}
+                color={active ? "red" : "green"}
+                tooltip={active ? "מחיקה" : "הפעלה"}
                 onClick={deleteUser}
                 className={"cursor-pointer"}/>
             {loading && <LoadingSpinner/>}

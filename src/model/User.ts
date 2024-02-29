@@ -1,4 +1,4 @@
-import {Entity, Fields, IdEntity, Remult, UserInfo} from "remult";
+import {Entity, Fields, IdEntity, remult, Remult, UserInfo} from "remult";
 import {District} from "./District";
 
 
@@ -10,8 +10,14 @@ export enum UserRole {
 
 export const AdminRoles = [UserRole.Admin, UserRole.SuperAdmin]
 
-@Entity("users", {
+@Entity<User>("users", {
     allowApiCrud: true,
+    deleting: (user) => {
+        if (user.id == remult.user!.id) {
+            throw "לא ניתן למחוק את עצמך"
+        }
+        user.active = false
+    }
     // allowApiRead: true,
     // allowApiUpdate: true,
     // allowApiDelete: () => !!remult.user?.roles?.length && AdminRoles.includes(remult.user.roles[0] as UserRole),
