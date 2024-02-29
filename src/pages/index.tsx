@@ -6,7 +6,7 @@ import {Button, Divider, Flex, MultiSelect, MultiSelectItem, Switch, Text} from 
 import {signOut} from "next-auth/react";
 import {useRouter} from "next/router";
 import {SearchIcon} from "@heroicons/react/solid";
-import {LoadingSpinner} from "@/components/Spinner";
+import {LoadingBackdrop, LoadingSpinner} from "@/components/Spinner";
 import {ProcedurePreview} from "@/components/ProcedurePreview";
 import {District} from "@/model/District";
 import {highlightedText} from "@/utils/highlightedText";
@@ -14,18 +14,32 @@ import {User, UserRole} from "@/model/User";
 import autoAnimate from "@formkit/auto-animate";
 
 const procedureRepo = remult.repo(Procedure);
+const userRepo = remult.repo(User);
 
 export default function IndexPage() {
     const [recent, setRecent] = useState<Procedure[]>()
     const [results, setResults] = useState<Procedure[]>()
     const [query, setQuery] = useState<string>()
-    // const [loading, setLoading] = useState(false)
+    const [loading, setLoading] = useState(false)
     const [current, setCurrent] = useState<Procedure | true | undefined>()
     const [edited, setEdited] = useState<Procedure | true | undefined>()
+    const [district, setDistrict] = useState<District | "All">("All")
+    const [allowedDistricts, setAllowedDistricts] = useState<District[]>([District.General])
 
     const router = useRouter()
 
     console.log("test1")
+
+    useEffect(() => {
+        if (User.isAdmin(remult)) {
+            setAllowedDistricts(Object.values(District))
+        } else {
+            userRepo.findFirst({id: remult.user?.id})
+                .then(user => {
+                    setAllowedDistricts([...(user.district ? [user.district] : []), District.General])
+                })
+        }
+    }, []);
 
     useEffect(() => {
         console.log(procedureRepo.metadata)
@@ -43,8 +57,17 @@ export default function IndexPage() {
     }, [router.query.q]);
 
     useEffect(() => {
-        // setLoading(true)
+        setQuery(router.query.search as string || undefined)
+    }, [router.query.search]);
+
+    useEffect(() => {
+        setDistrict(router.query.d as District || "All")
+    }, [router.query.d]);
+
+    useEffect(() => {
+        setLoading(true)
         procedureRepo.find({
+            where: (district === "All" ? {} : {districts: {$contains: district}}),
             orderBy: {
                 createdAt: 'asc'
             },
@@ -54,9 +77,9 @@ export default function IndexPage() {
                 setRecent(procedures)
             })
             .then(() => {
-                // setLoading(false)
+                setLoading(false)
             })
-    }, []);
+    }, [district]);
 
     useEffect(() => {
         if (!query) return
@@ -74,6 +97,8 @@ export default function IndexPage() {
             }
         }).then(procedures => {
             setResults(procedures)
+        }).finally(() => {
+            // setLoading(false)
         })
     }, [query]);
 
@@ -94,8 +119,9 @@ export default function IndexPage() {
             <Tremor.Button onClick={() => signOut()}>
                 התנתק
             </Tremor.Button>
-
         </Flex>
+
+        {loading && <LoadingBackdrop />}
 
         <Tremor.TextInput
             color={"amber"}
@@ -115,6 +141,20 @@ export default function IndexPage() {
             }}
             icon={SearchIcon}
         />
+
+        <Flex className={"justify-center gap-1.5 my-2"}>
+            {
+                allowedDistricts.map(d => {
+                    return <Tremor.Badge
+                        className={"cursor-pointer"}
+                        color={d === district ? "green" : "amber"}
+                        onClick={() => {
+                            setDistrict(d === district ? "All" : d)
+                        }}
+                        key={d}>{d}</Tremor.Badge>
+                })
+            }
+        </Flex>
 
         <AddProcedure
             open={!!edited}
@@ -138,7 +178,8 @@ export default function IndexPage() {
                 }) : results?.map(procedure => {
                     return <ProcedurePreview procedure={procedure} key={procedure.id}/>
                 })}
-            </Tremor.Grid>}
+            </Tremor.Grid>
+        }
     </Tremor.Flex>
 }
 
@@ -150,7 +191,7 @@ function ShowProcedure({procedure, open, onClose, onEdit}: {
 }) {
 
     const [loading, setLoading] = useState(false)
-
+    const router = useRouter()
     const dialogRef = useRef<HTMLDivElement>(null)
     useEffect(() => {
         dialogRef.current && autoAnimate(dialogRef.current)
@@ -163,6 +204,16 @@ function ShowProcedure({procedure, open, onClose, onEdit}: {
     const share = (text: string) => {
         const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`
         window.open(url, '_blank')
+    }
+
+    const search = (text: string) => {
+        onClose(false)
+        router.push(`/?search=${text}`)
+    }
+
+    const district = (district: District) => {
+        onClose(false)
+        router.push(`/?d=${district}`)
     }
 
     if (!procedure) return <></>
@@ -194,6 +245,22 @@ function ShowProcedure({procedure, open, onClose, onEdit}: {
                             onClick={() => share(procedure.procedure)}>
                             שתף
                         </Button>
+                    </Flex>
+
+                    <Flex className={"mx-4 gap-1.5"} justifyContent={"start"}>
+                        {procedure.keywords?.map(keyword => {
+                            return <Tremor.Badge
+                                className={"cursor-pointer"}
+                                onClick={() => search(keyword)}
+                                key={keyword}>{keyword}</Tremor.Badge>
+                        })}
+                        {procedure.districts?.map(d => {
+                            return <Tremor.Badge
+                                className={"cursor-pointer"}
+                                color={"amber"}
+                                onClick={() => district(d)}
+                                key={d}>מוקד {d}</Tremor.Badge>
+                        })}
                     </Flex>
 
 
