@@ -20,9 +20,6 @@ export class Procedure extends IdEntity {
     title!: string;
 
     @Fields.string()
-    description!: string;
-
-    @Fields.string()
     procedure!: string;
 
     // @Fields.number({

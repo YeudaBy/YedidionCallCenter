@@ -46,15 +46,18 @@ export default function IndexPage() {
     }, []);
 
     useEffect(() => {
-        const q = router.query.q
+        const q = router.query.id
         if (!q) return
-        // setCurrent(true)
+        setCurrent(true)
         procedureRepo
             .findFirst({id: q})
             .then(procedure => {
                 setCurrent(procedure)
             })
-    }, [router.query.q]);
+            .finally(() => {
+                setLoading(false)
+            })
+    }, [router.query.id]);
 
     useEffect(() => {
         setQuery(router.query.search as string || undefined)
@@ -67,7 +70,8 @@ export default function IndexPage() {
     useEffect(() => {
         setLoading(true)
         procedureRepo.find({
-            where: (district === "All" ? {} : {districts: {$contains: district}}),
+            where: (["All", District.General].includes(district) ? {}
+                : {districts: {$contains: district}}),
             orderBy: {
                 createdAt: 'asc'
             },
@@ -121,7 +125,7 @@ export default function IndexPage() {
             </Tremor.Button>
         </Flex>
 
-        {loading && <LoadingBackdrop />}
+        {loading && <LoadingBackdrop/>}
 
         <Tremor.TextInput
             color={"amber"}
@@ -189,8 +193,6 @@ function ShowProcedure({procedure, open, onClose, onEdit}: {
     onClose: (val: boolean) => void,
     onEdit: (procedure: Procedure) => void
 }) {
-
-    const [loading, setLoading] = useState(false)
     const router = useRouter()
     const dialogRef = useRef<HTMLDivElement>(null)
     useEffect(() => {
@@ -229,7 +231,6 @@ function ShowProcedure({procedure, open, onClose, onEdit}: {
                     <Text className={"text-3xl font-bold"}>טוען...</Text></>
                 : <>
                     <Tremor.Text className={"text-xl"}>{procedure.title}</Tremor.Text>
-                    <Tremor.Text>{procedure.description}</Tremor.Text>
                     <Tremor.Text>
                         {highlightedText(procedure.procedure)}
                     </Tremor.Text>
@@ -247,7 +248,9 @@ function ShowProcedure({procedure, open, onClose, onEdit}: {
                         </Button>
                     </Flex>
 
-                    <Flex className={"mx-4 gap-1.5"} justifyContent={"start"}>
+                    <Flex
+                        className={"mx-4 mt-8 gap-1.5 flex-wrap"}
+                        justifyContent={"center"}>
                         {procedure.keywords?.map(keyword => {
                             return <Tremor.Badge
                                 className={"cursor-pointer"}
@@ -289,7 +292,6 @@ function AddProcedure({procedure, open, onClose,}: {
 }) {
     const [loading, setLoading] = useState(false)
     const [title, setTitle] = useState<string>()
-    const [description, setDescription] = useState<string>()
     const [content, setContent] = useState<string>()
     const [keywords, setKeywords] = useState<string[]>([])
     const [active, setActive] = useState<boolean>(true)
@@ -301,7 +303,6 @@ function AddProcedure({procedure, open, onClose,}: {
     useEffect(() => {
         if (!!procedure) {
             setTitle(procedure.title)
-            setDescription(procedure.description)
             setContent(procedure.procedure)
             setKeywords(procedure.keywords)
             setActive(procedure.active)
@@ -315,7 +316,6 @@ function AddProcedure({procedure, open, onClose,}: {
         if (!procedure) {
             await procedureRepo.insert({
                 title: title,
-                description: description,
                 procedure: content,
                 active: active,
                 districts: districts,
@@ -325,7 +325,6 @@ function AddProcedure({procedure, open, onClose,}: {
         } else {
             await procedureRepo.update(procedure.id!, {
                 title: title,
-                description: description,
                 procedure: content,
                 active: active,
                 districts: districts,
@@ -344,11 +343,6 @@ function AddProcedure({procedure, open, onClose,}: {
                     placeholder={"כותרת *"}
                     value={title}
                     onChange={e => setTitle(e.target.value)}
-                />
-                <Tremor.TextInput
-                    placeholder={"תיאור"}
-                    value={description}
-                    onChange={e => setDescription(e.target.value)}
                 />
 
                 {/*<Flex className={"gap-2"}>*/}

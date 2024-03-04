@@ -15,3 +15,8 @@ export function highlightedText(text: string): ReactNode {
         return <>{bold}<br/></>
     })
 }
+
+export function plainText(text: string): string {
+    // remove * and \n
+    return text.replace(/\*/g, "").replace(/\n/g, " ")
+}
