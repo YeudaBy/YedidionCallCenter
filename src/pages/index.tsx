@@ -334,6 +334,12 @@ function AddProcedure({procedure, open, onClose,}: {
         }
         setLoading(false)
         onClose?.(false)
+        setActive(true)
+        setTitle('')
+        setContent('')
+        setKeywords([])
+        setType(ProcedureType.Procedure)
+        setDistricts([District.General])
     }
 
     return <>
