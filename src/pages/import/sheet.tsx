@@ -13,6 +13,7 @@ export default function ImportSheet() {
             console.log(parseXLSX(data));
             setRes(data);
         });
+
   }, []);
 
   function parseXLSX(data: string) {
