@@ -39,6 +39,7 @@ export default function AdminPage() {
     useEffect(() => {
         setLoading(true)
         usersRepo.find({
+            limit: 30,
             orderBy: {
                 district: "asc",
                 roles: "asc",
@@ -57,13 +58,6 @@ export default function AdminPage() {
         if (!query) return setFilteredUsers([])
         setFilteredUsers(users.filter(u => u.name.includes(query) || u.email.includes(query)))
     }, [query, users]);
-
-    useEffect(() => {
-        console.log(usersRepo.metadata.apiUpdateAllowed(), "usersRepo.metadata.apiUpdateAllowed()")
-        console.log(usersRepo.metadata.apiDeleteAllowed(), "usersRepo.metadata.apiDeleteAllowed()")
-        console.log(usersRepo.metadata.apiInsertAllowed(), "usersRepo.metadata.apiInsertAllowed()")
-        console.log(usersRepo.metadata.apiReadAllowed, "usersRepo.metadata.apiReadAllowed()")
-    }, []);
 
     return (
         <div className={"p-2 max-w-3xl mx-auto"}>
@@ -263,15 +257,16 @@ function UserItem({user, setUsers}: {
                     <Text className={"font-light"}>∙ {user.phoneFormatted}</Text>
                 </Flex>
             </Flex>
-            <Flex className={"w-fit gap-1"}>
-                <EditUser
-                    user={user}
-                    onDelete={onDelete}
-                    onSave={(nu: User) => {
-                        setUsers((prev: User[]) => prev.map(u => u.id === nu.id ? nu : u))
-                    }}/>
-                <DeleteUser user={user} onDelete={onDelete}/>
-            </Flex>
+            {remult.user?.roles?.includes(UserRole.SuperAdmin) || user.roles.includes(UserRole.Dispatcher) &&
+                <Flex className={"w-fit gap-1"}>
+                    <EditUser
+                        user={user}
+                        onDelete={onDelete}
+                        onSave={(nu: User) => {
+                            setUsers((prev: User[]) => prev.map(u => u.id === nu.id ? nu : u))
+                        }}/>
+                    <DeleteUser user={user} onDelete={onDelete}/>
+                </Flex>}
         </ListItem>
     )
 }
@@ -385,17 +380,18 @@ function EditUser({user: _user, onSave, onDelete}: {
                         </Card>
                     )}
 
-                    <Flex className={"gap-2 mt-4"} justifyContent={"start"}>
-                        <Switch
-                            id={"active"}
-                            checked={active}
-                            onChange={e => setActive(e)}
-                        />
-                        <label
-                            htmlFor={"active"} className={"cursor-pointer text-start text-sm"}>
-                            פעיל (כיבוי אפשרות זו תגרום להשהיית המשתמש מהמערכת)
-                        </label>
-                    </Flex>
+                    {remult.user?.roles?.includes(UserRole.SuperAdmin) || userRoles.includes(UserRole.Dispatcher) &&
+                        <Flex className={"gap-2 mt-4"} justifyContent={"start"}>
+                            <Switch
+                                id={"active"}
+                                checked={active}
+                                onChange={e => setActive(e)}
+                            />
+                            <label
+                                htmlFor={"active"} className={"cursor-pointer text-start text-sm"}>
+                                פעיל (כיבוי אפשרות זו תגרום להשהיית המשתמש מהמערכת)
+                            </label>
+                        </Flex>}
 
                     <Flex className={"mt-24 gap-2"}>
                         <Button
@@ -407,10 +403,11 @@ function EditUser({user: _user, onSave, onDelete}: {
                             className={"grow"}>
                             שמור
                         </Button>
-                        <DeleteUser user={_user} onDelete={() => {
-                            setOpen(false)
-                            onDelete()
-                        }}/>
+                        {remult.user?.roles?.includes(UserRole.SuperAdmin) || userRoles.includes(UserRole.Dispatcher)
+                            && <DeleteUser user={_user} onDelete={() => {
+                                setOpen(false)
+                                onDelete()
+                            }}/>}
                     </Flex>
 
                 </DialogPanel>
