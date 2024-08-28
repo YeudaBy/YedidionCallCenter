@@ -78,7 +78,7 @@ export default function IndexPage() {
             orderBy: {
                 createdAt: 'asc'
             },
-            limit: 5,
+            limit: 20,
         })
             .then(procedures => {
                 setRecent(procedures)
@@ -237,10 +237,10 @@ function ShowProcedure({procedure, open, onClose, onEdit}: {
 
     console.log(remult.user)
 
-    const titlePrefix = procedure !== true
-        ? procedure.districts.includes(District.General) ? "מוקד ארצי"
-            : "" : ""
-
+    const sharedText = () => {
+        if (typeof procedure !== "object") return ""
+        return `*מוקד ארצי - ${procedure.title}*:\n\n${procedure.procedure}\n\n${window.location.href}`
+    }
 
     return <Tremor.Dialog open={open} className={"relative"} onClose={() => onClose(false)}>
         <Icon
@@ -268,12 +268,12 @@ function ShowProcedure({procedure, open, onClose, onEdit}: {
                     <Flex alignItems={"center"} justifyContent={"center"} className={"gap-1 p-2"}>
                         <Button
                             className={"grow"}
-                            onClick={() => copy(procedure.procedure)}>
+                            onClick={() => copy(sharedText())}>
                             העתק
                         </Button>
                         <Button
                             className={"grow"}
-                            onClick={() => share(procedure.procedure)}>
+                            onClick={() => share(sharedText())}>
                             שתף
                         </Button>
                     </Flex>
