@@ -5,11 +5,13 @@ import {createPostgresDataProvider} from "remult/postgres";
 import {JsonDataProvider, remult} from "remult";
 import {JsonEntityFileStorage} from "remult/server";
 import {getToken} from "next-auth/jwt";
+import {ApiController} from "@/controllers/ApiController";
 
 export const api = remultNext({
     entities: [
         User, Procedure,
     ],
+    controllers: [ApiController],
     getUser: async (req) => {
         const jwtToken = await getToken({req})
         console.log({jwtToken})
@@ -32,6 +34,6 @@ export default api
 
 
 function production() {
-    // return true
+    return true
     return process.env.NODE_ENV !== 'development';
 }
