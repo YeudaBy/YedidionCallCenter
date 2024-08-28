@@ -3,6 +3,7 @@ import NextAuth, {Session} from "next-auth";
 import api from "@/pages/api/[...remult]";
 import {User} from "@/model/User";
 
+// @ts-ignore
 const auth = NextAuth({
     secret: process.env.SECRET,
     providers: [
@@ -21,11 +22,15 @@ const auth = NextAuth({
 
     callbacks: {
         // @ts-ignore
-        session: async (session: Session) => {
+        session: async (session: Session, token) => {
+            console.log({session, token})
             const remult = await api.getRemult({} as any)
             // @ts-ignore
             const email = session.session.user?.email
             console.log({email})
+            if (session.user) {
+                return session
+            }
             if (email) {
                 const user = await User.signIn(remult, email)
                 console.log({user})

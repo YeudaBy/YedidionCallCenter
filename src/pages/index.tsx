@@ -2,7 +2,7 @@ import {useEffect, useRef, useState} from "react";
 import {Procedure, ProcedureType} from "@/model/Procedure";
 import {remult} from "remult";
 import * as Tremor from "@tremor/react";
-import {Button, Divider, Flex, MultiSelect, MultiSelectItem, Switch, Text} from "@tremor/react";
+import {Button, Divider, Flex, Icon, MultiSelect, MultiSelectItem, Switch, Text} from "@tremor/react";
 import {signOut} from "next-auth/react";
 import {useRouter} from "next/router";
 import {SearchIcon} from "@heroicons/react/solid";
@@ -12,6 +12,10 @@ import {District} from "@/model/District";
 import {highlightedText} from "@/utils/highlightedText";
 import {User, UserRole} from "@/model/User";
 import autoAnimate from "@formkit/auto-animate";
+import {PutBlobResult} from "@vercel/blob";
+import {upload} from "@vercel/blob/client";
+import Image from "next/image";
+import {CloseIcon} from "next/dist/client/components/react-dev-overlay/internal/icons/CloseIcon";
 
 const procedureRepo = remult.repo(Procedure);
 const userRepo = remult.repo(User);
@@ -220,18 +224,32 @@ function ShowProcedure({procedure, open, onClose, onEdit}: {
 
     if (!procedure) return <></>
 
+    console.log(remult.user)
 
-    return <Tremor.Dialog open={open} onClose={() => onClose(false)}>
+    const titlePrefix = procedure !== true
+        ? procedure.districts.includes(District.General) ? "מוקד ארצי"
+            : "" : ""
+
+
+    return <Tremor.Dialog open={open} className={"relative"} onClose={() => onClose(false)}>
+        <Icon
+            variant={"light"}
+            icon={CloseIcon}
+            onClick={() => onClose(false)}
+            className={"fixed z-10 top-2 start-2 rounded-full cursor-pointer"}
+        />
+
         <Tremor.DialogPanel
             ref={dialogRef}
             className={"gap-1.5 text-start flex items-center flex-col"}>
+
             {procedure == true ?
                 <>
                     <LoadingSpinner className={"ml-4"}/>
                     <Text className={"text-3xl font-bold"}>טוען...</Text></>
                 : <>
                     <Tremor.Text className={"text-xl"}>{procedure.title}</Tremor.Text>
-                    <Tremor.Text>
+                    <Tremor.Text className={"scrollable border-gray-100 border-2 p-1 py-3 rounded-r-xl w-full drop-shadow-sm"}>
                         {highlightedText(procedure.procedure)}
                     </Tremor.Text>
 
@@ -297,6 +315,8 @@ function AddProcedure({procedure, open, onClose,}: {
     const [active, setActive] = useState<boolean>(true)
     const [type, setType] = useState(ProcedureType.Procedure)
     const [districts, setDistricts] = useState<District[]>([District.General])
+    const [showAddImage, setShowAddImage] = useState(false)
+    const [images, setImages] = useState<string[]>()
 
     console.log("yest")
 
@@ -393,6 +413,37 @@ function AddProcedure({procedure, open, onClose,}: {
                     onChange={e => setKeywords(e.target.value.split(','))}
                 />
 
+                <Text className={"text-sm text-start"}>
+                    תמונות
+                </Text>
+                <Flex className={"mb-4"}>
+                    <Button
+                        onClick={() => setShowAddImage(true)}>
+                        הוסף תמונה
+                    </Button>
+                    {images?.map((image, i) => {
+                        return <Image
+                            key={i}
+                            src={image}
+                            alt={image}
+                            height={30}
+                            width={30}
+                            className={"rounded-md"}
+                        />
+                    })}
+                </Flex>
+
+                <AddImageDialog
+                    open={showAddImage}
+                    onClose={(image) => {
+                        setShowAddImage(false)
+                        if (image) {
+                            setImages([...(images || []), image])
+                        }
+                    }}
+                />
+
+
                 <Flex alignItems={"center"} justifyContent={"start"} className={"gap-1"}>
                     <Switch
                         id={"active"}
@@ -403,6 +454,7 @@ function AddProcedure({procedure, open, onClose,}: {
                         active ? "פעיל" : "לא פעיל"
                     }</label>
                 </Flex>
+
                 {
                     remult.user?.roles?.includes(UserRole.SuperAdmin) && !!procedure &&
                     <Button
@@ -416,7 +468,7 @@ function AddProcedure({procedure, open, onClose,}: {
                 }
 
 
-                <Flex className={"mt-8 gap-1.5"}>
+                <Flex className={"mt-4 gap-1.5"}>
                     <Tremor.Button
                         className="grow"
                         loading={loading}
@@ -434,6 +486,68 @@ function AddProcedure({procedure, open, onClose,}: {
                 </Flex>
             </Tremor.DialogPanel>
         </Tremor.Dialog>
-
     </>
+}
+
+function AddImageDialog({open, onClose}: {
+    open: boolean,
+    procedure?: Procedure,
+    onClose: (image?: string) => void
+}) {
+    const inputFileRef = useRef<HTMLInputElement>(null);
+    const [blob, setBlob] = useState<PutBlobResult | null>(null);
+    const [file, setFile] = useState<File | null>(null);
+    const [loading, setLoading] = useState(false);
+
+    const addImage = async () => {
+        if (!file) {
+            throw new Error('No file selected');
+        }
+        setLoading(true);
+        const newBlob = await upload(file.name, file, {
+            access: 'public',
+            handleUploadUrl: '/api/image/upload'
+        });
+        setBlob(newBlob);
+        setLoading(false);
+        onClose(newBlob.url);
+    }
+
+    return <Tremor.Dialog unmount={!open} open={open} onClose={() => onClose()}>
+        <Tremor.DialogPanel>
+            <input
+                ref={inputFileRef}
+                type="file"
+                id={"file"}
+                required
+                hidden
+                onChange={(event) => {
+                    if (!inputFileRef.current?.files) {
+                        throw new Error('No file selected');
+                    }
+                    setFile(inputFileRef.current.files[0]);
+                }}
+            />
+            <label htmlFor={"file"}>בחר תמונה</label>
+            <Button
+                onClick={() => {
+                    inputFileRef.current?.click();
+                }}
+            >
+                בחר
+            </Button>
+            <div>
+                {file?.name}
+            </div>
+            <Button
+                onClick={() => {
+                    addImage();
+                }}
+                disabled={!file}
+                loading={loading}
+            >
+                הוסף
+            </Button>
+        </Tremor.DialogPanel>
+    </Tremor.Dialog>
 }
