@@ -2,7 +2,7 @@ import {useEffect, useRef, useState} from "react";
 import {Procedure, ProcedureType} from "@/model/Procedure";
 import {remult} from "remult";
 import * as Tremor from "@tremor/react";
-import {Button, Divider, Flex, Icon, MultiSelect, MultiSelectItem, Switch, Text} from "@tremor/react";
+import {Badge, Button, Divider, Flex, Icon, MultiSelect, MultiSelectItem, Switch, Text} from "@tremor/react";
 import {signOut} from "next-auth/react";
 import {useRouter} from "next/router";
 import {SearchIcon} from "@heroicons/react/solid";
@@ -15,7 +15,7 @@ import autoAnimate from "@formkit/auto-animate";
 import {PutBlobResult} from "@vercel/blob";
 import {upload} from "@vercel/blob/client";
 import Image from "next/image";
-import {CloseIcon} from "next/dist/client/components/react-dev-overlay/internal/icons/CloseIcon";
+import {RiCloseFill} from "@remixicon/react";
 
 const procedureRepo = remult.repo(Procedure);
 const userRepo = remult.repo(User);
@@ -29,10 +29,9 @@ export default function IndexPage() {
     const [edited, setEdited] = useState<Procedure | true | undefined>()
     const [district, setDistrict] = useState<District | "All">("All")
     const [allowedDistricts, setAllowedDistricts] = useState<District[]>([District.General])
+    const [waitingCount, setWaitingCount] = useState(0)
 
     const router = useRouter()
-
-    console.log("test1")
 
     useEffect(() => {
         if (User.isAdmin(remult)) {
@@ -40,7 +39,7 @@ export default function IndexPage() {
         } else {
             userRepo.findFirst({id: remult.user?.id})
                 .then(user => {
-                    setAllowedDistricts([...(user.district ? [user.district] : []), District.General])
+                    setAllowedDistricts([...(user?.district ? [user.district] : []), District.General])
                 })
         }
     }, []);
@@ -110,6 +109,15 @@ export default function IndexPage() {
         })
     }, [query]);
 
+    useEffect(() => {
+        userRepo.count({
+            roles: {$contains: UserRole.Dispatcher},
+            district: {"$nin": Object.values(District)}
+        }).then(count => {
+            setWaitingCount(count)
+        })
+    }, []);
+
     return <Tremor.Flex flexDirection={"col"} className={"p-4 max-w-4xl m-auto"}>
 
         <Flex className={"gap-1 mb-4"}>
@@ -122,6 +130,9 @@ export default function IndexPage() {
                     className={"grow"}
                     onClick={() => router.push('/admin')}>
                     איזור ניהול
+                    <Badge color={"red"} className={"mx-3"}>
+                        {waitingCount} ממתינים
+                    </Badge>
                 </Tremor.Button>}
 
             <Tremor.Button onClick={() => signOut()}>
@@ -234,7 +245,7 @@ function ShowProcedure({procedure, open, onClose, onEdit}: {
     return <Tremor.Dialog open={open} className={"relative"} onClose={() => onClose(false)}>
         <Icon
             variant={"light"}
-            icon={CloseIcon}
+            icon={RiCloseFill}
             onClick={() => onClose(false)}
             className={"fixed z-10 top-2 start-2 rounded-full cursor-pointer"}
         />
@@ -249,7 +260,8 @@ function ShowProcedure({procedure, open, onClose, onEdit}: {
                     <Text className={"text-3xl font-bold"}>טוען...</Text></>
                 : <>
                     <Tremor.Text className={"text-xl"}>{procedure.title}</Tremor.Text>
-                    <Tremor.Text className={"scrollable border-gray-100 border-2 p-1 py-3 rounded-r-xl w-full drop-shadow-sm"}>
+                    <Tremor.Text
+                        className={"scrollable border-gray-100 border-2 p-1 py-3 rounded-r-xl w-full drop-shadow-sm"}>
                         {highlightedText(procedure.procedure)}
                     </Tremor.Text>
 

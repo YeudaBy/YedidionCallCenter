@@ -27,7 +27,6 @@ const auth = NextAuth({
             const remult = await api.getRemult({} as any)
             // @ts-ignore
             const email = session.session.user?.email
-            console.log({email})
             if (session.user) {
                 return session
             }
