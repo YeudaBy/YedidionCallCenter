@@ -16,6 +16,7 @@ import {PutBlobResult} from "@vercel/blob";
 import {upload} from "@vercel/blob/client";
 import Image from "next/image";
 import {RiCloseFill} from "@remixicon/react";
+import {UploadButton} from "@/components/uploadthing";
 
 const procedureRepo = remult.repo(Procedure);
 const userRepo = remult.repo(User);
@@ -214,6 +215,8 @@ function ShowProcedure({procedure, open, onClose, onEdit}: {
         dialogRef.current && autoAnimate(dialogRef.current)
     }, []);
 
+    const [selectedImage, setSelectedImage] = useState<string>()
+
     const copy = (text: string) => {
         navigator.clipboard.writeText(text)
     }
@@ -265,7 +268,34 @@ function ShowProcedure({procedure, open, onClose, onEdit}: {
                         {highlightedText(procedure.procedure)}
                     </Tremor.Text>
 
-                    <Flex alignItems={"center"} justifyContent={"center"} className={"gap-1 p-2"}>
+                    <Flex className={"gap-1.5 my-2"}>
+                        {procedure.images?.map((image, i) => {
+                            return <Image
+                                key={i}
+                                src={image}
+                                alt={image}
+                                height={75}
+                                width={75}
+                                onClick={() => setSelectedImage(image)}
+                                className={"rounded-md border-2 border-blue-200 cursor-pointer"}
+                            />
+                        })}
+
+                        {!!selectedImage &&
+                            <Tremor.Dialog open={!!selectedImage} onClose={() => setSelectedImage(undefined)}>
+                                <Tremor.DialogPanel>
+                                    <Image
+                                        src={selectedImage}
+                                        alt={selectedImage}
+                                        layout={"responsive"}
+                                        width={500}
+                                        height={500}
+                                    />
+                                </Tremor.DialogPanel>
+                            </Tremor.Dialog>}
+                    </Flex>
+
+                    <Flex alignItems={"center"} justifyContent={"center"} className={"gap-1"}>
                         <Button
                             className={"grow"}
                             onClick={() => copy(sharedText())}>
@@ -327,10 +357,7 @@ function AddProcedure({procedure, open, onClose,}: {
     const [active, setActive] = useState<boolean>(true)
     const [type, setType] = useState(ProcedureType.Procedure)
     const [districts, setDistricts] = useState<District[]>([District.General])
-    const [showAddImage, setShowAddImage] = useState(false)
     const [images, setImages] = useState<string[]>()
-
-    console.log("yest")
 
     useEffect(() => {
         if (!!procedure) {
@@ -340,6 +367,7 @@ function AddProcedure({procedure, open, onClose,}: {
             setActive(procedure.active)
             setType(procedure.type)
             setDistricts(procedure.districts)
+            setImages(procedure.images)
         }
     }, [procedure]);
 
@@ -352,7 +380,8 @@ function AddProcedure({procedure, open, onClose,}: {
                 active: active,
                 districts: districts,
                 keywords: keywords.map(k => k.trim()),
-                type: type
+                type: type,
+                images: images
             })
         } else {
             await procedureRepo.update(procedure.id!, {
@@ -361,7 +390,8 @@ function AddProcedure({procedure, open, onClose,}: {
                 active: active,
                 districts: districts,
                 keywords: keywords.map(k => k.trim()),
-                type: type
+                type: type,
+                images: images
             })
         }
         setLoading(false)
@@ -372,6 +402,7 @@ function AddProcedure({procedure, open, onClose,}: {
         setKeywords([])
         setType(ProcedureType.Procedure)
         setDistricts([District.General])
+        setImages([])
     }
 
     return <>
@@ -383,7 +414,6 @@ function AddProcedure({procedure, open, onClose,}: {
                     onChange={e => setTitle(e.target.value)}
                 />
 
-                {/*<Flex className={"gap-2"}>*/}
                 <MultiSelect
                     placeholder={"בחר/י מוקדים:"}
                     value={districts}
@@ -409,8 +439,6 @@ function AddProcedure({procedure, open, onClose,}: {
                     <Tremor.SelectItem value={ProcedureType.Procedure}>נוהל</Tremor.SelectItem>
                     <Tremor.SelectItem value={ProcedureType.Guideline}>הנחייה</Tremor.SelectItem>
                 </Tremor.Select>
-                {/*</Flex>*/}
-
 
                 <Tremor.Textarea
                     placeholder={"נוסח הנוהל*: (מינימום 10 תווים)"}
@@ -428,32 +456,41 @@ function AddProcedure({procedure, open, onClose,}: {
                 <Text className={"text-sm text-start"}>
                     תמונות
                 </Text>
-                <Flex className={"mb-4"}>
-                    <Button
-                        onClick={() => setShowAddImage(true)}>
-                        הוסף תמונה
-                    </Button>
+                <Flex className={"mb-4 items-center justify-end gap-2"}>
                     {images?.map((image, i) => {
-                        return <Image
-                            key={i}
-                            src={image}
-                            alt={image}
-                            height={30}
-                            width={30}
-                            className={"rounded-md"}
-                        />
-                    })}
-                </Flex>
+                        return <div key={i} className={"relative"}>
+                            <Image
+                                src={image}
+                                alt={image}
+                                height={70}
+                                width={70}
+                                className={"rounded-md border-2 border-blue-300"}
+                            />
 
-                <AddImageDialog
-                    open={showAddImage}
-                    onClose={(image) => {
-                        setShowAddImage(false)
-                        if (image) {
-                            setImages([...(images || []), image])
-                        }
-                    }}
-                />
+                            <Icon
+                                color={"red"}
+                                onClick={() => setImages(images.filter((_, j) => i !== j))}
+                                icon={RiCloseFill}
+                                className={"absolute top-0 start-0 w-full h-full flex justify-center items-center cursor-pointer rounded-xl bg-white/50 drop-shadow-xl"}
+                            />
+                        </div>
+                    })}
+                    <UploadButton
+                        endpoint={"imageUploader"}
+                        className={"button:h-full"}
+                        onClientUploadComplete={url => setImages([...(images || []), ...url.map(e => e.url)])}
+                        content={{
+                            button({ready, isUploading, uploadProgress, fileTypes}) {
+                                return <p>
+                                    {ready ? 'בחר קובץ' : isUploading ? `מעלה ${uploadProgress}%` : 'המשך'}
+                                </p>
+                            },
+                            allowedContent({fileTypes}) {
+                                return <></>
+                            }
+                        }}
+                    />
+                </Flex>
 
 
                 <Flex alignItems={"center"} justifyContent={"start"} className={"gap-1"}>

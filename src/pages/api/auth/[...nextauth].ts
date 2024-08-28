@@ -1,10 +1,10 @@
 import GoogleProvider from "next-auth/providers/google";
-import NextAuth, {Session} from "next-auth";
+import NextAuth, {AuthOptions, getServerSession, Session} from "next-auth";
 import api from "@/pages/api/[...remult]";
 import {User} from "@/model/User";
+import {GetServerSidePropsContext, NextApiRequest, NextApiResponse} from "next";
 
-// @ts-ignore
-const auth = NextAuth({
+const authOptions: AuthOptions = {
     secret: process.env.SECRET,
     providers: [
         GoogleProvider({
@@ -48,6 +48,16 @@ const auth = NextAuth({
         strategy: "jwt",
         maxAge: 30 * 24 * 60 * 60, // 30 days
     }
-})
+}
 
-export default auth
+export default NextAuth(authOptions)
+
+
+export function auth(
+    ...args:
+        | [GetServerSidePropsContext["req"], GetServerSidePropsContext["res"]]
+        | [NextApiRequest, NextApiResponse]
+        | []
+) {
+    return getServerSession(...args, authOptions)
+}

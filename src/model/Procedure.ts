@@ -1,16 +1,10 @@
 import {Entity, Field, Fields, IdEntity, remult} from "remult";
 import {District} from "./District";
-import {AdminRoles, UserRole} from "./User";
 
 @Entity("procedure", {
     allowApiCrud: () => {
-        // console.log({remult})
         return true
     },
-    // allowApiInsert: AdminRoles,
-    // allowApiUpdate: AdminRoles,
-    // allowApiDelete: AdminRoles,
-    // allowApiCrud: true,
     saving: async (self: Procedure) => {
         self.owner = `${remult.user?.name} - ${remult.user?.name}`
     },
@@ -22,10 +16,6 @@ export class Procedure extends IdEntity {
     @Fields.string()
     procedure!: string;
 
-    // @Fields.number({
-    //     allowApiUpdate: true,
-    // })
-    // views: number = 1;
 
     @Fields.createdAt()
     createdAt!: Date;
@@ -50,12 +40,8 @@ export class Procedure extends IdEntity {
     @Fields.object()
     type: ProcedureType = ProcedureType.Procedure;
 
-    // @BackendMethod({allowed: true})
-    // static async increaseViews(id: string) {
-    //     let procedure = await remult.repo(Procedure).findId(id);
-    //     procedure.views++;
-    //     await procedure.save();
-    // }
+    @Field(() => Array<string>)
+    images: string[] = [];
 }
 
 export enum ProcedureType {

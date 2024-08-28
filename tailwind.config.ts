@@ -1,6 +1,7 @@
 import type {Config} from 'tailwindcss'
+import {withUt} from "uploadthing/tw";
 
-const config: Config = {
+const config: Config = withUt({
     content: [
         "./src/**/*.{js,ts,jsx,tsx}",
         "./node_modules/@tremor/**/*.{js,ts,jsx,tsx}",
@@ -125,6 +126,6 @@ const config: Config = {
         },
     ],
     plugins: [require("@headlessui/tailwindcss")],
-};
+});
 
 export default config;
