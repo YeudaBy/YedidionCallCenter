@@ -177,6 +177,9 @@ function AddUserDialog({open, onClose}: {
                     autoFocus
                     onChange={e => setName(e.target.value)}
                 />
+                <Text className={"text-xs text-start mb-2"}>
+                    נא להזין שם מלא + מספר מוקדן (ללא שם המוקד)
+                </Text>
                 <TextInput
                     placeholder={"*אימייל:"}
                     type={"email"}
@@ -184,6 +187,9 @@ function AddUserDialog({open, onClose}: {
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                 />
+                <Text className={"text-xs text-start mb-2"}>
+                    כתובת אימייל שתשתמש להתחברות למערכת (ע״י חשבון גוגל)
+                </Text>
                 <TextInput
                     placeholder={"טלפון:"}
                     type={"text"}
@@ -199,7 +205,6 @@ function AddUserDialog({open, onClose}: {
                         onClick={save}
                         variant={"primary"}
                         disabled={loading || !name || !email || !district}
-                        // icon={RiCheckFill}
                         loading={loading}
                         className={"grow"}>
                         שמור
@@ -331,14 +336,21 @@ function EditUser({user: _user, onSave, onDelete}: {
                         value={name}
                         onChange={e => setName(e.target.value)}
                     />
+                    <Text className={"text-xs text-start mb-2"}>
+                        נא להזין שם מלא + מספר מוקדן (ללא שם המוקד)
+                    </Text>
                     <TextInput
                         placeholder={"טלפון"}
                         value={phone}
                         onChange={e => setPhone(e.target.value)}
                     />
+                    <Text className={"text-xs text-start mb-2"}>
+                        מס׳ טלפון שישמש להתחברות לבוט (בפורמט 0531234567)
+                    </Text>
 
                     <Select
                         value={district}
+                        placeholder={"מוקד"}
                         // @ts-ignore
                         onChange={setDistrict}
                         disabled={userRoles?.includes(UserRole.SuperAdmin)}
@@ -350,43 +362,51 @@ function EditUser({user: _user, onSave, onDelete}: {
                                 <SelectItem key={d} value={d}>{d}</SelectItem>
                             ))}
                     </Select>
+                    <Text className={"text-xs text-start mb-2"}>
+                        שיוך למוקד (ללא שיוך למוקד - המשתמש לא יוכל להתחבר למערכת). לא רלוונטי למנהלי מערכת, רק למוקדנים
+                        ומנהלים רגילים.
+                    </Text>
 
-                    {remult.user?.roles?.includes(UserRole.SuperAdmin) && (
-                        <Card className={"shadow-xl bg-gradient-to-tl from-amber-50 to-gray-50"}>
-                            <Text className={"text-center font-extrabold"}>הרשאות</Text>
-                            <Flex className={"gap-2 mb-2"} justifyContent={"start"}>
-                                <Switch
-                                    id={"admin"}
-                                    checked={[UserRole.Admin, UserRole.SuperAdmin].includes(userRoles)}
-                                    onChange={e => e ? setUserRoles(UserRole.Admin) : setUserRoles(UserRole.Dispatcher)}
-                                />
-                                <label
-                                    htmlFor={"admin"} className={"cursor-pointer text-start text-sm"}>
-                                    מנהל
-                                </label>
-                            </Flex>
-                            <Flex className={"gap-2"} justifyContent={"start"}>
-                                <Switch
-                                    id={"super-admin"}
-                                    checked={userRoles === UserRole.SuperAdmin}
-                                    onChange={e => e ? setUserRoles(UserRole.SuperAdmin) : setUserRoles(UserRole.Admin)}
-                                />
-                                <label
-                                    htmlFor={"super-admin"} className={"cursor-pointer text-start text-sm"}>
-                                    מנהל מערכת
-                                </label>
-                            </Flex>
-                            <Divider/>
-                            <Text className={"text-start text-sm"}>
-                                ✅ מנהל יכול לערוך ולמחוק משתמשים, וכן להוסיף, לערוך ולמחוק נהלים. <br/>
-                                ✅ מנהל מערכת יכול להוסיף ולמחוק מנהלים, וכל הרשאה נוספת שיש למנהל רגיל. <br/>
-                                ✅ מוקדן רגיל יכול לצפות בנהלים אך ורק במידה והוא משוייך למוקד כלשהוא. <br/>
-                            </Text>
+                    <Card className={"shadow-xl bg-gradient-to-tl from-amber-50 to-gray-50"}>
+                        <Text className={"text-center font-extrabold"}>הרשאות</Text>
+                        {
+                            remult.user?.roles?.includes(UserRole.SuperAdmin) &&
+                            <>
+                                <Flex className={"gap-2 mb-2"} justifyContent={"start"}>
+                                    <Switch
+                                        id={"admin"}
+                                        checked={[UserRole.Admin, UserRole.SuperAdmin].includes(userRoles)}
+                                        onChange={e => e ? setUserRoles(UserRole.Admin) : setUserRoles(UserRole.Dispatcher)}
+                                    />
+                                    <label
+                                        htmlFor={"admin"} className={"cursor-pointer text-start text-sm"}>
+                                        מנהל
+                                    </label>
+                                </Flex>
+                                <Flex className={"gap-2"} justifyContent={"start"}>
+                                    <Switch
+                                        id={"super-admin"}
+                                        checked={userRoles === UserRole.SuperAdmin}
+                                        onChange={e => e ? setUserRoles(UserRole.SuperAdmin) : setUserRoles(UserRole.Admin)}
+                                    />
+                                    <label
+                                        htmlFor={"super-admin"} className={"cursor-pointer text-start text-sm"}>
+                                        מנהל מערכת
+                                    </label>
+                                </Flex>
+                            </>
+                        }
+                        <Divider/>
+                        <Text className={"text-start text-sm"}>
+                            ✅ מנהל יכול לאשר, להוסיף לערוך ולמחוק משתמשים, וכן להוסיף, לערוך ולמחוק נהלים. <br/>
+                            ✅ מנהל מערכת יכול להוסיף ולמחוק מנהלים, וכל שאר ההרשאות כמו מנהל רגיל. <br/>
+                            ✅ מוקדן רגיל יכול לצפות בנהלים אך ורק במידה והוא משוייך למוקד כלשהוא, ורק אם הם מסומנים
+                            כפעילים (במידה ולא, הם יופיעו בחיפוש ללא יכולת צפיה בתוכן). <br/>
+                        </Text>
 
-                        </Card>
-                    )}
+                    </Card>
 
-                    {remult.user?.roles?.includes(UserRole.SuperAdmin) || userRoles.includes(UserRole.Dispatcher) &&
+                    {userRoles.includes(UserRole.Dispatcher) || remult.user?.roles?.includes(UserRole.SuperAdmin) && // todo
                         <Flex className={"gap-2 mt-4"} justifyContent={"start"}>
                             <Switch
                                 id={"active"}
@@ -409,7 +429,7 @@ function EditUser({user: _user, onSave, onDelete}: {
                             className={"grow"}>
                             שמור
                         </Button>
-                        {remult.user?.roles?.includes(UserRole.SuperAdmin) || userRoles.includes(UserRole.Dispatcher)
+                        {remult.user?.roles?.includes(UserRole.SuperAdmin) || userRoles.includes(UserRole.Dispatcher) // todo
                             && <DeleteUser user={_user} onDelete={() => {
                                 setOpen(false)
                                 onDelete()
