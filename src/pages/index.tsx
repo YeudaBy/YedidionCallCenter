@@ -82,7 +82,7 @@ export default function IndexPage() {
                 active: true
             },
             orderBy: {
-                createdAt: 'asc'
+                updatedAt: 'desc'
             },
         })
             .then(procedures => {
