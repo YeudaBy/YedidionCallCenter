@@ -1,10 +1,8 @@
 import {ReactNode} from "react";
 import Link from "next/link";
-import {useRouter} from "next/router";
+import Router from "next/router";
 
 export function highlightedText(text: string): ReactNode {
-    const router = useRouter();
-
     return text.split("\n").map((line, i) => {
         const processedLine = line.split(/(\*[^*]+\*)|(https?:\/\/[^\s]+)/g).map((part, i) => {
             if (!part) return null;
@@ -14,7 +12,7 @@ export function highlightedText(text: string): ReactNode {
                 return <span key={i} className="font-bold">{part.slice(1, -1)}</span>;
             } else if (part.startsWith("http://") || part.startsWith("https://")) {
                 // Link
-                if (part.startsWith(router.basePath)) {
+                if (part.startsWith(Router.basePath)) {
                     return (
                         <Link key={i} href={part} className={"text-blue-600 underline"}>
                             {part}
