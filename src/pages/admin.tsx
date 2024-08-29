@@ -23,6 +23,7 @@ import {Loading} from "@/components/Spinner";
 import {RiCheckFill, RiCheckLine, RiDeleteBin7Line, RiPencilLine} from "@remixicon/react";
 import {District} from "@/model/District";
 import Link from "next/link";
+import {CloseDialogButton} from "@/components/CloseDialogButton";
 
 const usersRepo = remult.repo(User)
 
@@ -150,6 +151,7 @@ function AddUserDialog({open, onClose}: {
     return (
         <Dialog open={open} unmount={true} onClose={onClose}>
             <DialogPanel className={"flex flex-col gap-1.5"}>
+                <CloseDialogButton close={onClose}/>
                 <Text className={"text-center text-xl"}>הוספת משתמש</Text>
                 <Text className={"text-center text-sm mb-5"}>
                     לאחר הגדרתו, המשתמש יוכל להתחבר למערכת באמצעות המייל שהזנתם.
@@ -224,7 +226,10 @@ function UserItem({user, setUsers}: {
 }) {
     const isAdmin = user.roles === UserRole.Admin
     const isSuperAdmin = user.roles === UserRole.SuperAdmin
+    const currentUserRoles = remult.user?.roles
     const district = user.district
+
+    const allowed = currentUserRoles?.includes(UserRole.SuperAdmin) || (currentUserRoles?.includes(UserRole.Admin) && !isSuperAdmin && !isAdmin)
 
     const CBadge = () => {
         if (!user.active) return <Badge color={"gray"}>לא פעיל</Badge>
@@ -257,7 +262,7 @@ function UserItem({user, setUsers}: {
                     <Text className={"font-light"}>∙ {user.phoneFormatted}</Text>
                 </Flex>
             </Flex>
-            {remult.user?.roles?.includes(UserRole.SuperAdmin) || user.roles.includes(UserRole.Dispatcher) &&
+            {allowed &&
                 <Flex className={"w-fit gap-1"}>
                     <EditUser
                         user={user}
@@ -319,6 +324,7 @@ function EditUser({user: _user, onSave, onDelete}: {
             />
             <Dialog open={open} unmount={true} onClose={() => setOpen(false)}>
                 <DialogPanel className={"flex flex-col gap-1.5"}>
+                    <CloseDialogButton close={() => setOpen(false)}/>
                     <Text className={"text-center text-xl"}>עריכת משתמש</Text>
                     <TextInput
                         placeholder={"שם"}
@@ -456,6 +462,7 @@ function DeleteUser({user, onDelete}: {
 
             <Dialog open={show} unmount={true} onClose={() => setShow(false)}>
                 <DialogPanel className={"flex flex-col gap-1.5"}>
+                    <CloseDialogButton close={() => setShow(false)}/>
                     <Text className={"text-center text-xl"}>מחיקת משתמש</Text>
                     <Text className={"text-center text-sm"}>
                         האם אתה בטוח שברצונך ל{active ? "השהות" : "הפעיל"} את המשתמש {user.name}?

@@ -12,11 +12,10 @@ import {District} from "@/model/District";
 import {highlightedText} from "@/utils/highlightedText";
 import {User, UserRole} from "@/model/User";
 import autoAnimate from "@formkit/auto-animate";
-import {PutBlobResult} from "@vercel/blob";
-import {upload} from "@vercel/blob/client";
 import Image from "next/image";
 import {RiCloseFill} from "@remixicon/react";
 import {UploadButton} from "@/components/uploadthing";
+import {CloseDialogButton} from "@/components/CloseDialogButton";
 
 const procedureRepo = remult.repo(Procedure);
 const userRepo = remult.repo(User);
@@ -31,6 +30,9 @@ export default function IndexPage() {
     const [district, setDistrict] = useState<District | "All">("All")
     const [allowedDistricts, setAllowedDistricts] = useState<District[]>([District.General])
     const [waitingCount, setWaitingCount] = useState(0)
+    const [tags, setTags] = useState<string[]>([])
+    const [showInactive, setShowInactive] = useState(false)
+    const [inactives, setInactives] = useState<Procedure[]>()
 
     const router = useRouter()
 
@@ -74,12 +76,14 @@ export default function IndexPage() {
     useEffect(() => {
         setLoading(true)
         procedureRepo.find({
-            where: (["All", District.General].includes(district) ? {}
-                : {districts: {$contains: district}}),
+            where: {
+                ...(["All", District.General].includes(district) ? {}
+                    : {districts: {$contains: district}}),
+                active: true
+            },
             orderBy: {
                 createdAt: 'asc'
             },
-            limit: 20,
         })
             .then(procedures => {
                 setRecent(procedures)
@@ -119,24 +123,42 @@ export default function IndexPage() {
         })
     }, []);
 
+    useEffect(() => {
+        if (!showInactive) return
+        setLoading(true)
+        procedureRepo.find({
+            where: {
+                active: false
+            }
+        }).then(procedures => {
+            setInactives(procedures)
+        }).finally(() => {
+            setLoading(false)
+        })
+    }, [showInactive]);
+
     return <Tremor.Flex flexDirection={"col"} className={"p-4 max-w-4xl m-auto"}>
 
-        <Flex className={"gap-1 mb-4"}>
-            {!!User.isAdmin(remult) && <Tremor.Button
-                variant={"secondary"}
-                onClick={() => setEdited(true)}>הוסף נוהל</Tremor.Button>}
+        <Flex className={"gap-1 mb-4 items-center justify-end"}>
+            {!!User.isAdmin(remult) && <Tremor.Button onClick={() => setEdited(true)}>הוסף נוהל</Tremor.Button>}
 
             {
                 !!User.isAdmin(remult) && <Tremor.Button
-                    className={"grow"}
+                    variant={"secondary"}
                     onClick={() => router.push('/admin')}>
-                    איזור ניהול
-                    <Badge color={"red"} className={"mx-3"}>
-                        {waitingCount} ממתינים
+                    משתמשים
+                    <Badge color={"red"} className={"mx-1"}>
+                        {waitingCount}
                     </Badge>
                 </Tremor.Button>}
 
-            <Tremor.Button onClick={() => signOut()}>
+            {!!User.isAdmin(remult) && <Tremor.Button
+                variant={"secondary"}
+                onClick={() => setShowInactive(!showInactive)}>
+                {showInactive ? "הצג פעילים" : "הצג לא פעילים"}
+            </Tremor.Button>}
+
+            <Tremor.Button variant={"secondary"} onClick={() => signOut()}>
                 התנתק
             </Tremor.Button>
         </Flex>
@@ -176,23 +198,30 @@ export default function IndexPage() {
             }
         </Flex>
 
-        <AddProcedure
-            open={!!edited}
+        {!!edited && <AddProcedure
+            open={true}
             procedure={edited === true ? undefined : edited}
-            onClose={(val) => setEdited(undefined)}/>
-        <ShowProcedure
+            onClose={(val) => {
+                setEdited(undefined)
+                setEdited(undefined)
+                router.push('/')
+            }}/>}
+        {!!current && <ShowProcedure
             procedure={current}
-            open={!!current}
+            open={true}
             onClose={(val) => {
                 setCurrent(undefined)
                 router.push('/')
             }}
             onEdit={(procedure) => setEdited(procedure)}
-        />
+        />}
 
         {
             // loading ? <Loading/> :
             <Tremor.Grid className={"gap-2 mt-3 w-full"} numItems={1} numItemsSm={2} numItemsLg={3}>
+                {showInactive && inactives?.map(procedure => {
+                    return <ProcedurePreview procedure={procedure} key={procedure.id}/>
+                })}
                 {!query ? recent?.map(procedure => {
                     return <ProcedurePreview procedure={procedure} key={procedure.id}/>
                 }) : results?.map(procedure => {
@@ -246,17 +275,11 @@ function ShowProcedure({procedure, open, onClose, onEdit}: {
     }
 
     return <Tremor.Dialog open={open} className={"relative"} onClose={() => onClose(false)}>
-        <Icon
-            variant={"light"}
-            icon={RiCloseFill}
-            onClick={() => onClose(false)}
-            className={"fixed z-10 top-2 start-2 rounded-full cursor-pointer"}
-        />
 
         <Tremor.DialogPanel
             ref={dialogRef}
             className={"gap-1.5 text-start flex items-center flex-col"}>
-
+            <CloseDialogButton close={() => onClose(false)}/>
             {procedure == true ?
                 <>
                     <LoadingSpinner className={"ml-4"}/>
@@ -284,6 +307,7 @@ function ShowProcedure({procedure, open, onClose, onEdit}: {
                         {!!selectedImage &&
                             <Tremor.Dialog open={!!selectedImage} onClose={() => setSelectedImage(undefined)}>
                                 <Tremor.DialogPanel>
+                                    <CloseDialogButton close={() => setSelectedImage(undefined)}/>
                                     <Image
                                         src={selectedImage}
                                         alt={selectedImage}
@@ -345,7 +369,7 @@ function ShowProcedure({procedure, open, onClose, onEdit}: {
     </Tremor.Dialog>
 }
 
-function AddProcedure({procedure, open, onClose,}: {
+function AddProcedure({procedure, open, onClose}: {
     open: boolean,
     onClose: (val: boolean) => void,
     procedure?: Procedure,
@@ -396,23 +420,33 @@ function AddProcedure({procedure, open, onClose,}: {
         }
         setLoading(false)
         onClose?.(false)
-        setActive(true)
-        setTitle('')
-        setContent('')
-        setKeywords([])
-        setType(ProcedureType.Procedure)
-        setDistricts([District.General])
-        setImages([])
     }
+
+    useEffect(() => {
+        // cleanup
+        return () => {
+            setTitle(undefined)
+            setContent(undefined)
+            setKeywords([])
+            setActive(true)
+            setType(ProcedureType.Procedure)
+            setDistricts([District.General])
+            setImages([])
+        }
+    }, []);
 
     return <>
         <Tremor.Dialog open={open} onClose={(val) => onClose(val)}>
             <Tremor.DialogPanel className={"gap-1.5 flex items-center flex-col"}>
+                <CloseDialogButton close={() => onClose(false)}/>
                 <Tremor.TextInput
                     placeholder={"כותרת *"}
                     value={title}
                     onChange={e => setTitle(e.target.value)}
                 />
+                <Tremor.Text className={"text-xs text-start self-start mb-1"}>
+                    את הכותרת יש להוסיף ללא המילה ״נוהל״.
+                </Tremor.Text>
 
                 <MultiSelect
                     placeholder={"בחר/י מוקדים:"}
@@ -429,6 +463,9 @@ function AddProcedure({procedure, open, onClose,}: {
                         </MultiSelectItem>
                     })}
                 </MultiSelect>
+                <Tremor.Text className={"text-xs text-start self-start mb-1"}>
+                    יש לבחור את המוקדים הרלוונטיים (במידה והנוהל ארצי - אין צורך לבחור את כולם, מספיק לסמן ״ארצי״)
+                </Tremor.Text>
 
                 <Tremor.Select
                     value={type}
@@ -439,6 +476,10 @@ function AddProcedure({procedure, open, onClose,}: {
                     <Tremor.SelectItem value={ProcedureType.Procedure}>נוהל</Tremor.SelectItem>
                     <Tremor.SelectItem value={ProcedureType.Guideline}>הנחייה</Tremor.SelectItem>
                 </Tremor.Select>
+                <Tremor.Text className={"text-xs text-start self-start mb-1"}>
+                    יש לבחור האם הנוהל המבוקש הינו ״הנחיה״. במידה ואינך בטוח - השאר על ״נוהל״.
+                </Tremor.Text>
+
 
                 <Tremor.Textarea
                     placeholder={"נוסח הנוהל*: (מינימום 10 תווים)"}
@@ -446,17 +487,21 @@ function AddProcedure({procedure, open, onClose,}: {
                     rows={10}
                     onChange={e => setContent(e.target.value)}
                 />
+                <Tremor.Text className={"text-xs text-start self-start mb-1"}>
+                    בהזנת הטקסט נא להקפיד על פורמט זהה לוואצאפ (הדגשות עם כוכביות וכו׳)
+                </Tremor.Text>
+
 
                 <Tremor.TextInput
-                    placeholder={"מילות מפתח: (מופרדות בפסיק)"}
+                    placeholder={"מילות מפתח:"}
                     value={keywords.join(',')}
                     onChange={e => setKeywords(e.target.value.split(','))}
                 />
+                <Tremor.Text className={"text-xs text-start self-start mb-1"}>
+                    יש להפריד בין מילות מפתח בפסיק - ללא רווח אחריו (לדוגמה: נזק,תקלה,תקן)
+                </Tremor.Text>
 
-                <Text className={"text-sm text-start"}>
-                    תמונות
-                </Text>
-                <Flex className={"mb-4 items-center justify-end gap-2"}>
+                <Flex className={"p-1 items-center justify-end gap-2 border-2 border-dashed"}>
                     {images?.map((image, i) => {
                         return <div key={i} className={"relative"}>
                             <Image
@@ -499,9 +544,10 @@ function AddProcedure({procedure, open, onClose,}: {
                         checked={active}
                         onChange={e => setActive(e)}
                     />
-                    <label htmlFor={"active"} className={"text-sm"}>{
-                        active ? "פעיל" : "לא פעיל"
-                    }</label>
+                    <Tremor.Text className={"text-xs text-start"}>
+                        {active ? "פעיל" : "לא פעיל"} [במידה ואינכם מעוניינים לפרסם עדיין את הנוהל לכולם - כבו אפשרות
+                        זו]
+                    </Tremor.Text>
                 </Flex>
 
                 {
@@ -536,67 +582,4 @@ function AddProcedure({procedure, open, onClose,}: {
             </Tremor.DialogPanel>
         </Tremor.Dialog>
     </>
-}
-
-function AddImageDialog({open, onClose}: {
-    open: boolean,
-    procedure?: Procedure,
-    onClose: (image?: string) => void
-}) {
-    const inputFileRef = useRef<HTMLInputElement>(null);
-    const [blob, setBlob] = useState<PutBlobResult | null>(null);
-    const [file, setFile] = useState<File | null>(null);
-    const [loading, setLoading] = useState(false);
-
-    const addImage = async () => {
-        if (!file) {
-            throw new Error('No file selected');
-        }
-        setLoading(true);
-        const newBlob = await upload(file.name, file, {
-            access: 'public',
-            handleUploadUrl: '/api/image/upload'
-        });
-        setBlob(newBlob);
-        setLoading(false);
-        onClose(newBlob.url);
-    }
-
-    return <Tremor.Dialog unmount={!open} open={open} onClose={() => onClose()}>
-        <Tremor.DialogPanel>
-            <input
-                ref={inputFileRef}
-                type="file"
-                id={"file"}
-                required
-                hidden
-                onChange={(event) => {
-                    if (!inputFileRef.current?.files) {
-                        throw new Error('No file selected');
-                    }
-                    setFile(inputFileRef.current.files[0]);
-                }}
-            />
-            <label htmlFor={"file"}>בחר תמונה</label>
-            <Button
-                onClick={() => {
-                    inputFileRef.current?.click();
-                }}
-            >
-                בחר
-            </Button>
-            <div>
-                {file?.name}
-            </div>
-            <Button
-                onClick={() => {
-                    addImage();
-                }}
-                disabled={!file}
-                loading={loading}
-            >
-                הוסף
-            </Button>
-        </Tremor.DialogPanel>
-    </Tremor.Dialog>
 }
