@@ -2,8 +2,7 @@ import {useEffect, useRef, useState} from "react";
 import {Procedure, ProcedureType} from "@/model/Procedure";
 import {remult} from "remult";
 import * as Tremor from "@tremor/react";
-import {Badge, Button, Divider, Flex, Icon, MultiSelect, MultiSelectItem, Switch, Text} from "@tremor/react";
-import {signOut} from "next-auth/react";
+import {Button, Divider, Flex, Icon, MultiSelect, MultiSelectItem, Switch, Text} from "@tremor/react";
 import {useRouter} from "next/router";
 import {SearchIcon} from "@heroicons/react/solid";
 import {LoadingBackdrop, LoadingSpinner} from "@/components/Spinner";
@@ -13,9 +12,12 @@ import {highlightedText} from "@/utils/highlightedText";
 import {User, UserRole} from "@/model/User";
 import autoAnimate from "@formkit/auto-animate";
 import Image from "next/image";
-import {RiCloseFill} from "@remixicon/react";
+import {RiAddLine, RiCloseFill, RiEyeLine, RiEyeOffLine, RiGroupLine, RiUserLine} from "@remixicon/react";
 import {UploadButton} from "@/components/uploadthing";
 import {CloseDialogButton} from "@/components/CloseDialogButton";
+import {Popover, PopoverContent} from "@/components/Popover";
+import {PopoverTrigger} from "@radix-ui/react-popover";
+import {signOut} from "next-auth/react";
 
 const procedureRepo = remult.repo(Procedure);
 const userRepo = remult.repo(User);
@@ -33,6 +35,16 @@ export default function IndexPage() {
     const [tags, setTags] = useState<string[]>([])
     const [showInactive, setShowInactive] = useState(false)
     const [inactives, setInactives] = useState<Procedure[]>()
+    const [me, setMe] = useState<User>()
+    const [addNumOpen, setAddNumOpen] = useState(false)
+
+    useEffect(() => {
+        if (!remult.user) return
+        userRepo.liveQuery({where: {id: remult.user.id}})
+            .subscribe(user => {
+                setMe(user.items[0])
+            })
+    }, []);
 
     const router = useRouter()
 
@@ -140,27 +152,60 @@ export default function IndexPage() {
     return <Tremor.Flex flexDirection={"col"} className={"p-4 max-w-4xl m-auto"}>
 
         <Flex className={"gap-1 mb-4 items-center justify-end"}>
-            {!!User.isAdmin(remult) && <Tremor.Button onClick={() => setEdited(true)}>הוסף נוהל</Tremor.Button>}
+
+            <Text className={"text-lg sm:text-2xl font-bold grow"}>
+                מוקד ידידים - נהלים והנחיות
+            </Text>
+
+            {!!User.isAdmin(remult) && <Tremor.Icon
+                className={"cursor-pointer border-blue-400 rounded-xl border-2"}
+                icon={RiAddLine} onClick={() => setEdited(true)}/>}
 
             {
-                !!User.isAdmin(remult) && <Tremor.Button
-                    variant={"secondary"}
-                    onClick={() => router.push('/admin')}>
-                    משתמשים
-                    <Badge color={"red"} className={"mx-1"}>
-                        {waitingCount}
-                    </Badge>
-                </Tremor.Button>}
+                !!User.isAdmin(remult) && <Tremor.Icon
+                    onClick={() => router.push('/admin')}
+                    icon={RiGroupLine}
+                    className={"cursor-pointer"}
+                />
+            }
 
-            {!!User.isAdmin(remult) && <Tremor.Button
-                variant={"secondary"}
-                onClick={() => setShowInactive(!showInactive)}>
-                {showInactive ? "הצג פעילים" : "הצג לא פעילים"}
-            </Tremor.Button>}
+            {!!User.isAdmin(remult) && <Tremor.Icon
+                className={"cursor-pointer"}
+                icon={showInactive ? RiEyeLine : RiEyeOffLine}
+                onClick={() => setShowInactive(!showInactive)}/>
+            }
 
-            <Tremor.Button variant={"secondary"} onClick={() => signOut()}>
-                התנתק
-            </Tremor.Button>
+            <Popover>
+                <PopoverTrigger asChild>
+                    <Tremor.Icon icon={RiUserLine} className={"cursor-pointer"}/>
+                </PopoverTrigger>
+                <PopoverContent className="p-4">
+                    <Tremor.List className={""}>
+                        <Tremor.ListItem>
+                            <Tremor.Text>
+                                {me?.name}
+                                {" - "}
+                                {me?.roles.includes(UserRole.Dispatcher) ? me?.district || "--" : "מנהל"}
+                            </Tremor.Text>
+                        </Tremor.ListItem>
+                        <Tremor.ListItem>
+                            <Tremor.Text>
+                                {me?.phoneFormatted || "הזן מספר טלפון:"}
+                            </Tremor.Text>
+                            {!me?.phone && <Icon onClick={() => setAddNumOpen(true)}
+                                                 icon={RiAddLine} className={"cursor-pointer"}/>}
+                        </Tremor.ListItem>
+                        <Tremor.ListItem>
+                            <Tremor.Button className={"w-full"}
+                                           onClick={() => void signOut()}>
+                                התנתק
+                            </Tremor.Button>
+                        </Tremor.ListItem>
+                    </Tremor.List>
+                </PopoverContent>
+            </Popover>
+
+            {!!me && <AddPhoneNumberDialog open={addNumOpen} onClose={setAddNumOpen} me={me}/>}
         </Flex>
 
         {loading && <LoadingBackdrop/>}
@@ -582,4 +627,40 @@ function AddProcedure({procedure, open, onClose}: {
             </Tremor.DialogPanel>
         </Tremor.Dialog>
     </>
+}
+
+
+function AddPhoneNumberDialog({open, onClose, me}: { open: boolean, onClose: (val: boolean) => void, me: User }) {
+    const [phone, setPhone] = useState<string>()
+
+    const save = async () => {
+        if (!phone || !me) return
+        const p = parseInt(phone.replace(/^0/, ""))
+        if (!p) return
+
+        await userRepo.update(me.id!, {phone: p})
+        onClose(false)
+    }
+
+    return <Tremor.Dialog open={open} onClose={() => onClose(false)}>
+        <Tremor.DialogPanel className={"gap-1.5 flex items-center flex-col"}>
+            <CloseDialogButton close={() => onClose(false)}/>
+            <Tremor.TextInput
+                placeholder={"מספר טלפון"}
+                value={phone}
+                onChange={e => {
+                    setPhone(e.target.value)
+                }}
+            />
+            <Tremor.Text className={"text-xs text-start self-start mb-1"}>
+                יש להזין מספר טלפון על מנת להמשיך
+            </Tremor.Text>
+            <Tremor.Button
+                onClick={() => {
+                    save()
+                }}>
+                שמור
+            </Tremor.Button>
+        </Tremor.DialogPanel>
+    </Tremor.Dialog>
 }

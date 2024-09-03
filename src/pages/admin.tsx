@@ -20,14 +20,46 @@ import {
     TextInput
 } from "@tremor/react";
 import {Loading} from "@/components/Spinner";
-import {RiCheckFill, RiCheckLine, RiDeleteBin7Line, RiPencilLine} from "@remixicon/react";
+import {RiAddLine, RiCheckFill, RiCheckLine, RiDeleteBin7Line, RiHomeLine, RiPencilLine} from "@remixicon/react";
 import {District} from "@/model/District";
-import Link from "next/link";
 import {CloseDialogButton} from "@/components/CloseDialogButton";
+import {useRouter} from "next/router";
+import {Color} from "@tremor/react/dist/lib/inputTypes";
 
 const usersRepo = remult.repo(User)
 
+const filters: { label: string, filter: (u: User) => boolean, color: Color }[] = [
+    {
+        label: "הכל",
+        filter: () => true,
+        color: "sky"
+    },
+    {
+        label: "לא פעילים",
+        filter: u => !u.active,
+        color: "gray"
+    },
+    {
+        label: "מנהלים",
+        filter: u => !u.roles.includes(UserRole.Dispatcher),
+        color: "amber"
+    },
+    {
+        label: "לא מנהלים",
+        filter: u => u.roles.includes(UserRole.Dispatcher),
+        color: "lime"
+    },
+    ...Object.values(District).filter(a => a !== District.General).map(d => ({
+        label: d,
+        filter: (u: User) => u.district === d,
+        color: "indigo" as Color
+    }))
+]
+
+
 export default function AdminPage() {
+    const router = useRouter()
+
     const [users, setUsers] = useState<User[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<Error | null>(null)
@@ -61,17 +93,13 @@ export default function AdminPage() {
     }, [query, users]);
 
     return (
-        <div className={"p-2 max-w-3xl mx-auto"}>
-            <Link href={"/"}>
-                <Text className={"font-semibold text-center text-xl"}>פאנל ניהול משתמשים</Text>
-            </Link>
+        <Flex flexDirection={"col"} className={"p-4 max-w-4xl m-auto"}>
+            <Flex className={"gap-1 mb-4 items-center justify-end"}>
+                <Text className={"text-lg sm:text-2xl font-bold grow"}>משתמשים</Text>
 
-            <Button
-                variant={"secondary"}
-                onClick={() => setShowAddUser(true)}
-                className={"w-full my-2"}>
-                הוספת משתמש
-            </Button>
+                <Icon icon={RiHomeLine} onClick={() => router.back()} className={"cursor-pointer"}/>
+                <Icon icon={RiAddLine} onClick={() => setShowAddUser(true)} className={"cursor-pointer"}/>
+            </Flex>
 
             <TextInput
                 placeholder={"חיפוש"}
@@ -80,9 +108,24 @@ export default function AdminPage() {
                 className={"w-full"}
             />
 
+            <Flex
+                className={"gap-1.5 my-2 items-center justify-center flex-wrap border-2 p-2 rounded-md shadow-md border-gray-300"}>
+                {
+                    filters.map(d => (
+                        <Badge
+                            key={d.label}
+                            color={d.color}
+                            onClick={() => setFilteredUsers(users.filter(d.filter))}
+                            className={`cursor-pointer`}>
+                            {d.label}
+                        </Badge>
+                    ))
+                }
+            </Flex>
+
             {loading && <Loading/>}
             {error && <div>Error: {error.message}</div>}
-            {usersRepo.metadata.apiUpdateAllowed() ? <List className={"p-1"}>
+            {usersRepo.metadata.apiUpdateAllowed() ? <List>
                 {(!!filteredUsers.length ? filteredUsers : users).map(user => (
                     <UserItem
                         user={user}
@@ -102,7 +145,7 @@ export default function AdminPage() {
                 open={showAddUser}
                 onClose={() => setShowAddUser(false)}
             />
-        </div>
+        </Flex>
     )
 }
 
@@ -252,7 +295,7 @@ function UserItem({user, setUsers}: {
     }
 
     return (
-        <ListItem className={"justify-between py-2 max-w-3xl mx-auto items-center"}>
+        <ListItem className={"justify-between mx-auto items-center"}>
             <Flex
                 flexDirection={"col"}
                 alignItems={"start"}
@@ -264,7 +307,7 @@ function UserItem({user, setUsers}: {
                 </Flex>
                 <Flex className={"gap-1.5"} justifyContent={"start"}>
                     <Text className={"font-light"}>{user.email}</Text>
-                    <Text className={"font-light"}>∙ {user.phoneFormatted}</Text>
+                    {!!user.phone && <Text className={"font-light"}>∙ {user.phoneFormatted}</Text>}
                 </Flex>
             </Flex>
             {allowed &&
@@ -443,9 +486,13 @@ function EditUser({user: _user, onSave, onDelete}: {
 }
 
 
-function DeleteUser({user, onDelete}: {
+function DeleteUser({
+                        user, onDelete
+                    }: {
     user: User,
-    onDelete: () => void
+    onDelete
+        :
+        () => void
 }) {
     const [loading, setLoading] = useState(false)
     const [show, setShow] = useState(false)
