@@ -12,7 +12,17 @@ import {highlightedText} from "@/utils/highlightedText";
 import {User, UserRole} from "@/model/User";
 import autoAnimate from "@formkit/auto-animate";
 import Image from "next/image";
-import {RiAddLine, RiCloseFill, RiCloseLine, RiEyeLine, RiEyeOffLine, RiGroupLine, RiUserLine} from "@remixicon/react";
+import {
+    RiAddLine,
+    RiCloseFill,
+    RiCloseLine,
+    RiEyeLine,
+    RiEyeOffLine,
+    RiGroupLine,
+    RiSortAlphabetAsc,
+    RiSortAsc,
+    RiUserLine
+} from "@remixicon/react";
 import {UploadButton} from "@/components/uploadthing";
 import {CloseDialogButton} from "@/components/CloseDialogButton";
 import {Popover, PopoverContent} from "@/components/Popover";
@@ -22,8 +32,13 @@ import {signOut} from "next-auth/react";
 const procedureRepo = remult.repo(Procedure);
 const userRepo = remult.repo(User);
 
+enum Order {
+    Recent = 'חדשים',
+    Alphabetical = 'א-ב',
+}
+
 export default function IndexPage() {
-    const [recent, setRecent] = useState<Procedure[]>()
+    const [procedures, setProcedures] = useState<Procedure[]>()
     const [results, setResults] = useState<Procedure[]>()
     const [query, setQuery] = useState<string>()
     const [loading, setLoading] = useState(false)
@@ -37,6 +52,17 @@ export default function IndexPage() {
     const [inactives, setInactives] = useState<Procedure[]>()
     const [me, setMe] = useState<User>()
     const [addNumOpen, setAddNumOpen] = useState(false)
+    const [order, setOrder] = useState<Order>(Order.Recent)
+
+    useEffect(() => {
+        if (!order) return
+        setProcedures(() => {
+            return procedures?.sort((a, b) => {
+                return order === Order.Recent ? b.updatedAt.getTime() - a.updatedAt.getTime()
+                    : a.title.localeCompare(b.title)
+            })
+        })
+    }, [order, procedures]);
 
     useEffect(() => {
         if (!remult.user) return
@@ -94,11 +120,11 @@ export default function IndexPage() {
                 active: true
             },
             orderBy: {
-                updatedAt: 'desc'
-            },
+                updatedAt: "desc"
+            }
         })
             .then(procedures => {
-                setRecent(procedures)
+                setProcedures(procedures)
             })
             .then(() => {
                 setLoading(false)
@@ -247,6 +273,16 @@ export default function IndexPage() {
                         key={d}>{d}</Tremor.Badge>
                 })
             }
+            <Tremor.Button
+                className={"cursor-pointer py-1 gap-2 px-2"}
+                color={"blue"}
+                icon={order === Order.Recent ? RiSortAlphabetAsc : RiSortAsc}
+                onClick={() => {
+                    setOrder(order === Order.Recent ? Order.Alphabetical : Order.Recent)
+                }}
+            >
+                {`מיין לפי ${order}`}
+            </Tremor.Button>
         </Flex>
 
         {!!edited && <AddProcedure
@@ -273,7 +309,7 @@ export default function IndexPage() {
                 {showInactive && inactives?.map(procedure => {
                     return <ProcedurePreview procedure={procedure} key={procedure.id}/>
                 })}
-                {!query ? recent?.map(procedure => {
+                {!query ? procedures?.map(procedure => {
                     return <ProcedurePreview procedure={procedure} key={procedure.id}/>
                 }) : results?.map(procedure => {
                     return <ProcedurePreview procedure={procedure} key={procedure.id}/>
