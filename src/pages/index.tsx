@@ -12,7 +12,7 @@ import {highlightedText} from "@/utils/highlightedText";
 import {User, UserRole} from "@/model/User";
 import autoAnimate from "@formkit/auto-animate";
 import Image from "next/image";
-import {RiAddLine, RiCloseFill, RiEyeLine, RiEyeOffLine, RiGroupLine, RiUserLine} from "@remixicon/react";
+import {RiAddLine, RiCloseFill, RiCloseLine, RiEyeLine, RiEyeOffLine, RiGroupLine, RiUserLine} from "@remixicon/react";
 import {UploadButton} from "@/components/uploadthing";
 import {CloseDialogButton} from "@/components/CloseDialogButton";
 import {Popover, PopoverContent} from "@/components/Popover";
@@ -165,6 +165,7 @@ export default function IndexPage() {
                 !!User.isAdmin(remult) && <Tremor.Icon
                     onClick={() => router.push('/admin')}
                     icon={RiGroupLine}
+                    data-badge={waitingCount}
                     className={"cursor-pointer"}
                 />
             }
@@ -184,7 +185,7 @@ export default function IndexPage() {
                         <Tremor.ListItem>
                             <Tremor.Text>
                                 {me?.name}
-                                {" - "}
+                                {" • "}
                                 {me?.roles.includes(UserRole.Dispatcher) ? me?.district || "--" : "מנהל"}
                             </Tremor.Text>
                         </Tremor.ListItem>
@@ -210,26 +211,31 @@ export default function IndexPage() {
 
         {loading && <LoadingBackdrop/>}
 
-        <Tremor.TextInput
-            color={"amber"}
-            className={"w-full"}
-            placeholder={"חיפוש..."}
-            value={query}
-            onChange={e => {
-                setQuery(e.target.value)
-            }}
-            onValueChange={v => {
-                if (!v) {
-                    setResults(undefined)
-                    router.push('/')
-                } else {
-                    router.push(`/?q=${v}`)
-                }
-            }}
-            icon={SearchIcon}
-        />
+        <Flex className={""}>
+            <Tremor.TextInput
+                color={"amber"}
+                className={"w-full"}
+                placeholder={"חיפוש..."}
+                value={query}
+                onChange={e => {
+                    setQuery(e.target.value)
+                }}
+                onValueChange={v => {
+                    if (!v) {
+                        setResults(undefined)
+                        router.push('/')
+                    } else {
+                        router.push(`/?q=${v}`)
+                    }
+                }}
+                icon={SearchIcon}
+            />
+            <Icon icon={RiCloseLine} onClick={() => {
+                router.push('/').then(() => setQuery(undefined))
+            }}/>
+        </Flex>
 
-        <Flex className={"justify-center gap-1.5 my-2"}>
+        <Flex className={"justify-start gap-1.5 my-4"}>
             {
                 allowedDistricts.map(d => {
                     return <Tremor.Badge
@@ -263,7 +269,7 @@ export default function IndexPage() {
 
         {
             // loading ? <Loading/> :
-            <Tremor.Grid className={"gap-2 mt-3 w-full"} numItems={1} numItemsSm={2} numItemsLg={3}>
+            <Tremor.Grid className={"gap-2 w-full"} numItems={1} numItemsSm={2} numItemsLg={3}>
                 {showInactive && inactives?.map(procedure => {
                     return <ProcedurePreview procedure={procedure} key={procedure.id}/>
                 })}
@@ -323,7 +329,7 @@ function ShowProcedure({procedure, open, onClose, onEdit}: {
 
         <Tremor.DialogPanel
             ref={dialogRef}
-            className={"gap-1.5 text-start flex items-center flex-col"}>
+            className={"gap-1.5 text-start flex items-center flex-col p-2 sm:p-3"}>
             <CloseDialogButton close={() => onClose(false)}/>
             {procedure == true ?
                 <>
@@ -540,10 +546,10 @@ function AddProcedure({procedure, open, onClose}: {
                 <Tremor.TextInput
                     placeholder={"מילות מפתח:"}
                     value={keywords.join(',')}
-                    onChange={e => setKeywords(e.target.value.split(','))}
+                    onChange={e => setKeywords(e.target.value.split(/,\s*/))}
                 />
                 <Tremor.Text className={"text-xs text-start self-start mb-1"}>
-                    יש להפריד בין מילות מפתח בפסיק - ללא רווח אחריו (לדוגמה: נזק,תקלה,תקן)
+                    יש להפריד בין מילות מפתח בפסיק (לדוגמה: נזק, תקלה, תקן)
                 </Tremor.Text>
 
                 <Flex className={"p-1 items-center justify-end gap-2 border-2 border-dashed"}>

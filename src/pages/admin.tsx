@@ -89,7 +89,7 @@ export default function AdminPage() {
 
     useEffect(() => {
         if (!query) return setFilteredUsers([])
-        setFilteredUsers(users.filter(u => u.name.includes(query) || u.email.includes(query)))
+        setFilteredUsers(users.filter(u => u.name.includes(query) || u.email.includes(query) || u.phoneFormatted?.includes(query)))
     }, [query, users]);
 
     return (
@@ -290,6 +290,14 @@ function UserItem({user, setUsers}: {
         return <Badge color={"red"}>לא רשום</Badge>
     }
 
+    const getColor = () => {
+        if (!user.active) return "gray"
+        if (isSuperAdmin) return "amber"
+        if (isAdmin) return "blue"
+        if (district) return "green"
+        return "red"
+    }
+
     const onDelete = async () => {
         setUsers((prev: User[]) => prev.filter(u => u.id !== user.id))
     }
@@ -303,11 +311,11 @@ function UserItem({user, setUsers}: {
             >
                 <Flex className={"gap-1.5"} justifyContent={"start"}>
                     <Text>{user.name}</Text>
-                    <CBadge/>
+                    {/*<CBadge/>*/}
                 </Flex>
                 <Flex className={"gap-1.5"} justifyContent={"start"}>
-                    <Text className={"font-light"}>{user.email}</Text>
-                    {!!user.phone && <Text className={"font-light"}>∙ {user.phoneFormatted}</Text>}
+                    <Text
+                        className={"font-light opacity-75"}>{user.email}{!!user.phone && `∙ ${user.phoneFormatted}`}</Text>
                 </Flex>
             </Flex>
             {allowed &&

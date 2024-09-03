@@ -7,7 +7,7 @@ export function CloseDialogButton({close}: { close: () => void }) {
             variant={"light"}
             icon={RiCloseFill}
             onClick={() => close()}
-            className={"-mt-4 rounded-full cursor-pointer ml-auto"}
+            className={"rounded-full cursor-pointer ml-auto"}
         />
     )
 }
