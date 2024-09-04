@@ -19,11 +19,13 @@ import {
     TextInput
 } from "@tremor/react";
 import {Loading} from "@/components/Spinner";
-import {RiAddLine, RiCheckFill, RiDeleteBin7Line, RiHomeLine, RiPencilLine} from "@remixicon/react";
+import {RiAddLine, RiCheckFill, RiDeleteBin7Line, RiFileUploadLine, RiHomeLine, RiPencilLine} from "@remixicon/react";
 import {District} from "@/model/District";
 import {CloseDialogButton} from "@/components/CloseDialogButton";
 import {useRouter} from "next/router";
 import {Color} from "@tremor/react/dist/lib/inputTypes";
+import {importFromXLSX} from "@/utils/xlsx";
+import Image from "next/image";
 
 const usersRepo = remult.repo(User)
 
@@ -79,6 +81,8 @@ export default function AdminPage() {
 
     const [showAddUser, setShowAddUser] = useState(false)
 
+    const [importOpen, setImportOpen] = useState(false)
+
     useEffect(() => {
         function getWhere(): EntityFilter<User> {
             return {
@@ -123,8 +127,13 @@ export default function AdminPage() {
             <Flex className={"gap-1 mb-4 items-center justify-end"}>
                 <Text className={"text-lg sm:text-2xl font-bold grow"}>משתמשים</Text>
 
-                <Icon icon={RiHomeLine} onClick={() => router.back()} variant={"simple"} className={"cursor-pointer"}/>
                 <Icon icon={RiAddLine} onClick={() => setShowAddUser(true)} variant={"shadow"}
+                      className={"cursor-pointer"}/>
+                <Icon icon={RiFileUploadLine}
+                      onClick={() => setImportOpen(true)}
+                      variant={"shadow"}
+                      className={"cursor-pointer"}/>
+                <Icon icon={RiHomeLine} onClick={() => router.push("/")} variant={"simple"}
                       className={"cursor-pointer"}/>
             </Flex>
 
@@ -172,6 +181,8 @@ export default function AdminPage() {
                 open={showAddUser}
                 onClose={() => setShowAddUser(false)}
             />
+
+            <ImportDialog open={importOpen} onClose={() => setImportOpen(false)}/>
         </Flex>
     )
 }
@@ -556,5 +567,116 @@ function DeleteUser({user, onDelete}: {
                 </DialogPanel>
             </Dialog>
         </>
+    )
+}
+
+
+function ImportDialog({open, onClose}: {
+    open: boolean,
+    onClose: () => void
+}) {
+    const [file, setFile] = useState<File>()
+    const [loading, setLoading] = useState(false)
+    const [district, setDistrict] = useState<District>()
+
+    useEffect(() => {
+        usersRepo.findFirst({id: remult.user!.id}).then(u => {
+            if (u?.isRegularAdmin) {
+                setDistrict(u.district)
+            } else {
+                setDistrict(District.General)
+            }
+        })
+    }, []);
+
+    const validateData = (data: any[]): {
+        name: string,
+        email: string,
+        phone: number | undefined
+    }[] => {
+        return data.map(d => ({
+            name: d["שם מלא"],
+            email: d["מייל"],
+            phone: d["טלפון"]
+        })).map(d => ({
+            ...d,
+            phone: d.phone ? Number(d.phone.replace(/^0/, "")) : undefined
+        }))
+    }
+
+    const importFile = async () => {
+        setLoading(true)
+        try {
+            const users = await importFromXLSX<User>(file!)
+            console.log(users)
+            const validUsers = validateData(users)
+            await usersRepo.insert(validUsers.map(u => ({
+                ...u,
+                roles: UserRole.Dispatcher,
+                active: true,
+                district: district
+            })))
+            onClose()
+            window.location.reload()
+        } catch (e) {
+            console.error(e)
+        } finally {
+            setLoading(false)
+            setFile(undefined)
+        }
+    }
+
+    return (
+        <Dialog open={open} unmount={false} onClose={onClose}>
+            <DialogPanel className={"flex flex-col gap-1.5"}>
+                <CloseDialogButton close={onClose}/>
+                <Text className={"text-center text-xl"}>ייבוא משתמשים</Text>
+                <Text className={"text-start text-sm"}>
+                    ניתן לייבא משתמשים מקובץ אקסל בפורמט .xlsx
+                    <br/>
+                    הנתונים צריכים להיות מסודרים בצורה הבאה: שם מלא, אימייל, מספר טלפון.
+                    <br/>
+                    דוגמה למבנה הקובץ: 👇
+                </Text>
+                <Image src={"/xlsx-export-exapme.png"} alt={"export exaple"}
+                       width={500} height={200} className={"mx-auto rounded-xl border-2 border-blue-400 my-3"}/>
+                {User.isSuperAdmin(remult) &&
+                    // @ts-ignore
+                    <Select value={district} onChange={setDistrict} placeholder={"מוקד"}>
+                        {Object.values(District).filter(d => d !== District.General).map(d => (
+                            <SelectItem key={d} value={d}>{d}</SelectItem>
+                        ))}
+                    </Select>}
+                <label
+                    className={"rounded-xl mt-3 flex flex-col justify-center items-center gap-2 bg-blue-100 p-2 py-6 border-2 border-dashed border-blue-600 cursor-pointer text-center"}>
+                    <Icon icon={RiFileUploadLine} variant={"light"}/>
+                    {file?.name || "בחר קובץ"}
+                    <input
+                        type={"file"}
+                        accept={".xlsx"}
+                        onChange={e => setFile(e.target.files?.[0])}
+                        className={"hidden"}
+                    />
+                </label>
+                <Flex className={"mt-2 gap-2"}>
+                    <Button
+                        onClick={importFile}
+                        variant={"primary"}
+                        disabled={loading || !file}
+                        loading={loading}
+                        className={"grow gap-2"}>
+                        ייבא
+                    </Button>
+                    <Button
+                        onClick={onClose}
+                        variant={"secondary"}
+                        disabled={loading}
+                        loading={loading}
+                        className={"grow"}>
+                        ביטול
+                    </Button>
+                </Flex>
+            </DialogPanel>
+        </Dialog>
     )
 }

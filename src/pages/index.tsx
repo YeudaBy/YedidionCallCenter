@@ -18,6 +18,7 @@ import {
     RiCloseLine,
     RiEyeLine,
     RiEyeOffLine,
+    RiFileDownloadLine,
     RiGroupLine,
     RiSortAlphabetAsc,
     RiSortAsc,
@@ -28,6 +29,7 @@ import {CloseDialogButton} from "@/components/CloseDialogButton";
 import {Popover, PopoverContent} from "@/components/Popover";
 import {PopoverTrigger} from "@radix-ui/react-popover";
 import {signOut} from "next-auth/react";
+import {exportToXLSX} from "@/utils/xlsx";
 
 const procedureRepo = remult.repo(Procedure);
 const userRepo = remult.repo(User);
@@ -179,26 +181,41 @@ export default function IndexPage() {
                 מוקד ידידים - נהלים והנחיות
             </Text>
 
-            {!!User.isAdmin(remult) && <Tremor.Icon
-                variant={"shadow"}
+            {!!User.isAdmin(remult) && <> <Tremor.Icon
+                variant={"outlined"}
                 className={"cursor-pointer"}
-                icon={RiAddLine} onClick={() => setEdited(true)}/>}
+                icon={RiAddLine} onClick={() => setEdited(true)}/>
 
-            {
-                !!User.isAdmin(remult) && <Tremor.Icon
-                    variant={"outlined"}
+                <Tremor.Icon
+                    variant={"shadow"}
                     onClick={() => router.push('/admin')}
                     icon={RiGroupLine}
                     data-badge={waitingCount == 0 ? undefined : waitingCount}
                     className={"cursor-pointer"}
                 />
-            }
 
-            {!!User.isAdmin(remult) && <Tremor.Icon
-                variant={"outlined"}
-                className={"cursor-pointer"}
-                icon={showInactive ? RiEyeLine : RiEyeOffLine}
-                onClick={() => setShowInactive(!showInactive)}/>
+                <Tremor.Icon
+                    variant={"shadow"}
+                    className={"cursor-pointer"}
+                    icon={showInactive ? RiEyeLine : RiEyeOffLine}
+                    onClick={() => setShowInactive(!showInactive)}/>
+
+                <Icon icon={RiFileDownloadLine}
+                      onClick={() => exportToXLSX(procedures?.map(p => ({
+                          "כותרת": p.title,
+                          "תוכן": p.procedure,
+                          "פעיל": p.active ? "כן" : "לא",
+                          "סוג": p.type,
+                          "מוקדים": p.districts.join(", "),
+                          "תגיות": p.keywords.join(", "),
+                          "תמונות": p.images.join(", "),
+                          "נוצר": p.createdAt.toISOString(),
+                          "עודכן": p.updatedAt.toISOString(),
+                          "קישור לנוהל": `${window.location.origin}/?id=${p.id}`
+                      })) || [], "נהלים - מוקד")}
+                      variant={'shadow'}
+                      className={"cursor-pointer"}/>
+            </>
             }
 
             <Popover>
@@ -231,10 +248,14 @@ export default function IndexPage() {
                 </PopoverContent>
             </Popover>
 
-            {!!me && <AddPhoneNumberDialog open={addNumOpen} onClose={setAddNumOpen} me={me}/>}
+            {
+                !!me && <AddPhoneNumberDialog open={addNumOpen} onClose={setAddNumOpen} me={me}/>
+            }
         </Flex>
 
-        {loading && <LoadingBackdrop/>}
+        {
+            loading && <LoadingBackdrop/>
+        }
 
         <Flex className={""}>
             <Tremor.TextInput
@@ -281,23 +302,27 @@ export default function IndexPage() {
             />
         </Flex>
 
-        {!!edited && <AddProcedure
-            open={true}
-            procedure={edited === true ? undefined : edited}
-            onClose={(val) => {
-                setEdited(undefined)
-                setEdited(undefined)
-                router.push('/')
-            }}/>}
-        {!!current && <ShowProcedure
-            procedure={current}
-            open={true}
-            onClose={(val) => {
-                setCurrent(undefined)
-                router.push('/')
-            }}
-            onEdit={(procedure) => setEdited(procedure)}
-        />}
+        {
+            !!edited && <AddProcedure
+                open={true}
+                procedure={edited === true ? undefined : edited}
+                onClose={(val) => {
+                    setEdited(undefined)
+                    setEdited(undefined)
+                    router.push('/')
+                }}/>
+        }
+        {
+            !!current && <ShowProcedure
+                procedure={current}
+                open={true}
+                onClose={(val) => {
+                    setCurrent(undefined)
+                    router.push('/')
+                }}
+                onEdit={(procedure) => setEdited(procedure)}
+            />
+        }
 
         {
             // loading ? <Loading/> :
