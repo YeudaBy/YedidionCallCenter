@@ -1,6 +1,6 @@
 import {useEffect, useRef, useState} from "react";
 import {Procedure, ProcedureType} from "@/model/Procedure";
-import {remult} from "remult";
+import {remult, UserInfo} from "remult";
 import * as Tremor from "@tremor/react";
 import {Button, Divider, Flex, Icon, MultiSelect, MultiSelectItem, Switch, Text} from "@tremor/react";
 import {useRouter} from "next/router";
@@ -20,6 +20,7 @@ import {
     RiEyeOffLine,
     RiFileDownloadLine,
     RiGroupLine,
+    RiListCheck,
     RiSortAlphabetAsc,
     RiSortAsc,
     RiUserLine
@@ -30,6 +31,7 @@ import {Popover, PopoverContent} from "@/components/Popover";
 import {PopoverTrigger} from "@radix-ui/react-popover";
 import {signOut} from "next-auth/react";
 import {exportToXLSX} from "@/utils/xlsx";
+import {diff} from "@/utils/diff";
 
 const procedureRepo = remult.repo(Procedure);
 const userRepo = remult.repo(User);
@@ -49,7 +51,6 @@ export default function IndexPage() {
     const [district, setDistrict] = useState<District | "All">("All")
     const [allowedDistricts, setAllowedDistricts] = useState<District[]>([District.General])
     const [waitingCount, setWaitingCount] = useState(0)
-    const [tags, setTags] = useState<string[]>([])
     const [showInactive, setShowInactive] = useState(false)
     const [inactives, setInactives] = useState<Procedure[]>()
     const [me, setMe] = useState<User>()
@@ -491,6 +492,10 @@ function AddProcedure({procedure, open, onClose}: {
     const [districts, setDistricts] = useState<District[]>([District.General])
     const [images, setImages] = useState<string[]>()
 
+    const [showLogs, setShowLogs] = useState(false)
+
+    console.log(procedure)
+
     useEffect(() => {
         if (!!procedure) {
             setTitle(procedure.title)
@@ -513,7 +518,8 @@ function AddProcedure({procedure, open, onClose}: {
                 districts: districts,
                 keywords: keywords.map(k => k.trim()),
                 type: type,
-                images: images
+                images: images,
+                logs: submitLogs()
             })
         } else {
             await procedureRepo.update(procedure.id!, {
@@ -523,7 +529,8 @@ function AddProcedure({procedure, open, onClose}: {
                 districts: districts,
                 keywords: keywords.map(k => k.trim()),
                 type: type,
-                images: images
+                images: images,
+                logs: submitLogs()
             })
         }
         setLoading(false)
@@ -543,10 +550,41 @@ function AddProcedure({procedure, open, onClose}: {
         }
     }, []);
 
+    const submitLogs = (): string[] => {
+        if (!remult.user) return []
+        let logs = procedure?.logs || []
+        if (!procedure) {
+            logs = [
+                ...logs,
+                formatLog(remult.user, "נוהל חדש: " + title),
+            ]
+        } else {
+            logs = [
+                ...logs,
+                diff(procedure.procedure, content || ""),
+                diff(procedure.title, title || ""),
+                diff(procedure.keywords.join(", "), keywords.join(", ") || ""),
+                diff(procedure.type, type || ""),
+                diff(procedure.districts.join(", "), districts.join(", ") || ""),
+                diff(procedure.active.toString(), active.toString() || ""),
+                diff(procedure.images.join(", "), images?.join(", ") || "")
+            ].filter(Boolean).map(e => e as string).map(e => formatLog(remult.user!, e))
+        }
+
+        console.log(logs)
+        return logs
+    };
+
+
     return <>
         <Tremor.Dialog open={open} onClose={(val) => onClose(val)}>
             <Tremor.DialogPanel className={"gap-1.5 flex items-center flex-col"}>
-                <CloseDialogButton close={() => onClose(false)}/>
+                <Flex className={"gap-1.5"}>
+                    <CloseDialogButton close={() => onClose(false)}/>
+                    <Icon icon={RiListCheck}
+                          onClick={() => setShowLogs(!showLogs)}
+                          className={"cursor-pointer"}/>
+                </Flex>
                 <Tremor.TextInput
                     placeholder={"כותרת *"}
                     value={title}
@@ -664,6 +702,13 @@ function AddProcedure({procedure, open, onClose}: {
                         onClick={async () => {
                             await procedureRepo.delete(procedure.id!)
                             onClose(false)
+                            await procedureRepo.update(procedure.id!, {
+                                logs: [
+                                    ...procedure.logs,
+                                    formatLog(remult.user!, "נוהל נמחק לצמיתות: " + procedure.title),
+                                    procedure.procedure
+                                ]
+                            })
                         }}
                         color={"red"}>
                         מחק לצמיתות
@@ -689,7 +734,44 @@ function AddProcedure({procedure, open, onClose}: {
                 </Flex>
             </Tremor.DialogPanel>
         </Tremor.Dialog>
+
+        <ProcedureLogsDialog procedure={procedure} open={showLogs} onClose={setShowLogs}/>
     </>
+}
+
+function ProcedureLogsDialog({procedure, open, onClose}: {
+    procedure?: Procedure,
+    open: boolean,
+    onClose: (val: boolean) => void
+}) {
+    const [logs, setLogs] = useState<string[]>([])
+    useEffect(() => {
+        if (!procedure) return
+        procedureRepo.findFirst({id: procedure.id})
+            .then(p => {
+                setLogs(p?.logs || [])
+            })
+    }, [procedure]);
+
+    console.log(logs)
+
+    return <Tremor.Dialog open={open} onClose={() => onClose(false)}>
+        <Tremor.DialogPanel className={"gap-1.5 flex items-center flex-col"}>
+            <CloseDialogButton close={() => onClose(false)}/>
+            <Tremor.Text className={"text-lg font-bold"}>היסטורית שינויים</Tremor.Text>
+            <Tremor.List>
+                {logs.length === 0 && <Tremor.ListItem>
+                    <Tremor.Text>לא נמצאו שינויים</Tremor.Text>
+                </Tremor.ListItem>}
+                {logs.map((log, i) => {
+                    return <li key={i} className={"text-start font-mono text-xs"} dangerouslySetInnerHTML={{
+                        __html: log
+                    }}></li>
+
+                })}
+            </Tremor.List>
+        </Tremor.DialogPanel>
+    </Tremor.Dialog>
 }
 
 
@@ -726,4 +808,9 @@ function AddPhoneNumberDialog({open, onClose, me}: { open: boolean, onClose: (va
             </Tremor.Button>
         </Tremor.DialogPanel>
     </Tremor.Dialog>
+}
+
+export function formatLog(by: UserInfo, change: string): string {
+    const date = new Date().toLocaleString("he-IL");
+    return `${date} - ${by.name} [${by.id}]: ${change}`
 }
