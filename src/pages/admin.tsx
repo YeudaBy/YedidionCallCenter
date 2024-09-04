@@ -1,5 +1,5 @@
-import {remult} from "remult";
-import {User, UserRole} from "@/model/User";
+import {EntityFilter, remult} from "remult";
+import {AdminRoles, User, UserRole} from "@/model/User";
 import {useEffect, useState} from "react";
 import {
     Badge,
@@ -8,7 +8,6 @@ import {
     Card,
     Dialog,
     DialogPanel,
-    Divider,
     Flex,
     Icon,
     List,
@@ -20,7 +19,7 @@ import {
     TextInput
 } from "@tremor/react";
 import {Loading} from "@/components/Spinner";
-import {RiAddLine, RiCheckFill, RiCheckLine, RiDeleteBin7Line, RiHomeLine, RiPencilLine} from "@remixicon/react";
+import {RiAddLine, RiCheckFill, RiDeleteBin7Line, RiHomeLine, RiPencilLine} from "@remixicon/react";
 import {District} from "@/model/District";
 import {CloseDialogButton} from "@/components/CloseDialogButton";
 import {useRouter} from "next/router";
@@ -28,30 +27,41 @@ import {Color} from "@tremor/react/dist/lib/inputTypes";
 
 const usersRepo = remult.repo(User)
 
-const filters: { label: string, filter: (u: User) => boolean, color: Color }[] = [
+const filters: { id: string, label: string, filter: (u: User) => boolean, color: Color }[] = [
     {
+        id: "all",
         label: "הכל",
         filter: () => true,
         color: "sky"
     },
     {
+        id: "unregistered",
+        label: "ממתינים",
+        filter: u => u.isNotRegistered,
+        color: "red"
+    },
+    {
+        id: "inactive",
         label: "לא פעילים",
         filter: u => !u.active,
         color: "gray"
     },
     {
+        id: "admins",
         label: "מנהלים",
-        filter: u => !u.roles.includes(UserRole.Dispatcher),
+        filter: u => u.isAdmin,
         color: "amber"
     },
     {
+        id: "dispatchers",
         label: "לא מנהלים",
-        filter: u => u.roles.includes(UserRole.Dispatcher),
+        filter: u => u.isDispatcher,
         color: "lime"
     },
-    ...Object.values(District).filter(a => a !== District.General).map(d => ({
-        label: d,
-        filter: (u: User) => u.district === d,
+    ...Object.entries(District).filter(([k, v]) => v !== District.General).map(([k, v]) => ({
+        id: k,
+        label: v,
+        filter: (u: User) => u.district === v,
         color: "indigo" as Color
     }))
 ]
@@ -65,14 +75,35 @@ export default function AdminPage() {
     const [error, setError] = useState<Error | null>(null)
 
     const [query, setQuery] = useState<string>()
-    const [filteredUsers, setFilteredUsers] = useState<User[]>([])
+    const [filter, setFilter] = useState<"all" | "unregistered" | "inactive" | "admins" | "dispatchers" | District>()
 
     const [showAddUser, setShowAddUser] = useState(false)
 
     useEffect(() => {
+        function getWhere(): EntityFilter<User> {
+            return {
+                active: filter !== "inactive",
+                roles: filter === "admins" ? {$in: AdminRoles} :
+                    ["dispatchers", "unregistered"].includes(filter || "") ? UserRole.Dispatcher : undefined,
+                district: filter === "unregistered" ? {
+                    $ne: Object.values(District)
+                } : Object.entries(District).find(([k, v]) => k === filter)?.[1] as District,
+                name: query ? {
+                    $contains: query
+                } : undefined,
+                email: query ? {
+                    $contains: query
+                } : undefined,
+                phone: query ? {
+                    $contains: query.replace(/^0/, "")
+                } : undefined
+            }
+        }
+
         setLoading(true)
         usersRepo.find({
             limit: 30,
+            where: getWhere(),
             orderBy: {
                 district: "asc",
                 roles: "asc",
@@ -85,20 +116,16 @@ export default function AdminPage() {
         }).finally(() => {
             setLoading(false)
         })
-    }, []);
-
-    useEffect(() => {
-        if (!query) return setFilteredUsers([])
-        setFilteredUsers(users.filter(u => u.name.includes(query) || u.email.includes(query) || u.phoneFormatted?.includes(query)))
-    }, [query, users]);
+    }, [filter, query]);
 
     return (
         <Flex flexDirection={"col"} className={"p-4 max-w-4xl m-auto"}>
             <Flex className={"gap-1 mb-4 items-center justify-end"}>
                 <Text className={"text-lg sm:text-2xl font-bold grow"}>משתמשים</Text>
 
-                <Icon icon={RiHomeLine} onClick={() => router.back()} className={"cursor-pointer"}/>
-                <Icon icon={RiAddLine} onClick={() => setShowAddUser(true)} className={"cursor-pointer"}/>
+                <Icon icon={RiHomeLine} onClick={() => router.back()} variant={"simple"} className={"cursor-pointer"}/>
+                <Icon icon={RiAddLine} onClick={() => setShowAddUser(true)} variant={"shadow"}
+                      className={"cursor-pointer"}/>
             </Flex>
 
             <TextInput
@@ -113,9 +140,9 @@ export default function AdminPage() {
                 {
                     filters.map(d => (
                         <Badge
-                            key={d.label}
+                            key={d.id}
                             color={d.color}
-                            onClick={() => setFilteredUsers(users.filter(d.filter))}
+                            onClick={() => setFilter(d.id as any)}
                             className={`cursor-pointer`}>
                             {d.label}
                         </Badge>
@@ -125,8 +152,8 @@ export default function AdminPage() {
 
             {loading && <Loading/>}
             {error && <div>Error: {error.message}</div>}
-            {usersRepo.metadata.apiUpdateAllowed() ? <List>
-                {(!!filteredUsers.length ? filteredUsers : users).map(user => (
+            {User.isAdmin(remult) ? <List>
+                {users?.map(user => (
                     <UserItem
                         user={user}
                         setUsers={setUsers}
@@ -203,8 +230,8 @@ function AddUserDialog({open, onClose}: {
                     value={district}
                     // @ts-ignore
                     onChange={setDistrict}
-                    placeholder={"שייך למוקד"}
-                    disabled={remult.user?.roles?.includes(UserRole.Admin)}
+                    placeholder={"*שייך למוקד"}
+                    disabled={User.isRegularAdmin(remult)}
                 >
                     {Object
                         .values(District)
@@ -213,6 +240,10 @@ function AddUserDialog({open, onClose}: {
                             <SelectItem key={d} value={d}>{d}</SelectItem>
                         ))}
                 </Select>
+                <Text className={"text-xs text-start mb-2"}>
+                    ללא שיוך למוקד - המשתמש לא יוכל להתחבר למערכת
+                </Text>
+
                 <TextInput
                     placeholder={"*שם:"}
                     type={"text"}
@@ -223,6 +254,7 @@ function AddUserDialog({open, onClose}: {
                 <Text className={"text-xs text-start mb-2"}>
                     נא להזין שם מלא + מספר מוקדן (ללא שם המוקד)
                 </Text>
+
                 <TextInput
                     placeholder={"*אימייל:"}
                     type={"email"}
@@ -249,14 +281,14 @@ function AddUserDialog({open, onClose}: {
                         variant={"primary"}
                         disabled={loading || !name || !email || !district}
                         loading={loading}
-                        className={"grow"}>
+                        icon={RiCheckFill}
+                        className={"grow gap-2"}>
                         שמור
                     </Button>
                     <Button
                         onClick={onClose}
                         variant={"secondary"}
                         disabled={loading}
-                        // icon={RiCheckFill}
                         loading={loading}
                         className={"grow"}>
                         ביטול
@@ -272,46 +304,27 @@ function UserItem({user, setUsers}: {
     user: User,
     setUsers: (users: (prev: User[]) => User[]) => void
 }) {
-    const isAdmin = user.roles === UserRole.Admin
-    const isSuperAdmin = user.roles === UserRole.SuperAdmin
-    const currentUserRoles = remult.user?.roles
-    const district = user.district
-
-    const allowed = currentUserRoles?.includes(UserRole.SuperAdmin) || (currentUserRoles?.includes(UserRole.Admin) && !isSuperAdmin && !isAdmin)
-
-    const CBadge = () => {
-        if (!user.active) return <Badge color={"gray"}>לא פעיל</Badge>
-        if (isSuperAdmin) return <Badge color={"amber"}>מנהל מערכת</Badge>
-        if (isAdmin) return <>
-            <Badge color={"blue"}>מנהל</Badge>
-            {district && <Badge color={"green"}>{district}</Badge>}
-        </>
-        if (district) return <Badge color={"green"}>{district}</Badge>
-        return <Badge color={"red"}>לא רשום</Badge>
-    }
-
-    const getColor = () => {
-        if (!user.active) return "gray"
-        if (isSuperAdmin) return "amber"
-        if (isAdmin) return "blue"
-        if (district) return "green"
-        return "red"
-    }
+    const allowed = User.isSuperAdmin(remult) || !user.isAdmin
 
     const onDelete = async () => {
         setUsers((prev: User[]) => prev.filter(u => u.id !== user.id))
     }
 
     return (
-        <ListItem className={"justify-between mx-auto items-center"}>
+        <ListItem className={`justify-between mx-auto items-center ${
+            !user.active ? "border-r-4 border-gray-500 pr-2" : ""}`}>
             <Flex
                 flexDirection={"col"}
                 alignItems={"start"}
                 className={"grow"}
             >
-                <Flex className={"gap-1.5"} justifyContent={"start"}>
-                    <Text>{user.name}</Text>
-                    {/*<CBadge/>*/}
+                <Flex className={"gap-1.5 relative"} justifyContent={"start"}>
+                    <Text>
+                        {user.name}
+                        {user.id === remult.user?.id && <span className={"text-xs text-red-500"}> (אתה)</span>}
+                    </Text>
+                    {user.isNotRegistered &&
+                        <div className={"bg-red-500 h-2 w-2 rounded-full relative -top-1 left-0"}></div>}
                 </Flex>
                 <Flex className={"gap-1.5"} justifyContent={"start"}>
                     <Text
@@ -362,7 +375,6 @@ function EditUser({user: _user, onSave, onDelete}: {
             roles: userRoles,
             phone: phone ? parseInt(phone.replace(/^0/, "")) : undefined
         }
-        // console.log("allowed", usersRepo.metadata.apiUpdateAllowed({..._user, ...nu}))
         const newUser = await usersRepo.update(_user.id, nu)
         onSave(newUser)
         setLoading(false)
@@ -381,7 +393,10 @@ function EditUser({user: _user, onSave, onDelete}: {
             <Dialog open={open} unmount={true} onClose={() => setOpen(false)}>
                 <DialogPanel className={"flex flex-col gap-1.5"}>
                     <CloseDialogButton close={() => setOpen(false)}/>
-                    <Text className={"text-center text-xl"}>עריכת משתמש</Text>
+                    <Text className={"text-center text-xl"}>
+                        עריכת משתמש
+                        {_user.id === remult.user?.id && <span className={"text-xs text-red-500"}> (אתה)</span>}
+                    </Text>
                     <TextInput
                         placeholder={"שם"}
                         value={name}
@@ -404,7 +419,7 @@ function EditUser({user: _user, onSave, onDelete}: {
                         placeholder={"מוקד"}
                         // @ts-ignore
                         onChange={setDistrict}
-                        disabled={userRoles?.includes(UserRole.SuperAdmin)}
+                        disabled={userRoles?.includes(UserRole.SuperAdmin) || User.isRegularAdmin(remult)}
                     >
                         {Object
                             .values(District)
@@ -418,75 +433,69 @@ function EditUser({user: _user, onSave, onDelete}: {
                         ומנהלים רגילים.
                     </Text>
 
-                    <Card className={"shadow-xl bg-gradient-to-tl from-amber-50 to-gray-50"}>
-                        <Text className={"text-center font-extrabold"}>הרשאות</Text>
-                        {
-                            remult.user?.roles?.includes(UserRole.SuperAdmin) &&
-                            <>
-                                <Flex className={"gap-2 mb-2"} justifyContent={"start"}>
-                                    <Switch
-                                        id={"admin"}
-                                        checked={[UserRole.Admin, UserRole.SuperAdmin].includes(userRoles)}
-                                        onChange={e => e ? setUserRoles(UserRole.Admin) : setUserRoles(UserRole.Dispatcher)}
-                                    />
-                                    <label
-                                        htmlFor={"admin"} className={"cursor-pointer text-start text-sm"}>
-                                        מנהל
-                                    </label>
-                                </Flex>
-                                <Flex className={"gap-2"} justifyContent={"start"}>
-                                    <Switch
-                                        id={"super-admin"}
-                                        checked={userRoles === UserRole.SuperAdmin}
-                                        onChange={e => e ? setUserRoles(UserRole.SuperAdmin) : setUserRoles(UserRole.Admin)}
-                                    />
-                                    <label
-                                        htmlFor={"super-admin"} className={"cursor-pointer text-start text-sm"}>
-                                        מנהל מערכת
-                                    </label>
-                                </Flex>
-                            </>
-                        }
-                        <Divider/>
-                        <Text className={"text-start text-sm"}>
-                            ✅ מנהל יכול לאשר, להוסיף לערוך ולמחוק משתמשים, וכן להוסיף, לערוך ולמחוק נהלים. <br/>
-                            ✅ מנהל מערכת יכול להוסיף ולמחוק מנהלים, וכל שאר ההרשאות כמו מנהל רגיל. <br/>
-                            ✅ מוקדן רגיל יכול לצפות בנהלים אך ורק במידה והוא משוייך למוקד כלשהוא, ורק אם הם מסומנים
-                            כפעילים (במידה ולא, הם יופיעו בחיפוש ללא יכולת צפיה בתוכן). <br/>
-                        </Text>
+                    {User.isSuperAdmin(remult) &&
+                        <Card className={"shadow-xl bg-gradient-to-tl from-amber-50 to-gray-50"}>
+                            <Text className={"text-center font-extrabold"}>הרשאות</Text>
+                            <Flex className={"gap-2 mb-2"} justifyContent={"start"}>
+                                <Switch
+                                    id={"admin"}
+                                    checked={[UserRole.Admin, UserRole.SuperAdmin].includes(userRoles)}
+                                    onChange={e => e ? setUserRoles(UserRole.Admin) : setUserRoles(UserRole.Dispatcher)}
+                                />
+                                <label
+                                    htmlFor={"admin"} className={"cursor-pointer text-start text-sm"}>
+                                    מנהל
+                                </label>
+                            </Flex>
+                            <Flex className={"gap-2"} justifyContent={"start"}>
+                                <Switch
+                                    id={"super-admin"}
+                                    checked={userRoles === UserRole.SuperAdmin}
+                                    onChange={e => e ? setUserRoles(UserRole.SuperAdmin) : setUserRoles(UserRole.Admin)}
+                                />
+                                <label
+                                    htmlFor={"super-admin"} className={"cursor-pointer text-start text-sm"}>
+                                    מנהל מערכת
+                                </label>
+                            </Flex>
+                            <Text className={"text-start text-sm mt-2 opacity-75"}>
+                                ✅ מנהל יכול לאשר, להוסיף לערוך ולמחוק משתמשים שמשויכים למוקד שלו, לקרוא נהלים לא פעילים
+                                ולהציג נהלים מכל המוקדים. <br/><br/>
+                                ✅ מנהל מערכת יכול להוסיף ולמחוק מנהלים, לנהל מוקדנים מכל המוקדים, להוסיף, לערוך ולמחוק
+                                נהלים, וכל שאר ההרשאות כמו מנהל. <br/><br/>
+                                ✅ מוקדן רגיל יכול לצפות בנהלים אך ורק במידה והוא משוייך למוקד כלשהוא, ורק אם הם מסומנים
+                                כפעילים (במידה ולא, הם יופיעו בחיפוש ללא יכולת צפיה בתוכן). <br/>
+                            </Text>
+                        </Card>
+                    }
 
-                    </Card>
+                    <Flex className={"gap-2 mt-4"} justifyContent={"start"}>
+                        <Switch
+                            id={"active"}
+                            checked={active}
+                            onChange={e => setActive(e)}
+                        />
+                        <label
+                            htmlFor={"active"} className={"cursor-pointer text-start text-sm"}>
+                            פעיל (כיבוי אפשרות זו תגרום להשהיית המשתמש מהמערכת)
+                        </label>
+                    </Flex>
 
-                    {userRoles.includes(UserRole.Dispatcher) || remult.user?.roles?.includes(UserRole.SuperAdmin) && // todo
-                        <Flex className={"gap-2 mt-4"} justifyContent={"start"}>
-                            <Switch
-                                id={"active"}
-                                checked={active}
-                                onChange={e => setActive(e)}
-                            />
-                            <label
-                                htmlFor={"active"} className={"cursor-pointer text-start text-sm"}>
-                                פעיל (כיבוי אפשרות זו תגרום להשהיית המשתמש מהמערכת)
-                            </label>
-                        </Flex>}
-
-                    <Flex className={"mt-24 gap-2"}>
+                    <Flex className={"gap-1"}>
                         <Button
                             onClick={save}
                             variant={"secondary"}
-                            disabled={loading || !name || (!(userRoles?.includes(UserRole.Admin) || userRoles?.includes(UserRole.SuperAdmin)) && !district)}
+                            disabled={loading || !name}
                             icon={RiCheckFill}
                             loading={loading}
-                            className={"grow"}>
+                            className={"grow gap-1"}>
                             שמור
                         </Button>
-                        {remult.user?.roles?.includes(UserRole.SuperAdmin) || userRoles.includes(UserRole.Dispatcher) // todo
-                            && <DeleteUser user={_user} onDelete={() => {
-                                setOpen(false)
-                                onDelete()
-                            }}/>}
+                        <DeleteUser user={_user} onDelete={() => {
+                            setOpen(false)
+                            onDelete()
+                        }}/>
                     </Flex>
-
                 </DialogPanel>
             </Dialog>
         </>
@@ -494,44 +503,28 @@ function EditUser({user: _user, onSave, onDelete}: {
 }
 
 
-function DeleteUser({
-                        user, onDelete
-                    }: {
+function DeleteUser({user, onDelete}: {
     user: User,
-    onDelete
-        :
-        () => void
+    onDelete: () => void
 }) {
     const [loading, setLoading] = useState(false)
     const [show, setShow] = useState(false)
 
-    const active = user.active
-
-    const deactivateUser = () => {
-        setLoading(true)
-        if (active)
-            usersRepo.update(user.id, {active: false})
-        else
-            usersRepo.update(user.id, {active: true})
-        setLoading(false)
-    }
-
     const deleteUser = async () => {
         setLoading(true)
-        await usersRepo.delete(user.id)
+        await usersRepo.delete(user)
         onDelete()
         setLoading(false)
         setShow(false)
     }
 
-
     return (
         <>
             <Icon
-                icon={active ? RiDeleteBin7Line : RiCheckLine}
+                icon={RiDeleteBin7Line}
                 variant={"light"}
-                color={active ? "red" : "green"}
-                tooltip={active ? "מחיקה" : "הפעלה"}
+                color={"rose"}
+                tooltip={"מחיקה"}
                 onClick={() => setShow(true)}
                 className={"cursor-pointer"}/>
 
@@ -540,35 +533,26 @@ function DeleteUser({
                     <CloseDialogButton close={() => setShow(false)}/>
                     <Text className={"text-center text-xl"}>מחיקת משתמש</Text>
                     <Text className={"text-center text-sm"}>
-                        האם אתה בטוח שברצונך ל{active ? "השהות" : "הפעיל"} את המשתמש {user.name}?
+                        האם אתה בטוח שברצונך למחוק את המשתמש לצמיתות?
                     </Text>
                     <Flex className={"mt-4 gap-2"}>
-                        <Button
-                            onClick={deactivateUser}
-                            color={"red"}
-                            disabled={loading}
-                            loading={loading}
-                            className={"grow"}>
-                            כן
-                        </Button>
                         <Button
                             onClick={() => setShow(false)}
                             variant={"secondary"}
                             disabled={loading}
                             loading={loading}
-                            className={"grow"}>
+                            className={"grow gap-2"}>
                             ביטול
                         </Button>
-                    </Flex>
-                    {remult.user?.roles?.includes(UserRole.SuperAdmin) &&
                         <Button onClick={deleteUser}
-                                variant={"light"}
-                                color={"red"}
+                                variant={"primary"}
+                                color={"rose"}
                                 disabled={loading}
                                 loading={loading}
-                                className={"grow"}>
+                                className={"grow gap-2"}>
                             מחק לצמיתות
-                        </Button>}
+                        </Button>
+                    </Flex>
                 </DialogPanel>
             </Dialog>
         </>

@@ -86,10 +86,6 @@ export default function IndexPage() {
     }, []);
 
     useEffect(() => {
-        console.log(procedureRepo.metadata)
-    }, []);
-
-    useEffect(() => {
         const q = router.query.id
         if (!q) return
         setCurrent(true)
@@ -184,19 +180,22 @@ export default function IndexPage() {
             </Text>
 
             {!!User.isAdmin(remult) && <Tremor.Icon
-                className={"cursor-pointer border-blue-400 rounded-xl border-2"}
+                variant={"shadow"}
+                className={"cursor-pointer"}
                 icon={RiAddLine} onClick={() => setEdited(true)}/>}
 
             {
                 !!User.isAdmin(remult) && <Tremor.Icon
+                    variant={"outlined"}
                     onClick={() => router.push('/admin')}
                     icon={RiGroupLine}
-                    data-badge={waitingCount}
+                    data-badge={waitingCount == 0 ? undefined : waitingCount}
                     className={"cursor-pointer"}
                 />
             }
 
             {!!User.isAdmin(remult) && <Tremor.Icon
+                variant={"outlined"}
                 className={"cursor-pointer"}
                 icon={showInactive ? RiEyeLine : RiEyeOffLine}
                 onClick={() => setShowInactive(!showInactive)}/>
@@ -256,7 +255,7 @@ export default function IndexPage() {
                 }}
                 icon={SearchIcon}
             />
-            <Icon icon={RiCloseLine} onClick={() => {
+            <Icon icon={RiCloseLine} variant={"light"} onClick={() => {
                 router.push('/').then(() => setQuery(undefined))
             }}/>
         </Flex>
@@ -273,16 +272,13 @@ export default function IndexPage() {
                         key={d}>{d}</Tremor.Badge>
                 })
             }
-            <Tremor.Button
-                className={"cursor-pointer py-1 gap-2 px-2"}
-                color={"blue"}
+            <Icon
                 icon={order === Order.Recent ? RiSortAlphabetAsc : RiSortAsc}
+                className={"cursor-pointer"} variant={"light"}
                 onClick={() => {
                     setOrder(order === Order.Recent ? Order.Alphabetical : Order.Recent)
                 }}
-            >
-                {`מיין לפי ${order}`}
-            </Tremor.Button>
+            />
         </Flex>
 
         {!!edited && <AddProcedure

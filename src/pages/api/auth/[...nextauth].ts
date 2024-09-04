@@ -61,3 +61,8 @@ export function auth(
 ) {
     return getServerSession(...args, authOptions)
 }
+
+export async function getUserOnServer() {
+    const session = await getServerSession()
+    return User.signIn(await api.getRemult({} as any), session?.user?.email || "")
+}

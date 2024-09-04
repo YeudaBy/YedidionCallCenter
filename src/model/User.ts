@@ -58,12 +58,36 @@ export class User extends IdEntity {
         return AdminRoles.includes(this.roles)
     }
 
+    get isSuperAdmin() {
+        return this.roles === UserRole.SuperAdmin
+    }
+
+    get isRegularAdmin() {
+        return this.roles === UserRole.Admin
+    }
+
+    get isDispatcher() {
+        return this.roles === UserRole.Dispatcher
+    }
+
+    get isNotRegistered() {
+        return this.isDispatcher && this.active && !this.district
+    }
+
     get phoneFormatted() {
         return this.phone ? `0${this.phone}` : undefined
     }
 
     static isAdmin(remult: Remult) {
         return remult.user && AdminRoles.includes(remult.user.roles![0] as UserRole)
+    }
+
+    static isSuperAdmin(remult: Remult) {
+        return remult.user && remult.user.roles?.includes(UserRole.SuperAdmin)
+    }
+
+    static isRegularAdmin(remult: Remult) {
+        return remult.user && remult.user.roles?.includes(UserRole.Admin)
     }
 
     static async signIn(remult: Remult, email: string) {

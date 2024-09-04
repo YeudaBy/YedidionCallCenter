@@ -11,14 +11,12 @@ export const api = remultNext({
     entities: [
         User, Procedure,
     ],
+    ensureSchema: true,
     controllers: [ApiController],
     getUser: async (req) => {
         const jwtToken = await getToken({req})
-        console.log({jwtToken})
-        if (!jwtToken?.email) return
-        const user = await User.signIn(remult, jwtToken.email)
-        console.log({user})
-        return user
+        if (!jwtToken?.sub) return undefined
+        return User.signIn(remult, jwtToken.sub)
     },
     logApiEndPoints: true,
     dataProvider:
