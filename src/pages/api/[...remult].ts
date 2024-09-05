@@ -6,10 +6,11 @@ import {JsonDataProvider, remult} from "remult";
 import {JsonEntityFileStorage} from "remult/server";
 import {getToken} from "next-auth/jwt";
 import {ApiController} from "@/controllers/ApiController";
+import {Log} from "@/model/Log";
 
 export const api = remultNext({
     entities: [
-        User, Procedure,
+        User, Procedure, Log
     ],
     ensureSchema: true,
     controllers: [ApiController],

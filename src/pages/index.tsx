@@ -1,8 +1,8 @@
 import {useEffect, useRef, useState} from "react";
 import {Procedure, ProcedureType} from "@/model/Procedure";
-import {remult, UserInfo} from "remult";
+import {remult} from "remult";
 import * as Tremor from "@tremor/react";
-import {Button, Divider, Flex, Icon, MultiSelect, MultiSelectItem, Switch, Text} from "@tremor/react";
+import {Button, Divider, Flex, Icon, ListItem, MultiSelect, MultiSelectItem, Switch, Text} from "@tremor/react";
 import {useRouter} from "next/router";
 import {SearchIcon} from "@heroicons/react/solid";
 import {LoadingBackdrop, LoadingSpinner} from "@/components/Spinner";
@@ -14,13 +14,18 @@ import autoAnimate from "@formkit/auto-animate";
 import Image from "next/image";
 import {
     RiAddLine,
+    RiChat1Line,
     RiCloseFill,
     RiCloseLine,
+    RiCursorLine,
+    RiDeleteBinLine,
     RiEyeLine,
     RiEyeOffLine,
     RiFileDownloadLine,
+    RiFileList3Fill,
     RiGroupLine,
     RiListCheck,
+    RiPencilLine,
     RiSortAlphabetAsc,
     RiSortAsc,
     RiUserLine
@@ -32,9 +37,13 @@ import {PopoverTrigger} from "@radix-ui/react-popover";
 import {signOut} from "next-auth/react";
 import {exportToXLSX} from "@/utils/xlsx";
 import {diff} from "@/utils/diff";
+import {Log, LogType} from "@/model/Log";
+import {Color} from "@tremor/react/dist/lib/inputTypes";
+import Link from "next/link";
 
 const procedureRepo = remult.repo(Procedure);
 const userRepo = remult.repo(User);
+const logRepo = remult.repo(Log);
 
 enum Order {
     Recent = 'חדשים',
@@ -56,6 +65,7 @@ export default function IndexPage() {
     const [me, setMe] = useState<User>()
     const [addNumOpen, setAddNumOpen] = useState(false)
     const [order, setOrder] = useState<Order>(Order.Recent)
+    const [logsOpen, setLogsOpen] = useState(false)
 
     useEffect(() => {
         if (!order) return
@@ -219,6 +229,14 @@ export default function IndexPage() {
             </>
             }
 
+            {
+                User.isSuperAdmin(remult) && <Tremor.Icon
+                    variant={"shadow"}
+                    className={"cursor-pointer"}
+                    icon={RiFileList3Fill}
+                    onClick={() => setLogsOpen(true)}/>
+            }
+
             <Popover>
                 <PopoverTrigger asChild>
                     <Tremor.Icon icon={RiUserLine} className={"cursor-pointer"}/>
@@ -323,6 +341,10 @@ export default function IndexPage() {
                 }}
                 onEdit={(procedure) => setEdited(procedure)}
             />
+        }
+
+        {
+            logsOpen && <LogsDialog procedure={undefined} open={true} onClose={setLogsOpen}/>
         }
 
         {
@@ -511,7 +533,7 @@ function AddProcedure({procedure, open, onClose}: {
     const addProcedure = async () => {
         setLoading(true)
         if (!procedure) {
-            await procedureRepo.insert({
+            const newObj = await procedureRepo.insert({
                 title: title,
                 procedure: content,
                 active: active,
@@ -519,7 +541,12 @@ function AddProcedure({procedure, open, onClose}: {
                 keywords: keywords.map(k => k.trim()),
                 type: type,
                 images: images,
-                logs: submitLogs()
+            })
+            await logRepo.insert({
+                byUserId: remult.user?.id!,
+                procedureId: newObj.id!,
+                log: newObj.title,
+                type: LogType.Created
             })
         } else {
             await procedureRepo.update(procedure.id!, {
@@ -530,8 +557,23 @@ function AddProcedure({procedure, open, onClose}: {
                 keywords: keywords.map(k => k.trim()),
                 type: type,
                 images: images,
-                logs: submitLogs()
             })
+            for (const e1 of [
+                diff(procedure.procedure, content || ""),
+                diff(procedure.title, title || ""),
+                diff(procedure.keywords.join(", "), keywords.join(", ") || ""),
+                diff(procedure.type, type || ""),
+                diff(procedure.districts.join(", "), districts.join(", ") || ""),
+                diff(procedure.active.toString(), active.toString() || ""),
+                diff(procedure.images.join(", "), images?.join(", ") || "")
+            ].filter(Boolean).map(e => e as string)) {
+                await logRepo.insert({
+                    byUserId: remult.user?.id!,
+                    procedureId: procedure.id!,
+                    log: e1,
+                    type: LogType.Updated
+                })
+            }
         }
         setLoading(false)
         onClose?.(false)
@@ -549,32 +591,6 @@ function AddProcedure({procedure, open, onClose}: {
             setImages([])
         }
     }, []);
-
-    const submitLogs = (): string[] => {
-        if (!remult.user) return []
-        let logs = procedure?.logs || []
-        if (!procedure) {
-            logs = [
-                ...logs,
-                formatLog(remult.user, "נוהל חדש: " + title),
-            ]
-        } else {
-            logs = [
-                ...logs,
-                diff(procedure.procedure, content || ""),
-                diff(procedure.title, title || ""),
-                diff(procedure.keywords.join(", "), keywords.join(", ") || ""),
-                diff(procedure.type, type || ""),
-                diff(procedure.districts.join(", "), districts.join(", ") || ""),
-                diff(procedure.active.toString(), active.toString() || ""),
-                diff(procedure.images.join(", "), images?.join(", ") || "")
-            ].filter(Boolean).map(e => e as string).map(e => formatLog(remult.user!, e))
-        }
-
-        console.log(logs)
-        return logs
-    };
-
 
     return <>
         <Tremor.Dialog open={open} onClose={(val) => onClose(val)}>
@@ -702,12 +718,11 @@ function AddProcedure({procedure, open, onClose}: {
                         onClick={async () => {
                             await procedureRepo.delete(procedure.id!)
                             onClose(false)
-                            await procedureRepo.update(procedure.id!, {
-                                logs: [
-                                    ...procedure.logs,
-                                    formatLog(remult.user!, "נוהל נמחק לצמיתות: " + procedure.title),
-                                    procedure.procedure
-                                ]
+                            await logRepo.insert({
+                                byUserId: remult.user?.id!,
+                                procedureId: procedure.id!,
+                                log: [procedure.title, procedure.procedure].join(", "),
+                                type: LogType.Deleted
                             })
                         }}
                         color={"red"}>
@@ -735,22 +750,53 @@ function AddProcedure({procedure, open, onClose}: {
             </Tremor.DialogPanel>
         </Tremor.Dialog>
 
-        <ProcedureLogsDialog procedure={procedure} open={showLogs} onClose={setShowLogs}/>
+        {showLogs && <LogsDialog procedure={procedure} open={true} onClose={setShowLogs}/>}
     </>
 }
 
-function ProcedureLogsDialog({procedure, open, onClose}: {
+type LogView = {
+    createdAt: Date,
+    user: User | string,
+    log: string,
+    type: LogType,
+    procedure: string | Procedure,
+}
+
+function LogsDialog({procedure, open, onClose}: {
     procedure?: Procedure,
     open: boolean,
     onClose: (val: boolean) => void
 }) {
-    const [logs, setLogs] = useState<string[]>([])
+    const [logs, setLogs] = useState<LogView[]>([])
+
     useEffect(() => {
-        if (!procedure) return
-        procedureRepo.findFirst({id: procedure.id})
-            .then(p => {
-                setLogs(p?.logs || [])
-            })
+        async function buildLog(log: Log): Promise<LogView> {
+            const user = await userRepo.findFirst({id: log.byUserId})
+            const procedure = await procedureRepo.findFirst({id: log.procedureId})
+            return {
+                createdAt: log.createdAt,
+                user: user?.name || log.byUserId,
+                procedure: procedure || log.procedureId,
+                log: log.log,
+                type: log.type
+            }
+        }
+
+        async function getLogs() {
+            if (!procedure) {
+                const logs = await logRepo.find({orderBy: {createdAt: "desc"}, limit: 50})
+                setLogs(await Promise.all(logs.map(buildLog)))
+            } else {
+                const logs = await logRepo.find({
+                    where: {procedureId: procedure.id},
+                    orderBy: {createdAt: "desc"},
+                    limit: 50
+                })
+                setLogs(await Promise.all(logs.map(buildLog)))
+            }
+        }
+
+        getLogs()
     }, [procedure]);
 
     console.log(logs)
@@ -764,9 +810,29 @@ function ProcedureLogsDialog({procedure, open, onClose}: {
                     <Tremor.Text>לא נמצאו שינויים</Tremor.Text>
                 </Tremor.ListItem>}
                 {logs.map((log, i) => {
-                    return <li key={i} className={"text-start font-mono text-xs"} dangerouslySetInnerHTML={{
-                        __html: log
-                    }}></li>
+                    return <ListItem key={i} className={"text-start text-xs flex-row flex justify-start items-start"}>
+                        <Icon
+                            icon={getLogTypeIcon(log.type)}
+                            color={getLogTypeColor(log.type)}
+                        />
+                        <Flex className={""} flexDirection={"col"} justifyContent={"start"} alignItems={"start"}>
+                            <Text className={"text-xs opacity-75"}>
+                                {log.createdAt.toLocaleString("he-IL")}
+                                <span
+                                    className={"font-semibold"}> | ע״י {typeof log.user === "string" ? log.user : log.user.name}</span>
+                            </Text>
+                            <span className={"font-mono"} dangerouslySetInnerHTML={{__html: log.log}}/>
+                        </Flex>
+                        {
+                            typeof log.procedure === "object" && <Link href={`/?id=${log.procedure.id}`}>
+                                <Tremor.Icon
+                                    color={'indigo'}
+                                    icon={RiCursorLine}
+                                    className={"cursor-pointer"}
+                                />
+                            </Link>
+                        }
+                    </ListItem>
 
                 })}
             </Tremor.List>
@@ -810,7 +876,28 @@ function AddPhoneNumberDialog({open, onClose, me}: { open: boolean, onClose: (va
     </Tremor.Dialog>
 }
 
-export function formatLog(by: UserInfo, change: string): string {
-    const date = new Date().toLocaleString("he-IL");
-    return `${date} - ${by.name} [${by.id}]: ${change}`
+function getLogTypeIcon(logType: LogType) {
+    switch (logType) {
+        case LogType.Created:
+            return RiAddLine
+        case LogType.Updated:
+            return RiPencilLine
+        case LogType.Deleted:
+            return RiDeleteBinLine
+        default:
+            return RiChat1Line
+    }
+}
+
+function getLogTypeColor(logType: LogType): Color {
+    switch (logType) {
+        case LogType.Created:
+            return "green"
+        case LogType.Updated:
+            return "amber"
+        case LogType.Deleted:
+            return "red"
+        default:
+            return "blue"
+    }
 }
