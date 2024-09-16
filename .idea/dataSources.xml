@@ -12,6 +12,36 @@
         <property name="com.intellij.clouds.kubernetes.db.container.port" />
       </jdbc-additional-properties>
       <working-dir>$ProjectFileDir$</working-dir>
+      <driver-properties>
+        <property name="sslmode" value="require" />
+      </driver-properties>
+    </data-source>
+    <data-source source="LOCAL" name="main@ep-flat-block-a2uyj2gk.eu-central-1.aws.neon.tech" uuid="d761bf53-ae94-4615-9f59-43f2ab45d8f0">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://ep-flat-block-a2uyj2gk.eu-central-1.aws.neon.tech:5432/main</jdbc-url>
+      <jdbc-additional-properties>
+        <property name="com.intellij.clouds.kubernetes.db.host.port" />
+        <property name="com.intellij.clouds.kubernetes.db.enabled" value="false" />
+        <property name="com.intellij.clouds.kubernetes.db.container.port" />
+      </jdbc-additional-properties>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
+    <data-source source="LOCAL" name="verceldb@ep-dawn-sunset-a4nvg8j6-pooler.us-east-1.aws.neon.tech [2]" uuid="48a65635-c809-4c9f-868b-6bd6678760cc">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://ep-dawn-sunset-a4nvg8j6-pooler.us-east-1.aws.neon.tech:5432/verceldb</jdbc-url>
+      <jdbc-additional-properties>
+        <property name="com.intellij.clouds.kubernetes.db.host.port" />
+        <property name="com.intellij.clouds.kubernetes.db.enabled" value="false" />
+        <property name="com.intellij.clouds.kubernetes.db.container.port" />
+      </jdbc-additional-properties>
+      <working-dir>$ProjectFileDir$</working-dir>
+      <driver-properties>
+        <property name="sslmode" value="require" />
+      </driver-properties>
     </data-source>
   </component>
 </project>

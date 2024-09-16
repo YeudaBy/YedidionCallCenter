@@ -23,7 +23,7 @@ export const api = remultNext({
     dataProvider:
         production() ?
             createPostgresDataProvider({
-                connectionString: process.env.POSTGRES_URL + "?sslmode=require",
+                connectionString: process.env.POSTGRES_URL,
             }) : async () => {
                 return new JsonDataProvider(new JsonEntityFileStorage("./db"))
             },
