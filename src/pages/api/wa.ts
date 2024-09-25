@@ -1,10 +1,11 @@
 import {NextApiRequest, NextApiResponse} from "next";
+import {WaWebhook} from "@/model/wa/WaWebhook";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
     switch (req.method) {
         case 'POST': {
-            const message = req.body;
-            console.log(message);
+            const message = req.body as WaWebhook;
+            console.log(JSON.stringify(message, null, 2));
             res.status(200).json({success: true});
         }
             break
