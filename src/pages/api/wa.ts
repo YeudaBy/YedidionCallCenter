@@ -7,6 +7,7 @@ import {buildWaReadReceipts} from "@/model/wa/WaReadReceipts";
 import {withRemult} from "remult";
 import {Procedure} from "@/model/Procedure";
 import {buildInteractiveList} from "@/model/wa/WaInteractiveList";
+import {User} from "@/model/User";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     switch (req.method) {
@@ -37,6 +38,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 await withRemult(async (remult) => {
                     remult.apiClient.url = `${process.env.BASE_URL}/api`
                     const repo = remult.repo(Procedure)
+                    const users = remult.repo(User)
+
+                    const user = await users.findFirst({phone: parseInt(message?.from.slice(3))})
+                    if (!user) return;
+
                     if (message?.text) {
                         const results = await repo.find({
                             limit: 10,
@@ -102,14 +108,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                             }
                         ))
                     } else if (message?.interactive) {
-                        console.log(JSON.stringify(message.interactive))
                         const id = message?.interactive?.list_reply?.id;
                         if (id) {
                             const p = await repo.findFirst({id})
                             console.log(p)
                             await whatsappManager.sendTextMessage(buildMessage(
                                 message.from,
-                                p?.parseToWaString() || 'Not found',
+                                p ? formatProcedure(p) : 'לא נמצאו תוצאות',
                                 true,
                                 message.id
                             ));
@@ -143,4 +148,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
 function max24chars(str: string): string {
     return str.length > 24 ? str.slice(0, 21) + '...' : str;
+}
+
+function formatProcedure(p: Procedure): string {
+    return `*מוקד ארצי - ${p.title}*:\n\n${p.procedure}\n\n${process.env.BASE_URL}/?id=${p.id}`
 }
