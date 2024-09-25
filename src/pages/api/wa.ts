@@ -7,7 +7,12 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
             const update = req.body as WaWebhook;
             try {
                 const messageValue = update.entry[0].changes?.[0].value;
-                console.log(JSON.stringify(messageValue?.metadata));
+
+                if (messageValue?.metadata?.display_phone_number !== process.env.WA_DISPLAY_PHONE_NUMBER) {
+                    res.status(200).json({success: false});
+                    return;
+                }
+
                 const message = messageValue?.messages?.[0];
                 if (!!message) {
                     console.log('Received message:', message.from, message.id, message.text);
