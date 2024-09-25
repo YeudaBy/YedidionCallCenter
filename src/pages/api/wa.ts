@@ -40,28 +40,42 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         const results = await repo.find({
                             limit: 10,
                             where: {
-                                title: {
-                                    $contains: message.text.body
-                                }
+                                $or: [
+                                    {title: message.text.body},
+                                    {
+                                        keywords: {
+                                            $contains: message.text.body
+                                        }
+                                    }
+                                ]
                             },
                             orderBy: {
                                 updatedAt: 'desc'
                             }
                         })
                         console.log(results)
+                        if (!results.length) {
+                            await whatsappManager.sendTextMessage(buildMessage(
+                                message.from,
+                                'לא נמצאו תוצאות',
+                                true,
+                                message?.id
+                            ));
+                            return;
+                        }
                         await whatsappManager.sendInteractiveMessage(buildInteractiveList(
                             message.from,
                             {
                                 type: 'list',
                                 header: {
                                     type: 'text',
-                                    text: 'תוצאות חיפוש'
+                                    text: 'תוצאות חיפוש:'
                                 },
                                 body: {
-                                    text: 'בחר מהרשימה נוהל להצגה'
+                                    text: 'להלן תוצאות החיפוש למונח המבוקש'
                                 },
                                 footer: {
-                                    text: 'Powered by Remult'
+                                    text: 'מוקד ידידים 1230'
                                 },
                                 action: {
                                     button: "בחר נוהל",
@@ -70,7 +84,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                             title: 'כותרת',
                                             rows: results.map(p => ({
                                                 title: p.title,
-                                                description: p.updatedAt.toISOString(),
+                                                description: p.updatedAt.toLocaleDateString(
+                                                    'he-IL',
+                                                    {
+                                                        year: 'numeric',
+                                                        month: 'numeric',
+                                                        day: 'numeric',
+                                                    }
+                                                ),
                                                 id: p.id
                                             }))
                                         }
@@ -79,6 +100,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                             }
                         ))
                     } else if (message?.interactive) {
+                        console.log(JSON.stringify(message.interactive))
                         const id = message?.interactive?.type?.list_reply?.id;
                         if (id) {
                             const p = await repo.findFirst({id})
@@ -87,7 +109,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                 message.from,
                                 p?.parseToWaString() || 'Not found',
                                 true,
-                                message?.id
+                                message.id
                             ));
                         }
                     }
