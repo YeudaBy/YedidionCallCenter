@@ -103,7 +103,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         ))
                     } else if (message?.interactive) {
                         console.log(JSON.stringify(message.interactive))
-                        const id = message?.interactive?.type?.list_reply?.id;
+                        const id = message?.interactive?.list_reply?.id;
                         if (id) {
                             const p = await repo.findFirst({id})
                             console.log(p)
