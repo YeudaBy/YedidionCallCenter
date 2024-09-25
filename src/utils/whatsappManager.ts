@@ -41,6 +41,7 @@ class WhatsAppManager implements IWhatsAppManager {
     }
 
     async sendReceipts(object: WaReadReceipts): Promise<void> {
+        console.log(JSON.stringify(object))
         await this.post(object);
     }
 
@@ -50,12 +51,18 @@ class WhatsAppManager implements IWhatsAppManager {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${process.env.WA_ACCESS_TOKEN}`
         }
-        const response = await fetch(url, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(body)
-        })
-        return await response.json()
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(body)
+            })
+            console.log(JSON.stringify(await response.clone().json()))
+            return await response.json()
+        } catch (e) {
+            console.error('Error sending message:', e)
+            return undefined
+        }
     }
 }
 
