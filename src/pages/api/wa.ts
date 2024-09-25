@@ -6,7 +6,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         case 'POST': {
             const update = req.body as WaWebhook;
             try {
-                const message = update.entry[0].changes?.[0].value.messages?.[0];
+                const messageValue = update.entry[0].changes?.[0].value;
+                console.log(JSON.stringify(messageValue?.metadata));
+                const message = messageValue?.messages?.[0];
                 if (!!message) {
                     console.log('Received message:', message.from, message.id, message.text);
                 }
