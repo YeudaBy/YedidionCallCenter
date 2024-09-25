@@ -14,7 +14,7 @@ export type WaTextMessage = {
     };
 }
 
-export function buildMessage(to: string, text: string, previewLinks: boolean, replay?: string): WaTextMessage {
+export function buildMessage(to: string, text: string, previewLinks: boolean = false, replay?: string): WaTextMessage {
     const message: WaTextMessage = {
         messaging_product: "whatsapp",
         recipient_type: "individual",
