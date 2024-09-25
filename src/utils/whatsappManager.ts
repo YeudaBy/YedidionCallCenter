@@ -47,6 +47,7 @@ class WhatsAppManager implements IWhatsAppManager {
 
     private async post(body: any) {
         const url = `https://graph.facebook.com/${process.env.WA_VERSION}/${process.env.WA_NUMBER_ID}/messages`
+        console.log(url)
         const headers = {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${process.env.WA_ACCESS_TOKEN}`
