@@ -6,6 +6,7 @@ import {buildMessage} from "@/model/wa/WaTextMessage";
 import {buildWaReadReceipts} from "@/model/wa/WaReadReceipts";
 import {withRemult} from "remult";
 import {Procedure} from "@/model/Procedure";
+import {buildInteractiveList} from "@/model/wa/WaInteractiveList";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     switch (req.method) {
@@ -48,12 +49,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                             }
                         })
                         console.log(results)
-                        await whatsappManager.sendTextMessage(buildMessage(
+                        await whatsappManager.sendInteractiveMessage(buildInteractiveList(
                             message.from,
-                            "List found",
-                            true,
-                            message?.id
-                        ));
+                            {
+                                type: 'list',
+                                header: {
+                                    type: 'text',
+                                    text: 'תוצאות חיפוש'
+                                },
+                                body: {
+                                    text: 'בחר מהרשימה נוהל להצגה'
+                                },
+                                footer: {
+                                    text: 'Powered by Remult'
+                                },
+                                action: {
+                                    button: "בחר נוהל",
+                                    sections: [
+                                        {
+                                            title: 'כותרת',
+                                            rows: results.map(p => ({
+                                                title: p.title,
+                                                description: p.updatedAt.toISOString(),
+                                                id: p.id
+                                            }))
+                                        }
+                                    ]
+                                }
+                            }
+                        ))
                     } else if (message?.interactive) {
                         const id = message?.interactive?.type?.list_reply?.id;
                         if (id) {
@@ -68,15 +92,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         }
                     }
                 })
-
-                const responseId = await whatsappManager.sendTextMessage(buildMessage(
-                    message.from,
-                    'Hello from the server! ',
-                    true,
-                    message?.id
-                ));
-
-                console.log('Sent message:', responseId);
 
                 res.status(200).json({success: true});
             } catch (e) {
