@@ -49,16 +49,15 @@ export type WaMessage = {
     from: string;
     id: string;
     interactive?: {
-        type: {
-            button_reply?: {
-                id: string;
-                title: string;
-            },
-            list_reply?: {
-                id: string;
-                title: string;
-                description: string;
-            }
+        type: string,
+        button_reply?: {
+            id: string;
+            title: string;
+        },
+        list_reply?: {
+            id: string;
+            title: string;
+            description: string;
         }
     },
     text?: {

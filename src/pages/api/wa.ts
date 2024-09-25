@@ -30,7 +30,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 await whatsappManager.reactToTextMessage(buildReaction(
                     message.from,
                     message.id,
-                    Emoji.Like
+                    // random emoji
+                    Object.values(Emoji)[Math.floor(Math.random() * Object.values(Emoji).length)]
                 ));
 
                 await withRemult(async (remult) => {
@@ -83,15 +84,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                         {
                                             title: 'כותרת',
                                             rows: results.map(p => ({
-                                                title: p.title,
-                                                description: p.updatedAt.toLocaleDateString(
-                                                    'he-IL',
-                                                    {
-                                                        year: 'numeric',
-                                                        month: 'numeric',
-                                                        day: 'numeric',
-                                                    }
-                                                ),
+                                                title: max24chars(p.title),
+                                                description: p.title.length > 24 ? p.title :
+                                                    p.updatedAt.toLocaleDateString(
+                                                        'he-IL',
+                                                        {
+                                                            year: 'numeric',
+                                                            month: 'numeric',
+                                                            day: 'numeric',
+                                                        }
+                                                    ),
                                                 id: p.id
                                             }))
                                         }
@@ -136,4 +138,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             res.status(405).end() // Method Not Allowed
             break
     }
+}
+
+
+function max24chars(str: string): string {
+    return str.length > 24 ? str.slice(0, 21) + '...' : str;
 }
