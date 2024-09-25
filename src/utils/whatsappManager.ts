@@ -41,13 +41,11 @@ class WhatsAppManager implements IWhatsAppManager {
     }
 
     async sendReceipts(object: WaReadReceipts): Promise<void> {
-        console.log(JSON.stringify(object))
         await this.post(object);
     }
 
     private async post(body: any) {
         const url = `https://graph.facebook.com/${process.env.WA_VERSION}/${process.env.WA_NUMBER_ID}/messages`
-        console.log(url)
         const headers = {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${process.env.WA_ACCESS_TOKEN}`

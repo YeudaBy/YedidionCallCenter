@@ -4,6 +4,8 @@ import {whatsappManager} from "@/utils/whatsappManager";
 import {buildReaction, Emoji} from "@/model/wa/WaReaction";
 import {buildMessage} from "@/model/wa/WaTextMessage";
 import {buildWaReadReceipts} from "@/model/wa/WaReadReceipts";
+import {withRemult} from "remult";
+import {Procedure} from "@/model/Procedure";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     switch (req.method) {
@@ -27,8 +29,45 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 await whatsappManager.reactToTextMessage(buildReaction(
                     message.from,
                     message.id,
-                    Emoji.SMILE
+                    Emoji.Like
                 ));
+
+                await withRemult(async (remult) => {
+                    remult.apiClient.url = `${process.env.BASE_URL}/api`
+                    const repo = remult.repo(Procedure)
+                    if (message?.text) {
+                        const results = await repo.find({
+                            limit: 10,
+                            where: {
+                                title: {
+                                    $contains: message.text.body
+                                }
+                            },
+                            orderBy: {
+                                updatedAt: 'desc'
+                            }
+                        })
+                        console.log(results)
+                        await whatsappManager.sendTextMessage(buildMessage(
+                            message.from,
+                            "List found",
+                            true,
+                            message?.id
+                        ));
+                    } else if (message?.interactive) {
+                        const id = message?.interactive?.type?.list_reply?.id;
+                        if (id) {
+                            const p = await repo.findFirst({id})
+                            console.log(p)
+                            await whatsappManager.sendTextMessage(buildMessage(
+                                message.from,
+                                p?.parseToWaString() || 'Not found',
+                                true,
+                                message?.id
+                            ));
+                        }
+                    }
+                })
 
                 const responseId = await whatsappManager.sendTextMessage(buildMessage(
                     message.from,

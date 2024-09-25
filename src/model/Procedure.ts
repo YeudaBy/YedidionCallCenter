@@ -41,6 +41,10 @@ export class Procedure extends IdEntity {
 
     @Field(() => Array<string>)
     logs: string[] = [];
+
+    parseToWaString() {
+        return `${this.title}\n${this.procedure}`
+    }
 }
 
 export enum ProcedureType {

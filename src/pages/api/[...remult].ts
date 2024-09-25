@@ -19,7 +19,7 @@ export const api = remultNext({
         if (!jwtToken?.sub) return undefined
         return User.signIn(remult, jwtToken.sub)
     },
-    logApiEndPoints: true,
+    logApiEndPoints: process.env.NODE_ENV !== 'development',
     dataProvider:
         production() ?
             createPostgresDataProvider({
