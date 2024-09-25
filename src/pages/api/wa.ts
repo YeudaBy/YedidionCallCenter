@@ -1,8 +1,9 @@
 import {NextApiRequest, NextApiResponse} from "next";
 import {WaWebhook} from "@/model/wa/WaWebhook";
 import {whatsappManager} from "@/utils/whatsappManager";
-import {Emoji} from "@/model/wa/WaReaction";
+import {buildReaction, Emoji} from "@/model/wa/WaReaction";
 import {buildMessage} from "@/model/wa/WaTextMessage";
+import {buildWaReadReceipts} from "@/model/wa/WaReadReceipts";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     switch (req.method) {
@@ -21,13 +22,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     console.log('Received message:', message.from, message.id, message.text);
                 }
 
-                await whatsappManager.reactToTextMessage(message.from, message.id, Emoji.Like);
-                await whatsappManager.sendTextMessage(buildMessage(
+                await whatsappManager.sendReceipts(buildWaReadReceipts(message.id))
+
+                await whatsappManager.reactToTextMessage(buildReaction(
+                    message.from,
+                    message.id,
+                    Emoji.SMILE
+                ));
+
+                const responseId = await whatsappManager.sendTextMessage(buildMessage(
                     message.from,
                     'Hello from the server! ',
                     true,
                     message?.id
                 ));
+
+                console.log('Sent message:', responseId);
 
                 res.status(200).json({success: true});
             } catch (e) {

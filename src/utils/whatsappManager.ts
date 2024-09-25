@@ -1,15 +1,20 @@
-import {WaTextMessage} from "@/model/wa/WaTextMessage";
+import {WaTextMessage, WaTextMessageResponse} from "@/model/wa/WaTextMessage";
+import {WaReadReceipts} from "@/model/wa/WaReadReceipts";
+import {WaReaction} from "@/model/wa/WaReaction";
+import {WaImageMessage} from "@/model/wa/WaImageMessage";
 
 export interface IWhatsAppManager {
     getUserNumber(req: any): Promise<string>;
 
     getUserText(req: any): Promise<string>;
 
-    sendTextMessage(textMessage: WaTextMessage): Promise<string | undefined>;
+    sendTextMessage(object: WaTextMessage): Promise<string | undefined>;
 
-    reactToTextMessage(to: string, message_id: string, emoji: string): Promise<void>;
+    reactToTextMessage(object: WaReaction): Promise<void>;
 
-    sendMediaMessage(number: string, mediaUrl: string): Promise<void>;
+    sendMediaMessage(object: WaImageMessage): Promise<string | undefined>;
+
+    sendReceipts(object: WaReadReceipts): Promise<void>;
 }
 
 class WhatsAppManager implements IWhatsAppManager {
@@ -21,24 +26,22 @@ class WhatsAppManager implements IWhatsAppManager {
         return req.body;
     }
 
-    async sendTextMessage(textMessage: WaTextMessage): Promise<string | undefined> {
-        const response = await this.post(textMessage)
+    async sendTextMessage(object: WaTextMessage): Promise<string | undefined> {
+        const response: WaTextMessageResponse = await this.post(object)
         return response?.messages?.[0]?.id
     }
 
-    async reactToTextMessage(to: string, message_id: string, emoji: string): Promise<void> {
-        const body = {
-            messaging_product: "whatsapp",
-            recipient_type: "individual",
-            to,
-            type: "reaction",
-            reaction: {message_id, emoji}
-        }
-        await this.post(body)
+    async reactToTextMessage(object: WaReaction): Promise<void> {
+        await this.post(object);
     }
 
-    async sendMediaMessage(number: string, mediaUrl: string): Promise<void> {
-        console.log(`Sending media message to ${number} with media url: ${mediaUrl}`);
+    async sendMediaMessage(object: WaImageMessage): Promise<string | undefined> {
+        const response: WaTextMessageResponse = await this.post(object);
+        return response?.messages?.[0]?.id
+    }
+
+    async sendReceipts(object: WaReadReceipts): Promise<void> {
+        await this.post(object);
     }
 
     private async post(body: any) {
