@@ -58,6 +58,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                             isSuperAdmin ? "add_user__super_admin" : "add_user__admin",
                             isSuperAdmin ? "ADD_NEW_SUPER_ADMIN" : "ADD_NEW"
                         ))
+                        return
                     }
 
                     if (message?.text) {
