@@ -1,0 +1,62 @@
+{
+  "version": "3.1",
+  "screens": [
+    {
+      "id": "ADD_NEW",
+      "title": "הוספת מוקדן חדש",
+      "data": {},
+      "terminal": true,
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Form",
+            "name": "flow_path",
+            "children": [
+              {
+                "type": "TextSubheading",
+                "text": "הזינו את פרטי המוקדן:"
+              },
+              {
+                "type": "TextInput",
+                "label": "שם",
+                "name": "name",
+                "required": true,
+                "input-type": "text",
+                "helper-text": "שם + מספר המוקדן (לדוגמה ״יהודה - 1883״)"
+              },
+              {
+                "type": "TextInput",
+                "label": "כתובת אימייל",
+                "name": "email",
+                "required": true,
+                "input-type": "email",
+                "helper-text": "באמצעות כתובת אימייל זו המוקדן יוכל להתחבר לאתר."
+              },
+              {
+                "type": "TextInput",
+                "label": "מספר טלפון",
+                "name": "phone",
+                "required": false,
+                "input-type": "phone",
+                "helper-text": "מספר הטלפון לשימוש בבוט (מספר ישראלי, לדוגמה - 0531234567)"
+              },
+              {
+                "type": "Footer",
+                "label": "שמירה",
+                "on-click-action": {
+                  "name": "complete",
+                  "payload": {
+                    "name": "${form.name}",
+                    "email": "${form.email}",
+                    "phone": "${form.phone}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

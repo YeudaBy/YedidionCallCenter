@@ -58,6 +58,11 @@ export type WaMessage = {
             id: string;
             title: string;
             description: string;
+        },
+        nfm_reply?: {
+            name: string,
+            body: string,
+            response_json: string
         }
     },
     text?: {

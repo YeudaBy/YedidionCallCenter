@@ -8,6 +8,7 @@ import {withRemult} from "remult";
 import {Procedure} from "@/model/Procedure";
 import {buildInteractiveList} from "@/model/wa/WaInteractiveList";
 import {User} from "@/model/User";
+import {InteractiveType} from "@/model/wa/WhatsApp";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     switch (req.method) {
@@ -73,7 +74,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         await whatsappManager.sendInteractiveMessage(buildInteractiveList(
                             message.from,
                             {
-                                type: 'list',
+                                type: InteractiveType.LIST,
                                 header: {
                                     type: 'text',
                                     text: 'תוצאות חיפוש:'
@@ -108,16 +109,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                             }
                         ))
                     } else if (message?.interactive) {
-                        const id = message?.interactive?.list_reply?.id;
-                        if (id) {
-                            const p = await repo.findFirst({id})
-                            console.log(p)
-                            await whatsappManager.sendTextMessage(buildMessage(
-                                message.from,
-                                p ? formatProcedure(p) : 'לא נמצאו תוצאות',
-                                true,
-                                message.id
-                            ));
+                        switch (message.interactive.type) {
+                            case "nfm_reply": {
+                                try {
+                                    const response = JSON.parse(message.interactive.nfm_reply!.response_json)
+                                    console.log(response)
+                                } catch (e) {
+                                    console.error('Error parsing JSON:', e)
+                                }
+                            }
+                                break
+
+                            case "list_reply": {
+                                const id = message?.interactive?.list_reply?.id;
+                                if (id) {
+                                    const p = await repo.findFirst({id})
+                                    console.log(p)
+                                    await whatsappManager.sendTextMessage(buildMessage(
+                                        message.from,
+                                        p ? formatProcedure(p) : 'לא נמצאו תוצאות',
+                                        true,
+                                        message.id
+                                    ));
+                                }
+                            }
+                                break
                         }
                     }
                 })

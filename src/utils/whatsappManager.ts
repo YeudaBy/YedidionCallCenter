@@ -2,7 +2,7 @@ import {WaTextMessage, WaTextMessageResponse} from "@/model/wa/WaTextMessage";
 import {WaReadReceipts} from "@/model/wa/WaReadReceipts";
 import {WaReaction} from "@/model/wa/WaReaction";
 import {WaImageMessage} from "@/model/wa/WaImageMessage";
-import {WaInteractiveList} from "@/model/wa/WaInteractiveList";
+import {WaFlow, WaInteractiveList} from "@/model/wa/WaInteractiveList";
 
 export interface IWhatsAppManager {
     getUserNumber(req: any): Promise<string>;
@@ -17,7 +17,7 @@ export interface IWhatsAppManager {
 
     sendReceipts(object: WaReadReceipts): Promise<void>;
 
-    sendInteractiveMessage(object: WaInteractiveList): Promise<void>;
+    sendInteractiveMessage(object: WaInteractiveList | WaFlow): Promise<void>;
 }
 
 class WhatsAppManager implements IWhatsAppManager {
@@ -47,7 +47,7 @@ class WhatsAppManager implements IWhatsAppManager {
         await this.post(object);
     }
 
-    async sendInteractiveMessage(object: WaInteractiveList): Promise<void> {
+    async sendInteractiveMessage(object: WaInteractiveList | WaFlow): Promise<void> {
         await this.post(object);
     }
 
