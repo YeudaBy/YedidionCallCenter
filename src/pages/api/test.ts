@@ -5,12 +5,14 @@ import {buildFlow} from "@/model/wa/WaInteractiveList";
 // const procedureRepo = remult.repo(Procedure)
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+    const sa = req.query.sa
+
     const r = await whatsappManager.sendInteractiveMessage(buildFlow(
         "972537845671",
         'תהליך הוספת מוקדן חדש',
         `בלחיצה על הכפתור המצורף, תוכלו להוסיף מוקדנים חדשים למערכת הנהלים, לצורך שימוש באתר ובבוט.\n\nעריכת, מחיקת ואישור מוקדנים מתבצעת על ידי דף ניהול המשתמשים באתר\n\n${process.env.BASE_URL}/admin`,
         "בדיקה",
-        process.env.WA_ADD_USER__ADMIN_FLOW_ID as string,
+        (!!sa ? process.env.WA_ADD_USER__SUPER_ADMIN_FLOW_ID : process.env.WA_ADD_USER__ADMIN_FLOW_ID) as string,
         "add_user__admin"
     ))
 

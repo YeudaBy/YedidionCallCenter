@@ -210,7 +210,11 @@ export function buildFlow(
                     flow_action: "navigate",
                     flow_action_payload: {
                         screen: "ADD_NEW",
-                        data: {}
+                        data: {
+                            product_name: "name",
+                            product_description: "description",
+                            product_price: 100
+                        }
                     }
                 }
             }

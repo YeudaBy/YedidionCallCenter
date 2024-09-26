@@ -9,6 +9,7 @@ import {Procedure} from "@/model/Procedure";
 import {buildInteractiveList} from "@/model/wa/WaInteractiveList";
 import {User, UserRole} from "@/model/User";
 import {InteractiveType} from "@/model/wa/WhatsApp";
+import {District} from "@/model/District";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     switch (req.method) {
@@ -117,19 +118,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                     const response = JSON.parse(message.interactive.nfm_reply!.response_json) as {
                                         name: string,
                                         email: string,
-                                        phone?: string | undefined
+                                        phone?: string | undefined,
+                                        district?: string | undefined
                                     } | undefined
-
+                                    console.log(response)
                                     if (!response) {
                                         await whatsappManager.sendTextMessage(buildMessage(message.from, "נכשל בקבלת הנתונים", false, message.id))
                                     } else {
-                                        await users.insert({
+                                        const district = !!response.district ? District[response.district as keyof typeof District] : user.district
+                                        const newUser = await users.insert({
                                             phone: response.phone ? phoneToDb(response.phone) : undefined,
                                             name: response.name,
                                             email: response.email,
-                                            district: user.district,
+                                            district: district,
                                             roles: UserRole.Dispatcher
                                         })
+                                        if (newUser) {
+                                            await whatsappManager.sendTextMessage(buildMessage(message.from, `המשתמש ${newUser.name} נוצר בהצלחה`, false, message.id))
+                                        } else {
+                                            await whatsappManager.sendTextMessage(buildMessage(message.from, "נכשל ביצירת המשתמש", false, message.id))
+                                        }
                                     }
                                     console.log(response)
                                 } catch (e) {
