@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState} from "react";
+import {useCallback, useEffect, useRef, useState} from "react";
 import {Procedure, ProcedureType} from "@/model/Procedure";
 import {remult} from "remult";
 import * as Tremor from "@tremor/react";
@@ -66,6 +66,7 @@ export default function IndexPage() {
     const [addNumOpen, setAddNumOpen] = useState(false)
     const [order, setOrder] = useState<Order>(Order.Recent)
     const [logsOpen, setLogsOpen] = useState(false)
+    const [deleteOpen, setDeleteOpen] = useState<Procedure>()
 
     useEffect(() => {
         if (!order) return
@@ -126,7 +127,8 @@ export default function IndexPage() {
             where: {
                 ...(["All", District.General].includes(district) ? {}
                     : {districts: {$contains: district}}),
-                active: true
+                active: true,
+                type: ProcedureType.Procedure,
             },
             orderBy: {
                 updatedAt: "desc"
@@ -152,7 +154,8 @@ export default function IndexPage() {
                             $contains: query
                         }
                     }
-                ]
+                ],
+                type: ProcedureType.Procedure,
             }
         }).then(procedures => {
             setResults(procedures)
@@ -183,6 +186,18 @@ export default function IndexPage() {
             setLoading(false)
         })
     }, [showInactive]);
+
+    const addNew = useCallback((newProcedure: Procedure) => {
+        setProcedures([...procedures || [], newProcedure])
+    }, [procedures]);
+
+    const editProcedure = useCallback((editedProcedure: Procedure) => {
+        setProcedures(procedures?.map(p => p.id === editedProcedure.id ? editedProcedure : p))
+    }, [procedures]);
+
+    const deleteProcedure = useCallback((deletedProcedureId: string) => {
+        setProcedures(procedures?.filter(p => p.id !== deletedProcedureId))
+    }, [procedures]);
 
     return <Tremor.Flex flexDirection={"col"} className={"p-4 max-w-4xl m-auto"}>
 
@@ -325,6 +340,9 @@ export default function IndexPage() {
             !!edited && <AddProcedure
                 open={true}
                 procedure={edited === true ? undefined : edited}
+                onAdd={addNew}
+                onEdit={editProcedure}
+                setOpenDelete={setDeleteOpen}
                 onClose={(val) => {
                     setEdited(undefined)
                     setEdited(undefined)
@@ -500,10 +518,13 @@ function ShowProcedure({procedure, open, onClose, onEdit}: {
     </Tremor.Dialog>
 }
 
-function AddProcedure({procedure, open, onClose}: {
+function AddProcedure({procedure, open, onClose, onAdd, onEdit, setOpenDelete}: {
     open: boolean,
     onClose: (val: boolean) => void,
     procedure?: Procedure,
+    onAdd?: (procedure: Procedure) => void,
+    onEdit?: (procedure: Procedure) => void,
+    setOpenDelete?: (val: Procedure | undefined) => void
 }) {
     const [loading, setLoading] = useState(false)
     const [title, setTitle] = useState<string>()
@@ -515,8 +536,6 @@ function AddProcedure({procedure, open, onClose}: {
     const [images, setImages] = useState<string[]>()
 
     const [showLogs, setShowLogs] = useState(false)
-
-    console.log(procedure)
 
     useEffect(() => {
         if (!!procedure) {
@@ -548,8 +567,9 @@ function AddProcedure({procedure, open, onClose}: {
                 log: newObj.title,
                 type: LogType.Created
             })
+            onAdd?.(newObj)
         } else {
-            await procedureRepo.update(procedure.id!, {
+            const updatedObj = await procedureRepo.update(procedure.id!, {
                 title: title,
                 procedure: content,
                 active: active,
@@ -574,23 +594,11 @@ function AddProcedure({procedure, open, onClose}: {
                     type: LogType.Updated
                 })
             }
+            onEdit?.(updatedObj)
         }
         setLoading(false)
         onClose?.(false)
     }
-
-    useEffect(() => {
-        // cleanup
-        return () => {
-            setTitle(undefined)
-            setContent(undefined)
-            setKeywords([])
-            setActive(true)
-            setType(ProcedureType.Procedure)
-            setDistricts([District.General])
-            setImages([])
-        }
-    }, []);
 
     return <>
         <Tremor.Dialog open={open} onClose={(val) => onClose(val)}>
@@ -712,25 +720,6 @@ function AddProcedure({procedure, open, onClose}: {
                     </Tremor.Text>
                 </Flex>
 
-                {
-                    remult.user?.roles?.includes(UserRole.SuperAdmin) && !!procedure &&
-                    <Button
-                        onClick={async () => {
-                            await procedureRepo.delete(procedure.id!)
-                            onClose(false)
-                            await logRepo.insert({
-                                byUserId: remult.user?.id!,
-                                procedureId: procedure.id!,
-                                log: [procedure.title, procedure.procedure].join(", "),
-                                type: LogType.Deleted
-                            })
-                        }}
-                        color={"red"}>
-                        מחק לצמיתות
-                    </Button>
-                }
-
-
                 <Flex className={"mt-4 gap-1.5"}>
                     <Tremor.Button
                         className="grow"
@@ -741,6 +730,14 @@ function AddProcedure({procedure, open, onClose}: {
                         }}>
                         {procedure ? "עדכן" : "הוסף"}
                     </Tremor.Button>
+                    {
+                        remult.user?.roles?.includes(UserRole.SuperAdmin) && !!procedure &&
+                        <Button
+                            onClick={() => setOpenDelete?.(procedure)}
+                            color={"red"}>
+                            מחק
+                        </Button>
+                    }
                     <Button
                         variant={"secondary"}
                         onClick={() => onClose(false)}>
@@ -752,6 +749,47 @@ function AddProcedure({procedure, open, onClose}: {
 
         {showLogs && <LogsDialog procedure={procedure} open={true} onClose={setShowLogs}/>}
     </>
+}
+
+function DeleteDialog({procedure, onClose, onDelete}: {
+    procedure: Procedure,
+    onClose: (val: boolean) => void,
+    onDelete: (procedureId: string) => void
+}) {
+    const [loading, setLoading] = useState(false)
+
+    const deleteProcedure = async () => {
+        setLoading(true)
+        await procedureRepo.delete(procedure.id!)
+        await logRepo.insert({
+            byUserId: remult.user?.id!,
+            procedureId: procedure.id!,
+            log: [procedure.title, procedure.procedure].join(", "),
+            type: LogType.Deleted
+        })
+        onDelete(procedure.id!)
+        onClose(false)
+    }
+
+    return <Tremor.Dialog open={true} onClose={() => onClose(false)}>
+        <Tremor.DialogPanel className={"gap-1.5 flex items-center flex-col"}>
+            <CloseDialogButton close={() => onClose(false)}/>
+            <Tremor.Text className={"text-lg font-bold"}>מחיקת נוהל</Tremor.Text>
+            <Tremor.Text className={"text-xs text-start self-start mb-1"}>
+                האם את/ה בטוח/ה שברצונך למחוק את הנוהל <span
+                className={"font-semibold"}> {procedure.title} </span> לצמיתות?
+            </Tremor.Text>
+            <Tremor.Button
+                variant={"primary"}
+                color={"red"}
+                icon={RiDeleteBinLine}
+                onClick={() => {
+                    deleteProcedure()
+                }}>
+                מחק
+            </Tremor.Button>
+        </Tremor.DialogPanel>
+    </Tremor.Dialog>
 }
 
 type LogView = {
@@ -768,6 +806,7 @@ function LogsDialog({procedure, open, onClose}: {
     onClose: (val: boolean) => void
 }) {
     const [logs, setLogs] = useState<LogView[]>([])
+    const [loading, setLoading] = useState(false)
 
     useEffect(() => {
         async function buildLog(log: Log): Promise<LogView> {
@@ -783,6 +822,7 @@ function LogsDialog({procedure, open, onClose}: {
         }
 
         async function getLogs() {
+            setLoading(true)
             if (!procedure) {
                 const logs = await logRepo.find({orderBy: {createdAt: "desc"}, limit: 50})
                 setLogs(await Promise.all(logs.map(buildLog)))
@@ -794,6 +834,7 @@ function LogsDialog({procedure, open, onClose}: {
                 })
                 setLogs(await Promise.all(logs.map(buildLog)))
             }
+            setLoading(false)
         }
 
         getLogs()
@@ -806,7 +847,10 @@ function LogsDialog({procedure, open, onClose}: {
             <CloseDialogButton close={() => onClose(false)}/>
             <Tremor.Text className={"text-lg font-bold"}>היסטורית שינויים</Tremor.Text>
             <Tremor.List>
-                {logs.length === 0 && <Tremor.ListItem>
+                {loading && <Tremor.ListItem>
+                    <Tremor.Text>טוען...</Tremor.Text>
+                </Tremor.ListItem>}
+                {logs.length === 0 && !loading && <Tremor.ListItem>
                     <Tremor.Text>לא נמצאו שינויים</Tremor.Text>
                 </Tremor.ListItem>}
                 {logs.map((log, i) => {

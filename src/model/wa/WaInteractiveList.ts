@@ -182,6 +182,7 @@ export function buildFlow(
     footer: string,
     flowId: string,
     flowToken: string,
+    screen: string
 ): WaFlow {
     return {
         messaging_product: "whatsapp",
@@ -209,7 +210,7 @@ export function buildFlow(
                     flow_cta: "הוספת מוקדן",
                     flow_action: "navigate",
                     flow_action_payload: {
-                        screen: "ADD_NEW",
+                        screen: screen,
                         data: {
                             product_name: "name",
                             product_description: "description",

@@ -5,11 +5,12 @@ import {buildReaction, Emoji} from "@/model/wa/WaReaction";
 import {buildMessage} from "@/model/wa/WaTextMessage";
 import {buildWaReadReceipts} from "@/model/wa/WaReadReceipts";
 import {withRemult} from "remult";
-import {Procedure} from "@/model/Procedure";
-import {buildInteractiveList} from "@/model/wa/WaInteractiveList";
+import {Procedure, ProcedureType} from "@/model/Procedure";
+import {buildFlow, buildInteractiveList} from "@/model/wa/WaInteractiveList";
 import {User, UserRole} from "@/model/User";
 import {InteractiveType} from "@/model/wa/WhatsApp";
 import {District} from "@/model/District";
+import {buildWaImageMessage} from "@/model/wa/WaImageMessage";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     switch (req.method) {
@@ -35,7 +36,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 await whatsappManager.reactToTextMessage(buildReaction(
                     message.from,
                     message.id,
-                    // random emoji
                     Object.values(Emoji)[Math.floor(Math.random() * Object.values(Emoji).length)]
                 ));
 
@@ -44,8 +44,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     const repo = remult.repo(Procedure)
                     const users = remult.repo(User)
 
-                    const user = await users.findFirst({phone: parseInt(message?.from.slice(3))})
-                    if (!user) return;
+                    const currentUser = await users.findFirst({phone: parseInt(message?.from.slice(3))})
+                    if (!currentUser) return;
+
+                    if (message.text?.body === "חדש") {
+                        const isSuperAdmin = currentUser.roles === UserRole.SuperAdmin
+                        await whatsappManager.sendInteractiveMessage(buildFlow(
+                            message.from,
+                            'תהליך הוספת מוקדן חדש',
+                            `בלחיצה על הכפתור המצורף, תוכלו להוסיף מוקדנים חדשים למערכת הנהלים, לצורך שימוש באתר ובבוט.\n\nעריכת, מחיקת ואישור מוקדנים מתבצעת על ידי דף ניהול המשתמשים באתר\n\n${process.env.BASE_URL}/admin`,
+                            "בדיקה",
+                            (isSuperAdmin ? process.env.WA_ADD_USER__SUPER_ADMIN_FLOW_ID : process.env.WA_ADD_USER__ADMIN_FLOW_ID) as string,
+                            isSuperAdmin ? "add_user__super_admin" : "add_user__admin",
+                            isSuperAdmin ? "ADD_NEW_SUPER_ADMIN" : "ADD_NEW"
+                        ))
+                    }
 
                     if (message?.text) {
                         const results = await repo.find({
@@ -125,7 +138,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                     if (!response) {
                                         await whatsappManager.sendTextMessage(buildMessage(message.from, "נכשל בקבלת הנתונים", false, message.id))
                                     } else {
-                                        const district = !!response.district ? District[response.district as keyof typeof District] : user.district
+                                        const district = !!response.district ? District[response.district as keyof typeof District] : currentUser.district
                                         const newUser = await users.insert({
                                             phone: response.phone ? phoneToDb(response.phone) : undefined,
                                             name: response.name,
@@ -157,6 +170,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                         true,
                                         message.id
                                     ));
+                                    if (p?.images) {
+                                        for (const image of p.images) {
+                                            await whatsappManager.sendMediaMessage(buildWaImageMessage(
+                                                message.from,
+                                                image,
+                                                p.title
+                                            ))
+                                        }
+                                    }
                                 }
                             }
                                 break
@@ -193,6 +215,7 @@ function max24chars(str: string): string {
 }
 
 function formatProcedure(p: Procedure): string {
+    if (p.type === ProcedureType.Guideline) return p.procedure
     return `*מוקד ארצי - ${p.title}*:\n\n${p.procedure}\n\n${process.env.BASE_URL}/?id=${p.id}`
 }
 
