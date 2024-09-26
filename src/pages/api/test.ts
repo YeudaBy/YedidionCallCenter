@@ -6,11 +6,12 @@ import {buildFlow} from "@/model/wa/WaInteractiveList";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     const r = await whatsappManager.sendInteractiveMessage(buildFlow(
-        "972534506559",
+        "972537845671",
         'תהליך הוספת מוקדן חדש',
-        "בלחיצה על הכפתור המצורף, תוכלו להוסיף מוקדנים חדשים למערכת הנהלים, לצורך שימוש באתר ובבוט.\n\nשימו לב, במידה והמוקדן נכנס בעבר לאתר ונרשם לו שהוא ממתין לאישור, נא לאשר דרך האתר ולא לרשום אותו מחדש בתהליך זה.",
-        "",
-        process.env.WA_ADD_USER__ADMIN_FLOW_ID as string
+        `בלחיצה על הכפתור המצורף, תוכלו להוסיף מוקדנים חדשים למערכת הנהלים, לצורך שימוש באתר ובבוט.\n\nעריכת, מחיקת ואישור מוקדנים מתבצעת על ידי דף ניהול המשתמשים באתר\n\n${process.env.BASE_URL}/admin`,
+        "בדיקה",
+        process.env.WA_ADD_USER__ADMIN_FLOW_ID as string,
+        "add_user__admin"
     ))
 
     console.log(r)
