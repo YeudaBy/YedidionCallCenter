@@ -168,11 +168,7 @@ export type WaFlow = {
                 flow_action: string;
                 flow_action_payload: {
                     screen: string;
-                    data: {
-                        product_name: string;
-                        product_description: string;
-                        product_price: number;
-                    }
+                    data: any
                 }
             }
         }
@@ -184,7 +180,8 @@ export function buildFlow(
     header: string,
     body: string,
     footer: string,
-    flowId: string
+    flowId: string,
+    flowToken: string,
 ): WaFlow {
     return {
         messaging_product: "whatsapp",
@@ -207,17 +204,13 @@ export function buildFlow(
                 name: "flow",
                 parameters: {
                     flow_message_version: "3",
-                    flow_token: "AQAAAAACS5FpgQ_cAAAAAD0QI3s.",
-                    flow_id: "1717241419022350",
+                    flow_token: flowToken,
+                    flow_id: flowId,
                     flow_cta: "הוספת מוקדן",
                     flow_action: "navigate",
                     flow_action_payload: {
                         screen: "ADD_NEW",
-                        data: {
-                            product_name: "name",
-                            product_description: "description",
-                            product_price: 100
-                        }
+                        data: {}
                     }
                 }
             }

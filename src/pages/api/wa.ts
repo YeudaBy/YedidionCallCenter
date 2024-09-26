@@ -7,7 +7,7 @@ import {buildWaReadReceipts} from "@/model/wa/WaReadReceipts";
 import {withRemult} from "remult";
 import {Procedure} from "@/model/Procedure";
 import {buildInteractiveList} from "@/model/wa/WaInteractiveList";
-import {User} from "@/model/User";
+import {User, UserRole} from "@/model/User";
 import {InteractiveType} from "@/model/wa/WhatsApp";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -23,9 +23,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 }
 
                 const message = messageValue?.messages?.[0];
-                if (!!message) {
-                    console.log('Received message:', message.from, message.id, message.text);
+                if (!message?.id) {
+                    return
                 }
+
+                console.log('Received message:', message.from, message.id, message.text);
 
                 await whatsappManager.sendReceipts(buildWaReadReceipts(message.id))
 
@@ -112,7 +114,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         switch (message.interactive.type) {
                             case "nfm_reply": {
                                 try {
-                                    const response = JSON.parse(message.interactive.nfm_reply!.response_json)
+                                    const response = JSON.parse(message.interactive.nfm_reply!.response_json) as {
+                                        name: string,
+                                        email: string,
+                                        phone?: string | undefined
+                                    } | undefined
+
+                                    if (!response) {
+                                        await whatsappManager.sendTextMessage(buildMessage(message.from, "נכשל בקבלת הנתונים", false, message.id))
+                                    } else {
+                                        await users.insert({
+                                            phone: response.phone ? phoneToDb(response.phone) : undefined,
+                                            name: response.name,
+                                            email: response.email,
+                                            district: user.district,
+                                            roles: UserRole.Dispatcher
+                                        })
+                                    }
                                     console.log(response)
                                 } catch (e) {
                                     console.error('Error parsing JSON:', e)
@@ -168,4 +186,8 @@ function max24chars(str: string): string {
 
 function formatProcedure(p: Procedure): string {
     return `*מוקד ארצי - ${p.title}*:\n\n${p.procedure}\n\n${process.env.BASE_URL}/?id=${p.id}`
+}
+
+function phoneToDb(phone: string): number {
+    return parseInt(phone.slice(1))
 }
