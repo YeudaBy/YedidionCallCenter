@@ -50,7 +50,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     if (message.text?.body === "חדש") {
                         const isSuperAdmin = currentUser.roles === UserRole.SuperAdmin
                         const isAdmin = currentUser.roles === UserRole.Admin
-                        console.log(currentUser.roles)
+
                         if (!isSuperAdmin && !isAdmin) return;
                         await whatsappManager.sendInteractiveMessage(buildFlow(
                             message.from,
