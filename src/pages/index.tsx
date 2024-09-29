@@ -68,6 +68,10 @@ export default function IndexPage() {
     const [logsOpen, setLogsOpen] = useState(false)
     const [deleteOpen, setDeleteOpen] = useState<Procedure>()
 
+    const procedureTypeFilter = () => {
+        return User.isAdmin(remult) ? {} : {type: ProcedureType.Procedure}
+    }
+
     useEffect(() => {
         if (!order) return
         setProcedures(() => {
@@ -128,7 +132,7 @@ export default function IndexPage() {
                 ...(["All", District.General].includes(district) ? {}
                     : {districts: {$contains: district}}),
                 active: true,
-                type: ProcedureType.Procedure,
+                ...procedureTypeFilter()
             },
             orderBy: {
                 updatedAt: "desc"
@@ -144,7 +148,6 @@ export default function IndexPage() {
 
     useEffect(() => {
         if (!query) return
-        // setLoading(true)
         procedureRepo.find({
             where: {
                 $or: [
@@ -155,12 +158,10 @@ export default function IndexPage() {
                         }
                     }
                 ],
-                type: ProcedureType.Procedure,
+                ...procedureTypeFilter()
             }
         }).then(procedures => {
             setResults(procedures)
-        }).finally(() => {
-            // setLoading(false)
         })
     }, [query]);
 
@@ -434,13 +435,13 @@ function ShowProcedure({procedure, open, onClose, onEdit}: {
                     <LoadingSpinner className={"ml-4"}/>
                     <Text className={"text-3xl font-bold"}>טוען...</Text></>
                 : <>
-                    <Tremor.Text className={"text-xl"}>{procedure.title}</Tremor.Text>
+                    <Tremor.Text className={"text-xl font-bold mb-2"}>{procedure.title}</Tremor.Text>
                     <Tremor.Text
-                        className={"scrollable border-gray-100 border-2 p-1 py-3 rounded-r-xl w-full drop-shadow-sm"}>
+                        className={"scrollable p-2 py-3 rounded-r-xl w-full bg-blue-50"}>
                         {highlightedText(procedure.procedure)}
                     </Tremor.Text>
 
-                    <Flex className={"gap-1.5 my-2"}>
+                    <Flex className={"gap-1.5 justify-start"}>
                         {procedure.images?.map((image, i) => {
                             return <Image
                                 key={i}
@@ -482,7 +483,7 @@ function ShowProcedure({procedure, open, onClose, onEdit}: {
                     </Flex>
 
                     <Flex
-                        className={"mx-4 mt-8 gap-1.5 flex-wrap"}
+                        className={"my-2 gap-1.5 flex-wrap"}
                         justifyContent={"center"}>
                         {procedure.keywords?.map(keyword => {
                             return <Tremor.Badge
@@ -644,10 +645,10 @@ function AddProcedure({procedure, open, onClose, onAdd, onEdit, setOpenDelete}: 
                     onChange={e => setType(e)}
                 >
                     <Tremor.SelectItem value={ProcedureType.Procedure}>נוהל</Tremor.SelectItem>
-                    <Tremor.SelectItem value={ProcedureType.Guideline}>הנחייה</Tremor.SelectItem>
+                    <Tremor.SelectItem value={ProcedureType.Guideline}>הנחיה</Tremor.SelectItem>
                 </Tremor.Select>
                 <Tremor.Text className={"text-xs text-start self-start mb-1"}>
-                    יש לבחור האם הנוהל המבוקש הינו ״הנחיה״. במידה ואינך בטוח - השאר על ״נוהל״.
+                    הנחיה תוצג למוקדנים רגילים אך ורק דרך הבוט בוואצאפ. במידה ואינכם בטוחים - השאירו על נוהל.
                 </Tremor.Text>
 
 
