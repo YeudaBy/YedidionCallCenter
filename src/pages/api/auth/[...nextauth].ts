@@ -4,7 +4,7 @@ import api from "@/pages/api/[...remult]";
 import {User} from "@/model/User";
 import {GetServerSidePropsContext, NextApiRequest, NextApiResponse} from "next";
 
-const authOptions: AuthOptions = {
+export const authOptions: AuthOptions = {
     secret: process.env.SECRET,
     providers: [
         GoogleProvider({

@@ -1,4 +1,4 @@
-import {BackendMethod, Entity, Fields, IdEntity, remult, Remult, UserInfo} from "remult";
+import {BackendMethod, Entity, Fields, IdEntity, Remult, UserInfo} from "remult";
 import {District} from "./District";
 
 
@@ -12,12 +12,6 @@ export const AdminRoles = [UserRole.Admin, UserRole.SuperAdmin]
 
 @Entity<User>("users", {
     allowApiCrud: true,
-    deleting: (user) => {
-        if (user.id == remult.user!.id) {
-            throw "לא ניתן למחוק את עצמך"
-        }
-        user.active = false
-    }
     // allowApiRead: true,
     // allowApiUpdate: true,
     // allowApiDelete: () => !!remult.user?.roles?.length && AdminRoles.includes(remult.user.roles[0] as UserRole),
@@ -76,6 +70,10 @@ export class User extends IdEntity {
 
     get phoneFormatted() {
         return this.phone ? `0${this.phone}` : undefined
+    }
+
+    get isAllowed() {
+        return (!!this.district || this?.isAdmin) && !this?.active
     }
 
     static isAdmin(remult: Remult) {
