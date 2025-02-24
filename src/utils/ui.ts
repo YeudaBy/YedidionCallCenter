@@ -1,6 +1,8 @@
 import {LogType} from "@/model/Log";
 import {RiAddLine, RiChat1Line, RiDeleteBinLine, RiPencilLine} from "@remixicon/react";
 import {Color} from "@tremor/react/dist/lib/inputTypes";
+import clsx, {ClassValue} from "clsx";
+import {twMerge} from "tailwind-merge";
 
 export function getLogTypeIcon(logType: LogType) {
     switch (logType) {
@@ -26,4 +28,8 @@ export function getLogTypeColor(logType: LogType): Color {
         default:
             return "blue"
     }
+}
+
+export function cx(...args: ClassValue[]) {
+    return twMerge(clsx(...args))
 }

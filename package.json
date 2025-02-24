@@ -12,6 +12,7 @@
     "@formkit/auto-animate": "^0.8.1",
     "@heroicons/react": "^1.0.6",
     "@radix-ui/react-popover": "^1.1.1",
+    "@radix-ui/themes": "^3.2.0",
     "@remixicon/react": "^4.1.1",
     "@tanstack/react-table": "^8.21.2",
     "@tremor/react": "3.13.4",
