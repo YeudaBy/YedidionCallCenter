@@ -1,5 +1,6 @@
 import {read, utils, WorkBook, write} from 'xlsx';
 import JSZip from "jszip";
+import {Procedure} from "@/model/Procedure";
 
 export const exportToXLSX = <T>(data: T[], filename: string) => {
     console.log(data);
@@ -33,4 +34,20 @@ export const importFromXLSX = async <T>(file: File): Promise<T[]> => {
     });
     const ws = wb.Sheets[wb.SheetNames[0]];
     return utils.sheet_to_json(ws);
+}
+
+
+export function exportProceduresToXLSX(procedures: Array<Procedure>) {
+    exportToXLSX(procedures?.map(p => ({
+        "כותרת": p.title,
+        "תוכן": p.procedure,
+        "פעיל": p.active ? "כן" : "לא",
+        "סוג": p.type,
+        "מוקדים": p.districts.join(", "),
+        "תגיות": p.keywords.join(", "),
+        "תמונות": p.images.join(", "),
+        "נוצר": p.createdAt.toISOString(),
+        "עודכן": p.updatedAt.toISOString(),
+        "קישור לנוהל": `${window.location.origin}/?id=${p.id}`
+    })) || [], "נהלים - מוקד")
 }

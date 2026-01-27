@@ -1,35 +1,23 @@
-import {useCallback, useEffect, useState} from "react";
+import {ReactNode, useCallback, useEffect, useState} from "react";
 import {Procedure, ProcedureType} from "@/model/Procedure";
 import {remult} from "remult";
 import * as Tremor from "@tremor/react";
-import {Flex, Icon, Text} from "@tremor/react";
 import {useRouter} from "next/router";
-import {SearchIcon} from "@heroicons/react/solid";
 import {LoadingBackdrop} from "@/components/Spinner";
 import {ProcedurePreview} from "@/components/ProcedurePreview";
 import {District} from "@/model/District";
 import {User, UserRole} from "@/model/User";
-import {
-    RiAddLine,
-    RiCloseLine,
-    RiDeleteBinLine,
-    RiEyeLine,
-    RiEyeOffLine,
-    RiFileDownloadLine,
-    RiFileList3Fill,
-    RiGroupLine,
-    RiSortAlphabetAsc,
-    RiSortAsc,
-    RiUserLine
-} from "@remixicon/react";
+import {RiDeleteBinLine} from "@remixicon/react";
 import {CloseDialogButton} from "@/components/CloseDialogButton";
-import {exportToXLSX} from "@/utils/xlsx";
+import {exportProceduresToXLSX} from "@/utils/xlsx";
 import {Log, LogType} from "@/model/Log";
 import {Order} from "@/utils/types";
 import {MainProcedureDialog} from "@/components/dialogs/MainProcedureDialog";
 import {ProcedureEditorDialog} from "@/components/dialogs/ProcedureEditorDialog";
 import {LogsDialog} from "@/components/dialogs/LogsDialog";
-import Link from "next/link";
+import {SearchBox} from "@/components/index-page/SearchBox";
+import {IndexHeader} from "@/components/index-page/IndexHeader";
+import {DistrictSelector} from "@/components/index-page/DistrictSelector";
 
 const procedureRepo = remult.repo(Procedure);
 const userRepo = remult.repo(User);
@@ -45,15 +33,12 @@ export default function IndexPage() {
     const [edited, setEdited] = useState<Procedure | true | undefined>()
     const [district, setDistrict] = useState<District | "All">("All")
     const [allowedDistricts, setAllowedDistricts] = useState<District[]>([District.General])
-    const [waitingCount, setWaitingCount] = useState(0)
     const [showInactive, setShowInactive] = useState(false)
     const [inactives, setInactives] = useState<Procedure[]>()
-    const [me, setMe] = useState<User>()
-    const [addNumOpen, setAddNumOpen] = useState(false)
     const [order, setOrder] = useState<Order>(Order.Recent)
     const [logsOpen, setLogsOpen] = useState(false)
     const [deleteOpen, setDeleteOpen] = useState<Procedure>()
-    const [deleteMeOpen, setDeleteMeOpen] = useState<boolean>(false)
+
 
     const procedureTypeFilter = () => {
         return User.isAdmin(remult) ? {} : {type: ProcedureType.Procedure}
@@ -69,13 +54,6 @@ export default function IndexPage() {
         })
     }, [order, procedures]);
 
-    useEffect(() => {
-        if (!remult.user) return
-        userRepo.liveQuery({where: {id: remult.user.id}})
-            .subscribe(user => {
-                setMe(user.items[0])
-            })
-    }, []);
 
     const router = useRouter()
 
@@ -152,14 +130,7 @@ export default function IndexPage() {
         })
     }, [query]);
 
-    useEffect(() => {
-        userRepo.count({
-            roles: {$contains: UserRole.Dispatcher},
-            district: {"$nin": Object.values(District)}
-        }).then(count => {
-            setWaitingCount(count)
-        })
-    }, []);
+
 
     useEffect(() => {
         if (!showInactive) return
@@ -188,114 +159,29 @@ export default function IndexPage() {
     }, [procedures]);
 
 
+
     return <Tremor.Flex flexDirection={"col"} className={"p-4 max-w-4xl m-auto"}>
-
-        <Flex className={"gap-1 mb-4 items-center justify-end"}>
-
-            <Text className={"text-lg sm:text-2xl font-bold grow"}>
-                מוקד ידידים - נהלים והנחיות
-            </Text>
-
-            {!!User.isAdmin(remult) && <> <Tremor.Icon
-                variant={"outlined"}
-                className={"cursor-pointer"}
-                icon={RiAddLine} onClick={() => setEdited(true)}/>
-
-                <Tremor.Icon
-                    variant={"shadow"}
-                    onClick={() => router.push('/admin')}
-                    icon={RiGroupLine}
-                    data-badge={waitingCount == 0 ? undefined : waitingCount}
-                    className={"cursor-pointer"}
-                />
-
-                <Tremor.Icon
-                    variant={"shadow"}
-                    className={"cursor-pointer"}
-                    icon={showInactive ? RiEyeLine : RiEyeOffLine}
-                    onClick={() => setShowInactive(!showInactive)}/>
-
-                <Icon icon={RiFileDownloadLine}
-                      onClick={() => exportToXLSX(procedures?.map(p => ({
-                          "כותרת": p.title,
-                          "תוכן": p.procedure,
-                          "פעיל": p.active ? "כן" : "לא",
-                          "סוג": p.type,
-                          "מוקדים": p.districts.join(", "),
-                          "תגיות": p.keywords.join(", "),
-                          "תמונות": p.images.join(", "),
-                          "נוצר": p.createdAt.toISOString(),
-                          "עודכן": p.updatedAt.toISOString(),
-                          "קישור לנוהל": `${window.location.origin}/?id=${p.id}`
-                      })) || [], "נהלים - מוקד")}
-                      variant={'shadow'}
-                      className={"cursor-pointer"}/>
-            </>
-            }
-
-            {
-                User.isSuperAdmin(remult) && <Tremor.Icon
-                    variant={"shadow"}
-                    className={"cursor-pointer"}
-                    icon={RiFileList3Fill}
-                    onClick={() => setLogsOpen(true)}/>
-            }
-
-            <Link href={"/me"}>
-                <Tremor.Icon icon={RiUserLine} className={"cursor-pointer"}/>
-            </Link>
-
-        </Flex>
+        <IndexHeader
+            setShowInactive={setShowInactive}
+            showInactive={showInactive}
+            exportProceduresToXLSX={() => exportProceduresToXLSX(procedures || [])}
+            openCreateModal={() => setEdited(true)}
+            setLogsOpen={setLogsOpen}
+        />
 
         {
             loading && <LoadingBackdrop/>
         }
 
-        <Flex className={"gap-2"}>
-            <Tremor.TextInput
-                color={"amber"}
-                className={"w-full"}
-                autoFocus
-                placeholder={"חיפוש..."}
-                value={query}
-                onChange={e => {
-                    setQuery(e.target.value)
-                }}
-                onValueChange={v => {
-                    if (!v) {
-                        setResults(undefined)
-                        router.push('/')
-                    } else {
-                        router.push(`/?q=${v}`)
-                    }
-                }}
-                icon={SearchIcon}
-            />
-            <Icon icon={RiCloseLine} variant={"light"} onClick={() => {
-                router.push('/').then(() => setQuery(undefined))
-            }}/>
-        </Flex>
+        <SearchBox query={query} setQuery={setQuery} setResults={setResults}/>
 
-        <Flex className={"justify-start gap-1.5 my-4"}>
-            {
-                allowedDistricts.map(d => {
-                    return <Tremor.Badge
-                        className={"cursor-pointer"}
-                        color={d === district ? "green" : "amber"}
-                        onClick={() => {
-                            setDistrict(d === district ? "All" : d)
-                        }}
-                        key={d}>{d}</Tremor.Badge>
-                })
-            }
-            <Icon
-                icon={order === Order.Recent ? RiSortAlphabetAsc : RiSortAsc}
-                className={"cursor-pointer"} variant={"light"}
-                onClick={() => {
-                    setOrder(order === Order.Recent ? Order.Alphabetical : Order.Recent)
-                }}
+        <DistrictSelector
+            allowedDistricts={allowedDistricts}
+            selectedDistrict={district}
+            setDistrict={setDistrict}
+            order={order}
+            setOrder={setOrder}
             />
-        </Flex>
 
         {
             !!edited && <ProcedureEditorDialog
@@ -319,6 +205,13 @@ export default function IndexPage() {
                     router.push('/')
                 }}
                 onEdit={(procedure) => setEdited(procedure)}
+            />
+        }
+        {
+            !!deleteOpen && <DeleteDialog
+                procedure={deleteOpen}
+                onClose={() => setDeleteOpen(undefined)}
+                onDelete={deleteProcedure}
             />
         }
 
