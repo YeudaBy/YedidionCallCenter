@@ -4,6 +4,7 @@ import Link from "next/link";
 import * as Tremor from "@tremor/react";
 import {RiUserLine} from "@remixicon/react";
 import {ReactNode} from "react";
+import Image from "next/image";
 
 export enum Headers {
     INDEX = "מוקד ידידים - נהלים והנחיות",
@@ -17,7 +18,9 @@ export function Header({headerText, buttons}: {
 }) {
     const is_me = headerText === Headers.ME;
 
-    return <Flex className={"gap-1 mb-4 items-center justify-end"}>
+    return <Flex className={"gap-1 py-4 items-center justify-end sticky " +
+        "top-0 z-20 bg-tremor-background w-full"}>
+        <Image src={"/transparent-logo.svg"} alt={"Yedidim Logo"} width={20} height={20} />
         <HeaderText text={headerText} />
         <>
             {buttons.map((button, index) => (
@@ -38,12 +41,12 @@ function MeButton() {
 
 function HeaderText({text}: {text: Headers}) {
     const is_index = text === Headers.INDEX;
-    const Content = () => <Text className={"text-lg sm:text-2xl font-bold grow"}>
+    const Content = () => <Text className={"xs:text-lg sm:text-2xl font-bold grow"}>
         {text}
     </Text>
 
     if (is_index) {
         return <Content />
     }
-    return <Link href={"/"}><Content /></Link>
+    return <Link href={"/"} className={"grow"}><Content /></Link>
 }
