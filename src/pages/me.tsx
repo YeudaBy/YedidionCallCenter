@@ -2,11 +2,12 @@ import {useEffect, useState} from "react";
 import {User, UserRole} from "@/model/User";
 import {remult} from "remult";
 import * as Tremor from "@tremor/react";
-import {Button, Card, Flex, Icon, Text, TextInput, Title} from "@tremor/react";
+import {Button, Card, Flex, Icon, Text, TextInput} from "@tremor/react";
 import {signOut} from "next-auth/react";
 import {ConfirmDeleteUserDialog} from "@/components/dialogs/ConfirmDeleteUserDialog";
 import {RiCheckLine} from "@remixicon/react";
 import {LoadingSpinner} from "@/components/Spinner";
+import {Header, Headers} from "@/components/Header";
 
 const userRepo = remult.repo(User);
 
@@ -27,9 +28,7 @@ export default function MePage() {
     }, []);
 
     return <Tremor.Flex flexDirection={"col"} className={"p-4 max-w-4xl m-auto"}>
-        <Title className={"mb-6"}>
-            פרופיל
-        </Title>
+        <Header headerText={Headers.ME} buttons={[]} />
         <Card className={""}>
             <Tremor.List className={""}>
                 <Tremor.ListItem>
