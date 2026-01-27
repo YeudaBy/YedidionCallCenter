@@ -251,10 +251,11 @@ export default function IndexPage() {
             loading && <LoadingBackdrop/>
         }
 
-        <Flex className={""}>
+        <Flex className={"gap-2"}>
             <Tremor.TextInput
                 color={"amber"}
                 className={"w-full"}
+                autoFocus
                 placeholder={"חיפוש..."}
                 value={query}
                 onChange={e => {
