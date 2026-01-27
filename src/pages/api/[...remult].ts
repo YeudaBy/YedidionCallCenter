@@ -21,12 +21,13 @@ export const api = remultNext({
     },
     logApiEndPoints: false, //process.env.NODE_ENV !== 'development',
     dataProvider:
-        production() ?
+        // production() ?
             createPostgresDataProvider({
                 connectionString: process.env.POSTGRES_URL,
-            }) : async () => {
-                return new JsonDataProvider(new JsonEntityFileStorage("./db"))
-            },
+            })
+                // : async () => {
+                // return new JsonDataProvider(new JsonEntityFileStorage("./db"))
+            // },
 })
 
 export default api
