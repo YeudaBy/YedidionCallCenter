@@ -1,5 +1,5 @@
 import type {Config} from 'tailwindcss'
-import { uploadthingPlugin } from 'uploadthing/tw'
+// import { uploadthingPlugin } from 'uploadthing/tw'
 
 
 export default {
@@ -169,6 +169,6 @@ export default {
     ],
     plugins: [
         require("@headlessui/tailwindcss"),
-        uploadthingPlugin,
+        // uploadthingPlugin,
     ],
 } satisfies Config
