@@ -403,7 +403,7 @@ const UserManagementTable: React.FC<UserManagementTableProps> = ({users, onDelet
                                         onClick={header.column.getToggleSortingHandler()}
                                         className={cx(
                                             "whitespace-nowrap py-1 text-sm sm:text-xs border border-tremor-border cursor-pointer",
-                                            header.column.columnDef.meta?.className,
+                                            // header.column.columnDef.meta?.className,
                                         )}
                                     >
                                         <div className="flex items-center gap-2 justify-center">
@@ -437,7 +437,7 @@ const UserManagementTable: React.FC<UserManagementTableProps> = ({users, onDelet
                                                        ? "bg-gray-50 dark:bg-gray-900"
                                                        : "",
                                                    "relative whitespace-nowrap py-1 text-gray-600 first:w-10",
-                                                   cell.column.columnDef.meta?.className,
+                                                   // cell.column.columnDef.meta?.className,
                                                )}>
                                         {index === 0 && row.getIsSelected() && (
                                             <div

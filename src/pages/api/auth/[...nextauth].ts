@@ -23,7 +23,6 @@ export const authOptions: AuthOptions = {
     callbacks: {
         // @ts-ignore
         session: async (session: Session, token) => {
-            console.log({session, token})
             const remult = await api.getRemult({} as any)
             // @ts-ignore
             const email = session.session.user?.email
@@ -32,7 +31,6 @@ export const authOptions: AuthOptions = {
             }
             if (email) {
                 const user = await User.signIn(remult, email)
-                console.log({user})
                 if (user) {
                     session.user = user
                     remult.user = user
