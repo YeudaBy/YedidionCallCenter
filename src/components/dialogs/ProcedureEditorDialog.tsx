@@ -8,7 +8,6 @@ import {CloseDialogButton} from "@/components/CloseDialogButton";
 import {RiCloseFill, RiListCheck} from "@remixicon/react";
 import * as Tremor from "@tremor/react";
 import {Button, Flex, Icon, MultiSelect, Switch} from "@tremor/react";
-import {UploadButton} from "@/components/uploadthing";
 import {UserRole} from "@/model/User";
 import Image from "next/image";
 import {LogsDialog} from "@/components/dialogs/LogsDialog";
