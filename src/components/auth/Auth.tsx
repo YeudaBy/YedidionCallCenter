@@ -4,12 +4,17 @@ import {remult} from "remult";
 import {User, UserRole} from "@/model/User";
 import {Card, Flex, Text} from "@tremor/react";
 import {LoadingSpinner} from "@/components/Spinner";
+import {messaging, onMessage} from "@/birebase/messaging";
 
 const userRepo = remult.repo(User);
 
 export function Auth({children}: { children: ReactNode }) {
     const session = useSession();
     const [signedUp, setSignedUp] = useState<boolean | null>(null)
+
+    useEffect(() => {
+        onMessage(messaging, console.log);
+    }, []);
 
     useEffect(() => {
         console.log(session.status)

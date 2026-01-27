@@ -20,6 +20,7 @@
     "@xyflow/react": "^12.3.2",
     "diff-match-patch": "^1.0.5",
     "firebase": "^12.8.0",
+    "firebase-admin": "^13.6.0",
     "formidable": "^3.5.1",
     "jszip": "^3.10.1",
     "multer": "2.0.2",

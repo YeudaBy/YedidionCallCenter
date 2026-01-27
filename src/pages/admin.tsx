@@ -19,7 +19,15 @@ import {
     TextInput
 } from "@tremor/react";
 import {Loading} from "@/components/Spinner";
-import {RiAddLine, RiCheckFill, RiDeleteBin7Line, RiFileUploadLine, RiHomeLine, RiPencilLine} from "@remixicon/react";
+import {
+    RiAddLine,
+    RiBellLine,
+    RiCheckFill,
+    RiDeleteBin7Line,
+    RiFileUploadLine,
+    RiHomeLine,
+    RiPencilLine
+} from "@remixicon/react";
 import {District} from "@/model/District";
 import {CloseDialogButton} from "@/components/CloseDialogButton";
 import {useRouter} from "next/router";
@@ -27,6 +35,7 @@ import {Color} from "@tremor/react/dist/lib/inputTypes";
 import {importFromXLSX} from "@/utils/xlsx";
 import Image from "next/image";
 import {Header, Headers} from "@/components/Header";
+import {Recipient} from "jose";
 
 const usersRepo = remult.repo(User)
 
@@ -342,6 +351,7 @@ function UserItem({user, setUsers}: {
             </Flex>
             {allowed &&
                 <Flex className={"w-fit gap-1"}>
+                    { !!user.fcmToken && <SendNotification user={user}/> }
                     <EditUser
                         user={user}
                         onDelete={onDelete}
@@ -351,6 +361,36 @@ function UserItem({user, setUsers}: {
                     <DeleteUser user={user} onDelete={onDelete}/>
                 </Flex>}
         </ListItem>
+    )
+}
+
+function SendNotification({user}: {user: User}) {
+    const [loading, setLoading] = useState(false)
+
+    const sendNotification = async () => {
+        setLoading(true)
+        await fetch("/api/notification", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                recipients: [user.fcmToken],
+                title: "בדיקת התראה",
+                body: "זוהי הודעת בדיקה למערכת ההתראות."
+            })
+        })
+        setLoading(false)
+    }
+
+    return (
+        <Icon
+            icon={RiBellLine}
+            variant={"light"}
+            color={"blue"}
+            tooltip={"שליחת התראת בדיקה"}
+            onClick={sendNotification}
+            className={`cursor-pointer ${loading ? "opacity-50 pointer-events-none" : ""}`}/>
     )
 }
 
