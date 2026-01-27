@@ -188,21 +188,21 @@ export function ProcedureEditorDialog({procedure, open, onClose, onAdd, onEdit, 
                             />
                         </div>
                     })}
-                    <UploadButton
-                        endpoint={"imageUploader"}
-                        className={"button:h-full"}
-                        onClientUploadComplete={url => setImages([...(images || []), ...url.map(e => e.url)])}
-                        content={{
-                            button({ready, isUploading, uploadProgress, fileTypes}) {
-                                return <p>
-                                    {ready ? 'בחר קובץ' : isUploading ? `מעלה ${uploadProgress}%` : 'המשך'}
-                                </p>
-                            },
-                            allowedContent({fileTypes}) {
-                                return <></>
-                            }
-                        }}
-                    />
+                    {/*<UploadButton*/}
+                    {/*    endpoint={"imageUploader"}*/}
+                    {/*    className={"button:h-full"}*/}
+                    {/*    onClientUploadComplete={url => setImages([...(images || []), ...url.map(e => e.url)])}*/}
+                    {/*    content={{*/}
+                    {/*        button({ready, isUploading, uploadProgress, fileTypes}) {*/}
+                    {/*            return <p>*/}
+                    {/*                {ready ? 'בחר קובץ' : isUploading ? `מעלה ${uploadProgress}%` : 'המשך'}*/}
+                    {/*            </p>*/}
+                    {/*        },*/}
+                    {/*        allowedContent({fileTypes}) {*/}
+                    {/*            return <></>*/}
+                    {/*        }*/}
+                    {/*    }}*/}
+                    {/*/>*/}
                 </Flex>
 
 

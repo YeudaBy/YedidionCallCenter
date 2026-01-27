@@ -1,10 +1,12 @@
 import type {Config} from 'tailwindcss'
-import {withUt} from "uploadthing/tw";
+import { uploadthingPlugin } from 'uploadthing/tw'
 
-export default withUt({
+
+export default {
     content: [
         "./src/**/*.{js,ts,jsx,tsx}",
         "./node_modules/@tremor/**/*.{js,ts,jsx,tsx}",
+        './node_modules/@uploadthing/react/dist/**'
     ],
     theme: {
         transparent: "transparent",
@@ -165,5 +167,8 @@ export default withUt({
                 /^(fill-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(?:50|100|200|300|400|500|600|700|800|900|950))$/,
         },
     ],
-    plugins: [require("@headlessui/tailwindcss")],
-}) satisfies Config
+    plugins: [
+        require("@headlessui/tailwindcss"),
+        uploadthingPlugin,
+    ],
+} satisfies Config
