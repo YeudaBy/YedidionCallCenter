@@ -26,6 +26,7 @@ import {useRouter} from "next/router";
 import {Color} from "@tremor/react/dist/lib/inputTypes";
 import {importFromXLSX} from "@/utils/xlsx";
 import Image from "next/image";
+import {Header, Headers} from "@/components/Header";
 
 const usersRepo = remult.repo(User)
 
@@ -124,18 +125,15 @@ export default function AdminPage() {
 
     return (
         <Flex flexDirection={"col"} className={"p-4 max-w-4xl m-auto"}>
-            <Flex className={"gap-1 mb-4 items-center justify-end"}>
-                <Text className={"text-lg sm:text-2xl font-bold grow"}>משתמשים</Text>
-
+            <Header headerText={Headers.ADMIN} buttons={[
                 <Icon icon={RiAddLine} onClick={() => setShowAddUser(true)} variant={"shadow"}
-                      className={"cursor-pointer"}/>
+                      className={"cursor-pointer"} key={"add"}/>,
                 <Icon icon={RiFileUploadLine}
                       onClick={() => setImportOpen(true)}
                       variant={"shadow"}
-                      className={"cursor-pointer"}/>
-                <Icon icon={RiHomeLine} onClick={() => router.push("/")} variant={"simple"}
-                      className={"cursor-pointer"}/>
-            </Flex>
+                      className={"cursor-pointer"} key={"import"}/>
+            ]} />
+
 
             <TextInput
                 placeholder={"חיפוש"}
