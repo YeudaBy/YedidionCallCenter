@@ -13,7 +13,7 @@ export const exportToXLSX = <T>(data: T[], filename: string) => {
     zip.generateAsync({type: 'nodebuffer'}).then((content) => {
         const a = document.createElement('a');
         document.body.appendChild(a);
-        const blob = new Blob([content], {type: 'application/octet-stream'});
+        const blob = new Blob([content as unknown as ArrayBuffer], {type: 'application/octet-stream'});
         a.href = window.URL.createObjectURL(blob);
         a.download = filename + '.zip';
         a.click();

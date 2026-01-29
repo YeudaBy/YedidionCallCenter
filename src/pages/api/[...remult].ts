@@ -13,6 +13,7 @@ export const api = remultNext({
         User, Procedure, Log
     ],
     ensureSchema: true,
+    admin: true,
     controllers: [ApiController],
     getUser: async (req) => {
         const jwtToken = await getToken({req})
@@ -21,12 +22,13 @@ export const api = remultNext({
     },
     logApiEndPoints: false, //process.env.NODE_ENV !== 'development',
     dataProvider:
-        production() ?
+        // production() ?
             createPostgresDataProvider({
                 connectionString: process.env.POSTGRES_URL,
-            }) : async () => {
-                return new JsonDataProvider(new JsonEntityFileStorage("./db"))
-            },
+            })
+                // : async () => {
+                // return new JsonDataProvider(new JsonEntityFileStorage("./db"))
+            // },
 })
 
 export default api
