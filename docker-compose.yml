@@ -10,7 +10,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   nextjs:
-    image: yedidon-next:prod
+    image: ghcr.io/yeudaby/yedidon-next:prod
     restart: unless-stopped
     depends_on:
       - db
