@@ -54,7 +54,7 @@ export function exportProceduresToXLSX(procedures: Array<Procedure>) {
 }
 
 export function importProceduresFromXLSX(file: File): Promise<Procedure[]> {
-    return importFromXLSX<Procedure>(file).then(data => data.map(d => ({
+    return importFromXLSX<Procedure>(file).then(data => data.map((d: any) => ({
         title: d["כותרת"],
         procedure: d["תוכן"],
         active: d["פעיל"] === "כן",
@@ -65,5 +65,5 @@ export function importProceduresFromXLSX(file: File): Promise<Procedure[]> {
         createdAt: d["נוצר"] ? new Date(d["נוצר"]) : new Date(),
         updatedAt: d["עודכן"] ? new Date(d["עודכן"]) : new Date(),
         id: d["id"] || undefined
-    })));
+    }))) as Promise<Procedure[]>;
 }
