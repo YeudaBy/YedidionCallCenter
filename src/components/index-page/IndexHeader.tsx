@@ -16,8 +16,10 @@ import {Header, Headers} from "@/components/Header";
 import {District} from "@/model/District";
 import {importFromXLSX, importProceduresFromXLSX} from "@/utils/xlsx";
 import {Procedure} from "@/model/Procedure";
+import {Log, LogType} from "@/model/Log";
 
 const userRepo = repo(User)
+const logRepo = repo(Log)
 
 export function IndexHeader({
     openCreateModal, showInactive, setShowInactive, setLogsOpen, exportProceduresToXLSX
@@ -50,6 +52,16 @@ export function IndexHeader({
                 importProceduresFromXLSX(file).then((results: Procedure[]) =>{
                     repo(Procedure).insert(results).then(() => {
                         alert(`נוספו ${results.length} נהלים בהצלחה`);
+                        return results
+                    }).then(results => {
+                        results.map(async (procedure) => {
+                            const log = logRepo.create();
+                            log.type = LogType.Imported;
+                            log.procedureId = procedure.id!;
+                            log.log = `נוסף נוהל "${procedure.title}" באמצעות ייבוא קובץ XLSX`;
+                            log.byUserId = remult.user!.id;
+                            await logRepo.insert(log);
+                        })
                     }).catch(error => {
                         alert("אירעה שגיאה בעת הוספת הנהלים: " + error.message);
                     })

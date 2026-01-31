@@ -1,5 +1,4 @@
 import {Flex, Text} from "@tremor/react";
-import { useRouter } from "next/router";
 import Link from "next/link";
 import * as Tremor from "@tremor/react";
 import {RiUserLine} from "@remixicon/react";

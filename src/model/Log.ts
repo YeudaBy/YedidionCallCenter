@@ -4,6 +4,7 @@ export enum LogType {
     Created = "נוצר",
     Updated = "עודכן",
     Deleted = "נמחק",
+    Imported = "יובא",
     Other = "אחר"
 }
 
