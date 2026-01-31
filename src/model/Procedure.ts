@@ -1,12 +1,26 @@
 import {Entity, Field, Fields, IdEntity} from "remult";
 import {District} from "./District";
+import {nanoid} from "nanoid";
+
+const PROCEDURE_ID_LENGTH = 7;
 
 @Entity("procedure", {
     allowApiCrud: () => {
         return true
     }
 })
-export class Procedure extends IdEntity {
+export class Procedure {
+    @Fields.string({
+        dbReadOnly: true,
+        defaultValue: () => nanoid(PROCEDURE_ID_LENGTH),
+        saving: (_, record) => {
+            if (!record.value) {
+                record.value = nanoid(PROCEDURE_ID_LENGTH)
+            }
+        },
+    })
+    id!: string;
+
     @Fields.string()
     title!: string;
 
