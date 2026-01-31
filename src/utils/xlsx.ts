@@ -39,6 +39,7 @@ export const importFromXLSX = async <T>(file: File): Promise<T[]> => {
 
 export function exportProceduresToXLSX(procedures: Array<Procedure>) {
     exportToXLSX(procedures?.map(p => ({
+        "id": p.id,
         "כותרת": p.title,
         "תוכן": p.procedure,
         "פעיל": p.active ? "כן" : "לא",
@@ -50,4 +51,19 @@ export function exportProceduresToXLSX(procedures: Array<Procedure>) {
         "עודכן": p.updatedAt.toISOString(),
         "קישור לנוהל": `${window.location.origin}/?id=${p.id}`
     })) || [], "נהלים - מוקד")
+}
+
+export function importProceduresFromXLSX(file: File): Promise<Procedure[]> {
+    return importFromXLSX<Procedure>(file).then(data => data.map(d => ({
+        title: d["כותרת"],
+        procedure: d["תוכן"],
+        active: d["פעיל"] === "כן",
+        type: d["סוג"],
+        districts: d["מוקדים"] ? (d["מוקדים"] as string).split(",").map(s => s.trim()) : [],
+        keywords: d["תגיות"] ? (d["תגיות"] as string).split(",").map(s => s.trim()) : [],
+        images: d["תמונות"] ? (d["תמונות"] as string).split(",").map(s => s.trim()) : [],
+        createdAt: d["נוצר"] ? new Date(d["נוצר"]) : new Date(),
+        updatedAt: d["עודכן"] ? new Date(d["עודכן"]) : new Date(),
+        id: d["id"] || undefined
+    })));
 }

@@ -7,7 +7,7 @@ import {ReactNode} from "react";
 import Image from "next/image";
 
 export enum Headers {
-    INDEX = "מוקד ידידים - נהלים והנחיות",
+    INDEX = "מוקדון - נהלי מוקד",
     ME = "הפרופיל שלי",
     ADMIN = "ניהול מערכת",
 }
