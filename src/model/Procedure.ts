@@ -1,8 +1,11 @@
 import {Entity, Field, Fields, IdEntity} from "remult";
 import {District} from "./District";
 import {nanoid} from "nanoid";
+import {NanoIdField} from "@/utils/types";
+
 
 const PROCEDURE_ID_LENGTH = 7;
+
 
 @Entity("procedure", {
     allowApiCrud: () => {
@@ -10,15 +13,7 @@ const PROCEDURE_ID_LENGTH = 7;
     }
 })
 export class Procedure {
-    @Fields.string({
-        dbReadOnly: true,
-        defaultValue: () => nanoid(PROCEDURE_ID_LENGTH),
-        saving: (_, record) => {
-            if (!record.value) {
-                record.value = nanoid(PROCEDURE_ID_LENGTH)
-            }
-        },
-    })
+    @NanoIdField(PROCEDURE_ID_LENGTH)
     id!: string;
 
     @Fields.string()
