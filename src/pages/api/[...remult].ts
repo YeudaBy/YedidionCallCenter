@@ -1,12 +1,20 @@
 import {remultNext} from 'remult/remult-next'
 import {Procedure} from "@/model/Procedure";
-import {User} from "@/model/User";
+import {User, UserRole} from "@/model/User";
 import {createPostgresDataProvider} from "remult/postgres";
-import {JsonDataProvider, remult} from "remult";
-import {JsonEntityFileStorage} from "remult/server";
+import {remult} from "remult";
 import {getToken} from "next-auth/jwt";
 import {ApiController} from "@/controllers/ApiController";
 import {Log} from "@/model/Log";
+
+
+const DEVELOPER_USER = {
+    email: "yeudaborodyanski@gmail.com",
+    name: "Yeuda Borodyanski",
+    roles: UserRole.SuperAdmin,
+    active: true,
+}
+
 
 export const api = remultNext({
     entities: [
@@ -20,21 +28,13 @@ export const api = remultNext({
         if (!jwtToken?.sub) return undefined
         return User.signIn(remult, jwtToken.sub)
     },
-    logApiEndPoints: false, //process.env.NODE_ENV !== 'development',
-    dataProvider:
-        // production() ?
-            createPostgresDataProvider({
-                connectionString: process.env.POSTGRES_URL,
-            })
-                // : async () => {
-                // return new JsonDataProvider(new JsonEntityFileStorage("./db"))
-            // },
+    initApi: async (api) => {
+        await api.repo(User).insert(DEVELOPER_USER)
+    },
+    logApiEndPoints: false,
+    dataProvider: createPostgresDataProvider({
+        connectionString: process.env.POSTGRES_URL,
+    })
 })
 
 export default api
-
-
-function production() {
-    return true
-    return process.env.NODE_ENV !== 'development';
-}
