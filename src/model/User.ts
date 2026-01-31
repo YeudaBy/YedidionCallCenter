@@ -3,9 +3,9 @@ import {District} from "./District";
 
 
 export enum UserRole {
-    Admin = "מנהל",
-    Dispatcher = "מוקדן",
-    SuperAdmin = "מנהל מערכת",
+    Admin = "admin",
+    Dispatcher = "dispacher",
+    SuperAdmin = "system-admin",
 }
 
 export const AdminRoles = [UserRole.Admin, UserRole.SuperAdmin]
