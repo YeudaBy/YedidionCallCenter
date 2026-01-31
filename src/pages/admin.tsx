@@ -30,6 +30,9 @@ import {Header, Headers} from "@/components/Header";
 
 const usersRepo = remult.repo(User)
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const ISRAEL_PHONE_REGEX = /^(?:0)?(5[0-9]{8})$/
+
 const filters: { id: string, label: string, filter: (u: User) => boolean, color: Color }[] = [
     {
         id: "all",
@@ -596,7 +599,19 @@ function ImportDialog({open, onClose}: {
             name: d["שם מלא"],
             email: d["מייל"],
             phone: d["טלפון"]
-        })).map(d => ({
+        })).filter((d) => {
+            if (!EMAIL_REGEX.test(d.email)) {
+                console.warn(`Invalid email: ${d.email}`)
+                return false
+            }
+
+            if (!!d.phone && !ISRAEL_PHONE_REGEX.test(d.phone)) {
+                console.warn(`Invalid phone: ${d.phone}, skipping phone number`)
+                d.phone = undefined
+            }
+
+            return d.name && d.email
+        }).map(d => ({
             ...d,
             phone: d.phone ? Number(d.phone.replace(/^0/, "")) : undefined
         }))
