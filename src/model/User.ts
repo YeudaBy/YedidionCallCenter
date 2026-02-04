@@ -40,6 +40,9 @@ export class User extends IdEntity {
     @Fields.object()
     roles: UserRole = UserRole.Dispatcher;
 
+    @Fields.string({required: false})
+    fcmToken?: string;
+
     get userInfo(): UserInfo {
         return {
             name: this.email,

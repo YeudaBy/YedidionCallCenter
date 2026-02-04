@@ -18,6 +18,7 @@ import {LogsDialog} from "@/components/dialogs/LogsDialog";
 import {SearchBox} from "@/components/index-page/SearchBox";
 import {IndexHeader} from "@/components/index-page/IndexHeader";
 import {DistrictSelector} from "@/components/index-page/DistrictSelector";
+import {useAnalytics} from "@/birebase/init";
 
 const procedureRepo = remult.repo(Procedure);
 const userRepo = remult.repo(User);
@@ -39,6 +40,7 @@ export default function IndexPage() {
     const [logsOpen, setLogsOpen] = useState(false)
     const [deleteOpen, setDeleteOpen] = useState<Procedure>()
 
+    useAnalytics()
 
     const procedureTypeFilter = () => {
         return User.isAdmin(remult) ? {} : {type: ProcedureType.Procedure}
