@@ -4,7 +4,7 @@ import {remult} from "remult";
 import {User} from "@/model/User";
 import {Button, Card, Flex, Text} from "@tremor/react";
 import {LoadingSpinner} from "@/components/Spinner";
-import {messaging, onMessage} from "@/birebase/messaging";
+import {messaging, onMessage} from "@/firebase-messages/messaging";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import {RiRestartLine} from "@remixicon/react";

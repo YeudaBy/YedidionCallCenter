@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import {requestNotificationPermission} from "@/birebase/notifications-permission";
+import {requestNotificationPermission} from "@/firebase-messages/notifications-permission";
 
 const NotificationPermission = () => {
 

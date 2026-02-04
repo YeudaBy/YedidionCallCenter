@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import {sendNotification} from "@/birebase/sendNotification";
+import {sendNotification} from "@/firebase-messages/sendNotification";
 import {NextApiResponse} from "next";
 
 async function POST(req: NextRequest, res: NextApiResponse) {

@@ -1,4 +1,4 @@
-import admin from "@/birebase/admin";
+import admin from "@/firebase-messages/admin";
 import {repo, withRemult} from "remult";
 import {User} from "@/model/User";
 
