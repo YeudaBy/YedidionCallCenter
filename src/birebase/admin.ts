@@ -1,5 +1,5 @@
 import admin from "firebase-admin";
-import settings from "./firebase-project-key.json";
+import settings from "firebase-service-account.json";
 
 const serviceAccount = settings as admin.ServiceAccount;
 
