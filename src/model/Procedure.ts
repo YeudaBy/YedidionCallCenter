@@ -1,6 +1,5 @@
 import {Entity, Field, Fields, IdEntity} from "remult";
 import {District} from "./District";
-import {nanoid} from "nanoid";
 import {NanoIdField} from "@/utils/types";
 
 
