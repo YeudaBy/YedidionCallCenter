@@ -76,12 +76,13 @@ function NotAuthorized() {
         </Text>
 
         <Text className={"mt-6 text-base text-center font-bold"}>
-            לצערנו אינך מוגדר כרגע במערכת, נא פנה למנהל המוקד על מנת להגדיר אותך.
+            נרשמת בהצלחה למערכת!<br/>
+            יש לפנות למנהל המוקד לאישור הפרטים והפעלת החשבון.
         </Text>
 
         <Button icon={RiRestartLine}
             className={"mt-6 gap-2"} onClick={goToLoginPage} variant={"light"}>
-            נסיון התחברות מחדש
+            התחבר מחדש
         </Button>
     </Card>;
 }
