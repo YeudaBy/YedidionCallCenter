@@ -64,6 +64,5 @@ export function importProceduresFromXLSX(file: File): Promise<Procedure[]> {
         images: d["תמונות"] ? (d["תמונות"] as string).split(",").map(s => s.trim()) : [],
         createdAt: d["נוצר"] ? new Date(d["נוצר"]) : new Date(),
         updatedAt: d["עודכן"] ? new Date(d["עודכן"]) : new Date(),
-        id: d["id"] || undefined
     }))) as Promise<Procedure[]>;
 }
