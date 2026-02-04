@@ -19,7 +19,7 @@ export function Header({headerText, buttons}: {
 
     return <Flex className={"gap-1 py-4 items-center justify-end sticky " +
         "top-0 z-20 bg-tremor-background w-full"}>
-        <Image src={"/transparent-logo.svg"} alt={"Yedidim Logo"} width={20} height={20} />
+        <Image src={"/transperent-192x192.png"} alt={"Yedidim Logo"} width={40} height={40} />
         <HeaderText text={headerText} />
         <>
             {buttons.map((button, index) => (
