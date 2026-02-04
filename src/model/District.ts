@@ -2,7 +2,7 @@ export enum District {
     General = "ארצי",
     Jerusalem = "ירושלים",
     Central = "מרכז",
-    Schooners = "תיכונים",
+    // Schooners = "תיכונים",
     Northern = "צפון",
     Southern = "דרום",
 }
