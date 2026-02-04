@@ -132,8 +132,6 @@ export default function IndexPage() {
         })
     }, [query]);
 
-
-
     useEffect(() => {
         if (!showInactive) return
         setLoading(true)
@@ -159,8 +157,6 @@ export default function IndexPage() {
     const deleteProcedure = useCallback((deletedProcedureId: string) => {
         setProcedures(procedures?.filter(p => p.id !== deletedProcedureId))
     }, [procedures]);
-
-
 
     return <Tremor.Flex flexDirection={"col"} className={"p-4 max-w-4xl m-auto"}>
         <IndexHeader

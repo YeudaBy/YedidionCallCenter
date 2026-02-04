@@ -9,6 +9,7 @@ export enum Headers {
     INDEX = "מוקדון - נהלי מוקד",
     ME = "הפרופיל שלי",
     ADMIN = "ניהול מערכת",
+    USERS = "ניהול משתמשים",
 }
 
 export function Header({headerText, buttons}: {

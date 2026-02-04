@@ -23,19 +23,17 @@ import {
     RiAddLine,
     RiBellLine,
     RiCheckFill,
-    RiDeleteBin7Line,
+    RiDeleteBin7Line, RiFileDownloadFill, RiFileDownloadLine,
     RiFileUploadLine,
-    RiHomeLine,
     RiPencilLine
 } from "@remixicon/react";
 import {District} from "@/model/District";
 import {CloseDialogButton} from "@/components/CloseDialogButton";
 import {useRouter} from "next/router";
 import {Color} from "@tremor/react/dist/lib/inputTypes";
-import {importFromXLSX} from "@/utils/xlsx";
+import {exportUsersToXLSX, importFromXLSX} from "@/utils/xlsx";
 import Image from "next/image";
 import {Header, Headers} from "@/components/Header";
-import {Recipient} from "jose";
 
 const usersRepo = remult.repo(User)
 
@@ -49,6 +47,12 @@ const filters: { id: string, label: string, filter: (u: User) => boolean, color:
         filter: () => true,
         color: "sky"
     },
+    ...Object.entries(District).filter(([k, v]) => v !== District.General).map(([k, v]) => ({
+        id: k,
+        label: v,
+        filter: (u: User) => u.district === v,
+        color: "indigo" as Color
+    })),
     {
         id: "unregistered",
         label: "ממתינים",
@@ -73,17 +77,11 @@ const filters: { id: string, label: string, filter: (u: User) => boolean, color:
         filter: u => u.isDispatcher,
         color: "lime"
     },
-    ...Object.entries(District).filter(([k, v]) => v !== District.General).map(([k, v]) => ({
-        id: k,
-        label: v,
-        filter: (u: User) => u.district === v,
-        color: "indigo" as Color
-    }))
 ]
 
 
-export default function AdminPage() {
-    const router = useRouter()
+export default function AdminUsersPage() {
+    const router = useRouter();
 
     const [users, setUsers] = useState<User[]>([])
     const [loading, setLoading] = useState(false)
@@ -97,6 +95,11 @@ export default function AdminPage() {
     const [importOpen, setImportOpen] = useState(false)
 
     useEffect(() => {
+        if (!User.isAdmin(remult)) {
+            router.replace("/")
+            return
+        }
+
         function getWhere(): EntityFilter<User> {
             return {
                 active: filter !== "inactive",
@@ -135,15 +138,27 @@ export default function AdminPage() {
         })
     }, [filter, query]);
 
+    const exportSelected = async () => {
+        try {
+            exportUsersToXLSX(users);
+        } catch (e) {
+            console.error("Error exporting users:", e);
+        }
+    }
+
     return (
         <Flex flexDirection={"col"} className={"p-4 max-w-4xl m-auto"}>
-            <Header headerText={Headers.ADMIN} buttons={[
+            <Header headerText={Headers.USERS} buttons={[
                 <Icon icon={RiAddLine} onClick={() => setShowAddUser(true)} variant={"shadow"}
                       className={"cursor-pointer"} key={"add"}/>,
                 <Icon icon={RiFileUploadLine}
                       onClick={() => setImportOpen(true)}
                       variant={"shadow"}
-                      className={"cursor-pointer"} key={"import"}/>
+                      className={"cursor-pointer"} key={"import"}/>,
+                <Icon icon={RiFileDownloadLine}
+                        onClick={exportSelected}
+                        variant={"shadow"}
+                        className={"cursor-pointer"} key={"export"}/>,
             ]} />
 
 
@@ -155,7 +170,7 @@ export default function AdminPage() {
             />
 
             <Flex
-                className={"gap-1.5 my-2 items-center justify-center flex-wrap border-2 p-2 rounded-md shadow-md border-gray-300"}>
+                className={"gap-1.5 my-2 justify-start flex-wrap p-2 rounded-md"}>
                 {
                     filters.map(d => (
                         <Badge

@@ -41,7 +41,7 @@ export class User extends IdEntity {
     roles: UserRole = UserRole.Dispatcher;
 
     @Fields.string({required: false})
-    fcmToken?: string;
+    fcmToken?: string = undefined;
 
     get userInfo(): UserInfo {
         return {

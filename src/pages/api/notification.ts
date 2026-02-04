@@ -5,9 +5,10 @@ import {NextApiResponse} from "next";
 async function POST(req: NextRequest, res: NextApiResponse) {
     try {
 
-        const { title, body, recipients } = req.body as unknown as {
+        const { title, body, url, recipients } = req.body as unknown as {
             title: string;
             body: string;
+            url: string;
             recipients: string[];
         }
 
@@ -18,7 +19,7 @@ async function POST(req: NextRequest, res: NextApiResponse) {
             );
         }
 
-        await sendNotification(title, body, recipients);
+        await sendNotification(title, body, recipients, {url});
         return res.status(200).json({ message: "Notification sent successfully" });
 
     } catch (error) {

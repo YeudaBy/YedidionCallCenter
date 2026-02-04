@@ -1,6 +1,7 @@
 import {read, utils, WorkBook, write} from 'xlsx';
 import JSZip from "jszip";
 import {Procedure} from "@/model/Procedure";
+import {User} from "@/model/User";
 
 export const exportToXLSX = <T>(data: T[], filename: string) => {
     console.log(data);
@@ -38,6 +39,7 @@ export const importFromXLSX = async <T>(file: File): Promise<T[]> => {
 
 
 export function exportProceduresToXLSX(procedures: Array<Procedure>) {
+    const dateStr = new Date().toISOString().split('T')[0];
     exportToXLSX(procedures?.map(p => ({
         "id": p.id,
         "כותרת": p.title,
@@ -50,7 +52,7 @@ export function exportProceduresToXLSX(procedures: Array<Procedure>) {
         "נוצר": p.createdAt.toISOString(),
         "עודכן": p.updatedAt.toISOString(),
         "קישור לנוהל": `${window.location.origin}/?id=${p.id}`
-    })) || [], "נהלים - מוקד")
+    })) || [], "נהלים - מוקד " + dateStr)
 }
 
 export function importProceduresFromXLSX(file: File): Promise<Procedure[]> {
@@ -65,4 +67,18 @@ export function importProceduresFromXLSX(file: File): Promise<Procedure[]> {
         createdAt: d["נוצר"] ? new Date(d["נוצר"]) : new Date(),
         updatedAt: d["עודכן"] ? new Date(d["עודכן"]) : new Date(),
     }))) as Promise<Procedure[]>;
+}
+
+export function exportUsersToXLSX(users: Array<User>) {
+    const dateStr = new Date().toISOString().split('T')[0];
+    exportToXLSX(users?.map(u => ({
+        "id": u.id,
+        "שם": u.name,
+        "אימייל": u.email,
+        "טלפון": u.phone,
+        "תפקיד": u.roles,
+        "מחוז": u.district,
+        "נוצר": u.createdAt.toISOString(),
+        "פעיל": u.active,
+    })) || [], "משתמשים - מוקד " + dateStr)
 }
