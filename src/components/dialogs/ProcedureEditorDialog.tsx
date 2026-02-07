@@ -10,7 +10,6 @@ import * as Tremor from "@tremor/react";
 import {Button, Flex, Icon, MultiSelect, Switch} from "@tremor/react";
 import {UserRole} from "@/model/User";
 import Image from "next/image";
-import {LogsDialog} from "@/components/dialogs/LogsDialog";
 import {useRouter} from "next/router";
 
 const procedureRepo = remult.repo(Procedure);
