@@ -37,7 +37,6 @@ export default function IndexPage() {
     const [showInactive, setShowInactive] = useState(false)
     const [inactives, setInactives] = useState<Procedure[]>()
     const [order, setOrder] = useState<Order>(Order.Recent)
-    const [logsOpen, setLogsOpen] = useState(false)
     const [deleteOpen, setDeleteOpen] = useState<Procedure>()
 
     useAnalytics()
@@ -162,9 +161,7 @@ export default function IndexPage() {
         <IndexHeader
             setShowInactive={setShowInactive}
             showInactive={showInactive}
-            exportProceduresToXLSX={() => exportProceduresToXLSX(procedures || [])}
             openCreateModal={() => setEdited(true)}
-            setLogsOpen={setLogsOpen}
         />
 
         {
@@ -211,10 +208,6 @@ export default function IndexPage() {
                 onClose={() => setDeleteOpen(undefined)}
                 onDelete={deleteProcedure}
             />
-        }
-
-        {
-            logsOpen && <LogsDialog procedure={undefined} open={true} onClose={setLogsOpen}/>
         }
 
         {

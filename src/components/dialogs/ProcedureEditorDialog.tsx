@@ -11,6 +11,7 @@ import {Button, Flex, Icon, MultiSelect, Switch} from "@tremor/react";
 import {UserRole} from "@/model/User";
 import Image from "next/image";
 import {LogsDialog} from "@/components/dialogs/LogsDialog";
+import {useRouter} from "next/router";
 
 const procedureRepo = remult.repo(Procedure);
 const logRepo = remult.repo(Log);
@@ -32,7 +33,11 @@ export function ProcedureEditorDialog({procedure, open, onClose, onAdd, onEdit, 
     const [districts, setDistricts] = useState<District[]>([District.General])
     const [images, setImages] = useState<string[]>()
 
-    const [showLogs, setShowLogs] = useState(false)
+    const router = useRouter()
+
+    const goToLogs = () => {
+        router.push(`/admin/logs?pid=${procedure?.id}`)
+    }
 
     useEffect(() => {
         if (!!procedure) {
@@ -103,7 +108,7 @@ export function ProcedureEditorDialog({procedure, open, onClose, onAdd, onEdit, 
                 <Flex className={"gap-1.5"}>
                     <CloseDialogButton close={() => onClose(false)}/>
                     <Icon icon={RiListCheck}
-                          onClick={() => setShowLogs(!showLogs)}
+                          onClick={goToLogs}
                           className={"cursor-pointer"}/>
                 </Flex>
                 <Tremor.TextInput
@@ -243,8 +248,6 @@ export function ProcedureEditorDialog({procedure, open, onClose, onAdd, onEdit, 
                 </Flex>
             </Tremor.DialogPanel>
         </Tremor.Dialog>
-
-        {showLogs && <LogsDialog procedure={procedure} open={true} onClose={setShowLogs}/>}
     </>
 }
 

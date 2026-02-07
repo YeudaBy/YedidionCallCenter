@@ -66,7 +66,7 @@ function NotAuthorized() {
         router.push('/api/auth/signin');
     }
 
-    return <Card className={"m-12 w-fit flex flex-col items-center bg-tremor-brand-faint"}>
+    return <Card className={"mx-auto my-12 w-fit flex flex-col items-center bg-tremor-brand-faint"}>
         <Image src={"/transperent-192x192.png"} alt={"Yedidim Logo"} width={180} height={180}/>
         <Text className={"mt-4 text-2xl text-center"}>
             ברוכים הבאים למוקדון

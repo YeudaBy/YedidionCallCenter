@@ -35,6 +35,7 @@ import {District} from "@/model/District";
 import {useAutoAnimate} from "@formkit/auto-animate/react";
 import {RiArrowDownSLine, RiArrowUpSLine} from "@remixicon/react";
 import {cx} from "@/utils/ui";
+import {RoleGuard} from "@/components/auth/RoleGuard";
 
 interface Filters {
     name: string;
@@ -48,6 +49,9 @@ export default function UsersPage() {
     const [users, setUsers] = useState<User[]>([]);
 
     useEffect(() => {
+        if (!User.isAdmin(remult))  {
+            return;
+        }
         loadUsers();
     }, []);
 
@@ -62,7 +66,7 @@ export default function UsersPage() {
     };
 
     return (
-        <>
+        <RoleGuard allowedRoles={[UserRole.Admin, UserRole.SuperAdmin]}>
             <Title className="text-center">
                 משתמשים במערכת ({users.length})
             </Title>
@@ -78,7 +82,7 @@ export default function UsersPage() {
                     onUpdateUser={handleUpdateUser}
                 />
             </div>
-        </>
+        </RoleGuard>
     );
 }
 

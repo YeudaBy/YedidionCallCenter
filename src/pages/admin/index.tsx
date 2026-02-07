@@ -10,25 +10,20 @@ import {
     RiUserSettingsLine
 } from "@remixicon/react";
 import Link from "next/link";
-import {useRouter} from "next/router";
-import {User} from "@/model/User";
+import {User, UserRole} from "@/model/User";
 import {remult, repo} from "remult";
 import {Procedure} from "@/model/Procedure";
 import {exportProceduresToXLSX, importProceduresFromXLSX} from "@/utils/xlsx";
 import {Log, LogType} from "@/model/Log";
 import {BroadcastDialog} from "@/components/dialogs/BroadcastDialog";
+import {RoleGuard} from "@/components/auth/RoleGuard";
 
 const procedureRepo = repo(Procedure);
 const logRepo = repo(Log);
 
 export default function AdminPage() {
-    const router = useRouter();
     const [isSuperAdmin, setIsSuperAdmin] = useState(false)
     useEffect(() => {
-        if (!User.isAdmin(remult)) {
-            router.push("/");
-        }
-
         if (User.isSuperAdmin(remult)) {
             setIsSuperAdmin(true);
         }
@@ -40,8 +35,8 @@ export default function AdminPage() {
             procedureRepo.find().then(procedures => {
                 exportProceduresToXLSX(procedures);
             })
-        } catch (error: any) {
-            alert("אירעה שגיאה בעת ייצוא הנהלים: " + error.message);
+        } catch (error: unknown) {
+            alert("אירעה שגיאה בעת ייצוא הנהלים: " + (error as Error).message);
         }
     }
 
@@ -123,21 +118,23 @@ export default function AdminPage() {
         );
     }
 
-    return <Flex flexDirection={"col"} className={"p-4 max-w-4xl m-auto"}>
-        <Header headerText={Headers.ADMIN} buttons={[]}/>
-        <Grid numItems={2} numItemsMd={4} className={"gap-4 m-4"}>
-            {options.map((option, index) => (
-                <NavigationCard
-                    key={index}
-                    label={option.label}
-                    icon={option.icon}
-                    action={option.action}
-                />
-            ))}
-        </Grid>
+    return <RoleGuard allowedRoles={[UserRole.Admin, UserRole.SuperAdmin]}>
+        <Flex flexDirection={"col"} className={"p-4 max-w-4xl m-auto"}>
+            <Header headerText={Headers.ADMIN} buttons={[]}/>
+            <Grid numItems={2} numItemsMd={4} className={"gap-4 m-4"}>
+                {options.map((option, index) => (
+                    <NavigationCard
+                        key={index}
+                        label={option.label}
+                        icon={option.icon}
+                        action={option.action}
+                    />
+                ))}
+            </Grid>
 
-        {broadcastOpen && <BroadcastDialog onClose={() => setBroadcastOpen(false)}/>}
-    </Flex>
+            {broadcastOpen && <BroadcastDialog onClose={() => setBroadcastOpen(false)}/>}
+        </Flex>
+    </RoleGuard>
 
 }
 

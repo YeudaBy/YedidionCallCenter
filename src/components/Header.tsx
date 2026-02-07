@@ -10,6 +10,7 @@ export enum Headers {
     ME = "הפרופיל שלי",
     ADMIN = "ניהול מערכת",
     USERS = "ניהול משתמשים",
+    LOGS = "יומני מערכת"
 }
 
 export function Header({headerText, buttons}: {

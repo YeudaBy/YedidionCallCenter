@@ -23,17 +23,18 @@ import {
     RiAddLine,
     RiBellLine,
     RiCheckFill,
-    RiDeleteBin7Line, RiFileDownloadFill, RiFileDownloadLine,
+    RiDeleteBin7Line,
+    RiFileDownloadLine,
     RiFileUploadLine,
     RiPencilLine
 } from "@remixicon/react";
 import {District} from "@/model/District";
 import {CloseDialogButton} from "@/components/CloseDialogButton";
-import {useRouter} from "next/router";
 import {Color} from "@tremor/react/dist/lib/inputTypes";
 import {exportUsersToXLSX, importFromXLSX} from "@/utils/xlsx";
 import Image from "next/image";
 import {Header, Headers} from "@/components/Header";
+import {RoleGuard} from "@/components/auth/RoleGuard";
 
 const usersRepo = remult.repo(User)
 
@@ -81,8 +82,6 @@ const filters: { id: string, label: string, filter: (u: User) => boolean, color:
 
 
 export default function AdminUsersPage() {
-    const router = useRouter();
-
     const [users, setUsers] = useState<User[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<Error | null>(null)
@@ -96,7 +95,6 @@ export default function AdminUsersPage() {
 
     useEffect(() => {
         if (!User.isAdmin(remult)) {
-            router.replace("/")
             return
         }
 
@@ -107,7 +105,7 @@ export default function AdminUsersPage() {
                     ["dispatchers", "unregistered"].includes(filter || "") ? UserRole.Dispatcher : undefined,
                 district: filter === "unregistered" ? {
                     $ne: Object.values(District)
-                } : Object.entries(District).find(([k, v]) => k === filter)?.[1] as District,
+                } : Object.entries(District).find(([k, _]) => k === filter)?.[1] as District,
                 name: query ? {
                     $contains: query
                 } : undefined,
@@ -147,68 +145,70 @@ export default function AdminUsersPage() {
     }
 
     return (
-        <Flex flexDirection={"col"} className={"p-4 max-w-4xl m-auto"}>
-            <Header headerText={Headers.USERS} buttons={[
-                <Icon icon={RiAddLine} onClick={() => setShowAddUser(true)} variant={"shadow"}
-                      className={"cursor-pointer"} key={"add"}/>,
-                <Icon icon={RiFileUploadLine}
-                      onClick={() => setImportOpen(true)}
-                      variant={"shadow"}
-                      className={"cursor-pointer"} key={"import"}/>,
-                <Icon icon={RiFileDownloadLine}
-                        onClick={exportSelected}
-                        variant={"shadow"}
-                        className={"cursor-pointer"} key={"export"}/>,
-            ]} />
+        <RoleGuard allowedRoles={[UserRole.Admin, UserRole.SuperAdmin]}>
+            <Flex flexDirection={"col"} className={"p-4 max-w-4xl m-auto"}>
+                <Header headerText={Headers.USERS} buttons={[
+                    <Icon icon={RiAddLine} onClick={() => setShowAddUser(true)} variant={"shadow"}
+                          className={"cursor-pointer"} key={"add"}/>,
+                    <Icon icon={RiFileUploadLine}
+                          onClick={() => setImportOpen(true)}
+                          variant={"shadow"}
+                          className={"cursor-pointer"} key={"import"}/>,
+                    <Icon icon={RiFileDownloadLine}
+                          onClick={exportSelected}
+                          variant={"shadow"}
+                          className={"cursor-pointer"} key={"export"}/>,
+                ]}/>
 
 
-            <TextInput
-                placeholder={"חיפוש"}
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                className={"w-full"}
-            />
+                <TextInput
+                    placeholder={"חיפוש"}
+                    value={query}
+                    onChange={e => setQuery(e.target.value)}
+                    className={"w-full"}
+                />
 
-            <Flex
-                className={"gap-1.5 my-2 justify-start flex-wrap p-2 rounded-md"}>
-                {
-                    filters.map(d => (
-                        <Badge
-                            key={d.id}
-                            color={d.color}
-                            onClick={() => setFilter(d.id as any)}
-                            className={`cursor-pointer`}>
-                            {d.label}
-                        </Badge>
-                    ))
-                }
+                <Flex
+                    className={"gap-1.5 my-2 justify-start flex-wrap p-2 rounded-md"}>
+                    {
+                        filters.map(d => (
+                            <Badge
+                                key={d.id}
+                                color={d.color}
+                                onClick={() => setFilter(d.id as never)}
+                                className={`cursor-pointer`}>
+                                {d.label}
+                            </Badge>
+                        ))
+                    }
+                </Flex>
+
+                {loading && <Loading/>}
+                {error && <div>Error: {error.message}</div>}
+                {User.isAdmin(remult) ? <List>
+                    {users?.map(user => (
+                        <UserItem
+                            user={user}
+                            setUsers={setUsers}
+                            key={user.id}/>
+                    ))}
+                </List> : <Callout
+                    color={"red"}
+                    className={"my-3.5"}
+                    title={
+                        "שגיאת הרשאה"
+                    }>
+                    <Text>אין לך הרשאה לערוך משתמשים</Text>
+                </Callout>}
+
+                <AddUserDialog
+                    open={showAddUser}
+                    onClose={() => setShowAddUser(false)}
+                />
+
+                <ImportDialog open={importOpen} onClose={() => setImportOpen(false)}/>
             </Flex>
-
-            {loading && <Loading/>}
-            {error && <div>Error: {error.message}</div>}
-            {User.isAdmin(remult) ? <List>
-                {users?.map(user => (
-                    <UserItem
-                        user={user}
-                        setUsers={setUsers}
-                        key={user.id}/>
-                ))}
-            </List> : <Callout
-                color={"red"}
-                className={"my-3.5"}
-                title={
-                    "שגיאת הרשאה"
-                }>
-                <Text>אין לך הרשאה לערוך משתמשים</Text>
-            </Callout>}
-
-            <AddUserDialog
-                open={showAddUser}
-                onClose={() => setShowAddUser(false)}
-            />
-
-            <ImportDialog open={importOpen} onClose={() => setImportOpen(false)}/>
-        </Flex>
+        </RoleGuard>
     )
 }
 
@@ -264,8 +264,7 @@ function AddUserDialog({open, onClose}: {
                 </Text>
                 <Select
                     value={district}
-                    // @ts-ignore
-                    onChange={setDistrict}
+                    onValueChange={setDistrict as never}
                     placeholder={"*שייך למוקד"}
                     disabled={User.isRegularAdmin(remult)}
                 >
@@ -369,7 +368,7 @@ function UserItem({user, setUsers}: {
             </Flex>
             {allowed &&
                 <Flex className={"w-fit gap-1"}>
-                    { !!user.fcmToken && <SendNotification user={user}/> }
+                    {!!user.fcmToken && <SendNotification user={user}/>}
                     <EditUser
                         user={user}
                         onDelete={onDelete}
@@ -382,7 +381,7 @@ function UserItem({user, setUsers}: {
     )
 }
 
-function SendNotification({user}: {user: User}) {
+function SendNotification({user}: { user: User }) {
     const [loading, setLoading] = useState(false)
 
     const sendNotification = async () => {
@@ -484,7 +483,7 @@ function EditUser({user: _user, onSave, onDelete}: {
                     <Select
                         value={district}
                         placeholder={"מוקד"}
-                        // @ts-ignore
+                        // @ts-expect-error onChange type is wrong in tremor
                         onChange={setDistrict}
                         disabled={userRoles?.includes(UserRole.SuperAdmin) || User.isRegularAdmin(remult)}
                     >
@@ -709,7 +708,7 @@ function ImportDialog({open, onClose}: {
                 <Image src={"/xlsx-export-exapme.png"} alt={"export exaple"}
                        width={500} height={200} className={"mx-auto rounded-xl border-2 border-blue-400 my-3"}/>
                 {User.isSuperAdmin(remult) &&
-                    // @ts-ignore
+                    // @ts-expect-error onChange type is wrong in tremor
                     <Select value={district} onChange={setDistrict} placeholder={"מוקד"}>
                         {Object.values(District).filter(d => d !== District.General).map(d => (
                             <SelectItem key={d} value={d}>{d}</SelectItem>

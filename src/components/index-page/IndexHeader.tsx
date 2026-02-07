@@ -5,30 +5,20 @@ import {
     RiAddLine,
     RiEyeLine,
     RiEyeOffLine,
-    RiFileDownloadLine,
-    RiFileList3Fill,
-    RiFileUploadLine,
     RiGroupLine
 } from "@remixicon/react";
 import {ReactNode, useEffect, useState} from "react";
 import { useRouter } from "next/router";
 import {Header, Headers} from "@/components/Header";
 import {District} from "@/model/District";
-import {importFromXLSX, importProceduresFromXLSX} from "@/utils/xlsx";
-import {Procedure} from "@/model/Procedure";
-import {Log, LogType} from "@/model/Log";
-
 const userRepo = repo(User)
-const logRepo = repo(Log)
 
 export function IndexHeader({
-    openCreateModal, showInactive, setShowInactive, setLogsOpen, exportProceduresToXLSX
+    openCreateModal, showInactive, setShowInactive
                             }: {
     openCreateModal: () => void,
     showInactive: boolean,
     setShowInactive: (show: boolean) => void,
-    setLogsOpen: (open: boolean) => void,
-    exportProceduresToXLSX: () => void,
 }) {
     const router = useRouter();
     const [waitingCount, setWaitingCount] = useState(0)
