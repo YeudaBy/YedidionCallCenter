@@ -13,13 +13,18 @@ const userRepo = remult.repo(User);
 
 export function Auth({children}: { children: ReactNode }) {
     const session = useSession();
+    const router = useRouter();
     const [signedUp, setSignedUp] = useState<boolean | null>(null)
+
+    const isInAuthPages = router.pathname.startsWith("/auth");
 
     useEffect(() => {
         onMessage(messaging, console.log);
     }, []);
 
     useEffect(() => {
+        if (isInAuthPages) return;
+
         console.log(session.status)
         if (session.status === "unauthenticated") {
             signIn();
@@ -49,7 +54,7 @@ export function Auth({children}: { children: ReactNode }) {
         }
     }, [session]);
 
-    if (signedUp) return <>{children}</>;
+    if (signedUp || isInAuthPages) return <>{children}</>;
     if (signedUp === null) return <Card className={"m-auto mt-5 w-fit"}>
         <Flex flexDirection={"col"} className={"gap-3"}>
             <Text>מאמת פרטים</Text>

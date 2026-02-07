@@ -6,6 +6,10 @@ import {GetServerSidePropsContext, NextApiRequest, NextApiResponse} from "next";
 
 export const authOptions: AuthOptions = {
     secret: process.env.SECRET,
+    pages: {
+        signIn: '/auth/signin',
+
+    },
     providers: [
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID!,
