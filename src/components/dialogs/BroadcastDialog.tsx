@@ -5,6 +5,7 @@ import {Text} from "@tremor/react";
 import {CloseDialogButton} from "@/components/CloseDialogButton";
 import {useEffect, useState} from "react";
 import {Loading} from "@/components/Spinner";
+import {District} from "@/model/District";
 
 export function BroadcastDialog({onClose}: { onClose: () => void }) {
 
@@ -14,6 +15,8 @@ export function BroadcastDialog({onClose}: { onClose: () => void }) {
         }
     }, []);
 
+    const [districts, setDistricts] = useState<District[]>(Object.values(District))
+
     const [allTokens, setAllTokens] = useState<string[]>([])
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(true)
@@ -21,6 +24,7 @@ export function BroadcastDialog({onClose}: { onClose: () => void }) {
         repo(User).find({
             where: {
                 fcmToken: {$nin: [undefined, ""]},
+                district: {$in: districts}
             }
         }).then(users => {
             setAllTokens(users.map(u => u.fcmToken!))
@@ -78,6 +82,15 @@ export function BroadcastDialog({onClose}: { onClose: () => void }) {
                 <Text className={"text-right"}>
                     כמות משתמשים רשומים לקבלת הודעות: {allTokens.length}
                 </Text>
+
+                <Tremor.MultiSelect className={"w-full"} value={districts}
+                                    onValueChange={(values) => setDistricts(values as District[])}>
+                        {Object.values(District).map(district => (
+                            <Tremor.MultiSelectItem key={district} value={district}>
+                                {district}
+                            </Tremor.MultiSelectItem>
+                        ))}
+                </Tremor.MultiSelect>
 
                 <Tremor.TextInput
                     className={"w-full"}
