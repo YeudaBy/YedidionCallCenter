@@ -2,12 +2,13 @@ import {useCallback, useEffect, useState} from "react";
 import {Procedure, ProcedureType} from "@/model/Procedure";
 import {remult} from "remult";
 import * as Tremor from "@tremor/react";
+import {Button, Flex, Icon} from "@tremor/react";
 import {useRouter} from "next/router";
 import {LoadingBackdrop} from "@/components/Spinner";
 import {ProcedurePreview} from "@/components/ProcedurePreview";
 import {District} from "@/model/District";
 import {User} from "@/model/User";
-import {RiDeleteBinLine} from "@remixicon/react";
+import {RiCarouselView, RiDeleteBinLine, RiSortAlphabetAsc, RiSortAsc, RiStackedView} from "@remixicon/react";
 import {CloseDialogButton} from "@/components/CloseDialogButton";
 import {Log, LogType} from "@/model/Log";
 import {Order} from "@/utils/types";
@@ -36,6 +37,7 @@ export default function IndexPage() {
     const [inactives, setInactives] = useState<Procedure[]>()
     const [order, setOrder] = useState<Order>(Order.Recent)
     const [deleteOpen, setDeleteOpen] = useState<Procedure>()
+    const [dense, setDense] = useState(false)
 
     useAnalytics()
 
@@ -155,7 +157,7 @@ export default function IndexPage() {
         setProcedures(procedures?.filter(p => p.id !== deletedProcedureId))
     }, [procedures]);
 
-    return <Tremor.Flex flexDirection={"col"} className={"p-4 max-w-4xl m-auto"}>
+    return <Tremor.Flex flexDirection={"col"} className={"max-w-4xl m-auto"}>
         <IndexHeader
             setShowInactive={setShowInactive}
             showInactive={showInactive}
@@ -166,15 +168,51 @@ export default function IndexPage() {
             loading && <LoadingBackdrop/>
         }
 
-        <SearchBox query={query} setQuery={setQuery} setResults={setResults}/>
+        <Flex className={"p-4 flex-col"}>
 
-        <DistrictSelector
-            allowedDistricts={allowedDistricts}
-            selectedDistrict={district}
-            setDistrict={setDistrict}
-            order={order}
-            setOrder={setOrder}
+            <SearchBox query={query} setQuery={setQuery} setResults={setResults}/>
+
+            <DistrictSelector
+                allowedDistricts={allowedDistricts}
+                selectedDistrict={district}
+                setDistrict={setDistrict}
             />
+
+            <Flex className={"gap-2 justify-start items-center my-2"}>
+                <Button icon={dense ? RiStackedView : RiCarouselView}
+                      variant={"light"} className={"gap-2"}
+                      onClick={() => setDense(d => !d)}>
+                        {dense ? "דחוס" : "רגיל"}
+                </Button>
+                <Button
+                    icon={order === Order.Recent ? RiSortAlphabetAsc : RiSortAsc}
+                    className={"cursor-pointer gap-2"} variant={"light"}
+                    onClick={() => {
+                        setOrder(order === Order.Recent ? Order.Alphabetical : Order.Recent)
+                    }}
+                >
+                    {order === Order.Recent ? "א״ב" : "חדשים"}
+                </Button>
+            </Flex>
+
+
+
+            {
+                // loading ? <Loading/> :
+                <Tremor.Grid className={"gap-2 w-full"} numItems={dense ? 2 : 1} numItemsSm={dense ? 3 : 2}
+                             numItemsLg={dense ? 5 : 3}>
+                    {showInactive && inactives?.map(procedure => {
+                        return <ProcedurePreview dense={dense} procedure={procedure} key={procedure.id}/>
+                    })}
+                    {!query ? procedures?.map(procedure => {
+                        return <ProcedurePreview dense={dense} procedure={procedure} key={procedure.id}/>
+                    }) : results?.map(procedure => {
+                        return <ProcedurePreview dense={dense} procedure={procedure} key={procedure.id}/>
+                    })}
+                </Tremor.Grid>
+            }
+
+        </Flex>
 
         {
             !!edited && <ProcedureEditorDialog
@@ -193,7 +231,7 @@ export default function IndexPage() {
             !!current && <MainProcedureDialog
                 procedure={current}
                 open={true}
-                onClose={(val) => {
+                onClose={() => {
                     setCurrent(undefined)
                     router.push('/')
                 }}
@@ -206,20 +244,6 @@ export default function IndexPage() {
                 onClose={() => setDeleteOpen(undefined)}
                 onDelete={deleteProcedure}
             />
-        }
-
-        {
-            // loading ? <Loading/> :
-            <Tremor.Grid className={"gap-2 w-full"} numItems={1} numItemsSm={2} numItemsLg={3}>
-                {showInactive && inactives?.map(procedure => {
-                    return <ProcedurePreview procedure={procedure} key={procedure.id}/>
-                })}
-                {!query ? procedures?.map(procedure => {
-                    return <ProcedurePreview procedure={procedure} key={procedure.id}/>
-                }) : results?.map(procedure => {
-                    return <ProcedurePreview procedure={procedure} key={procedure.id}/>
-                })}
-            </Tremor.Grid>
         }
     </Tremor.Flex>
 }
