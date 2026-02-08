@@ -7,3 +7,6 @@ yarn-error.log
 .next-ssr-cache
 db
 firebase-service-account.json
+test
+
+.idea
