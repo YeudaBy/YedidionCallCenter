@@ -12,7 +12,7 @@ export default function SignIn({
                                }: InferGetServerSidePropsType<typeof getServerSideProps>) {
     const [allowingMessages, setAllowingMessages] = useState(false)
     return (
-        <Flex className={"flex-col h-screen justify-between items-center"}>
+        <Flex className={"bg-gradient-to-br from-white via-blue-50 to-green-50 flex-col h-screen justify-between items-center p-6"}>
             <Card className={"max-w-md mx-auto mt-10 p-6 flex flex-col items-center justify-center"}>
                 <Image src={"/transperent-192x192.png"} alt={"Yedidim Logo"} width={180} height={180}/>
                 <Text className={"mt-4 text-xl text-center font-semibold"}>
