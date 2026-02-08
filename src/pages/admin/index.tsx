@@ -87,9 +87,14 @@ export default function AdminPage() {
             icon: RiUserSettingsLine
         },
         {
-            action: "/admin/users-beta",
+            action: "/admin/beta/users",
             label: "ניהול משתמשים (בטא)",
             icon: RiAB
+        },
+        {
+            action: "/admin/beta/procedures",
+            label: "ניהול נהלים )בטא(",
+            icon: RiTimelineView
         }
     ];
 
