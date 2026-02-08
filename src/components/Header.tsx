@@ -2,7 +2,7 @@ import {Flex, Text} from "@tremor/react";
 import Link from "next/link";
 import * as Tremor from "@tremor/react";
 import {RiUserLine} from "@remixicon/react";
-import {ReactNode} from "react";
+import {ReactNode, useEffect, useRef, useState} from "react";
 import Image from "next/image";
 
 export enum Headers {
@@ -19,8 +19,8 @@ export function Header({headerText, buttons}: {
 }) {
     const is_me = headerText === Headers.ME;
 
-    return <Flex className={"gap-1 py-4 items-center justify-end sticky " +
-        "top-0 z-20 bg-tremor-background w-full"}>
+    return <Flex className={"gap-1 p-2 items-center border-b-2 shadow justify-end sticky " +
+        `top-0 z-20 bg-tremor-background w-full bg-tremor-background/40 backdrop-blur-sm`}>
         <Image src={"/transperent-192x192.png"} alt={"Yedidim Logo"} width={40} height={40} />
         <HeaderText text={headerText} />
         <>
