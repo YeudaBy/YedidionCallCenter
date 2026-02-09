@@ -9,7 +9,7 @@ const userRepo = repo(User)
 const deleteInvalidToken = async (token: string) => {
     try {
         await withRemult(async (remult) => {
-            const user = await userRepo.findFirst({fcmToken: token})
+            const user = await remult.repo(User).findFirst({fcmToken: token})
             if (user) {
                 user.fcmToken = undefined
                 await userRepo.save(user)

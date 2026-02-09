@@ -19,7 +19,9 @@ async function POST(req: NextRequest, res: NextApiResponse) {
             );
         }
 
-        await sendNotification(title, body, recipients, {url});
+        const data = url ? { url } : undefined;
+
+        await sendNotification(title, body, recipients, data);
         return res.status(200).json({ message: "Notification sent successfully" });
 
     } catch (error) {

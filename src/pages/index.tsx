@@ -178,7 +178,7 @@ export default function IndexPage() {
                     <Button icon={dense ? RiStackedView : RiCarouselView}
                             variant={"light"} className={"gap-2"}
                             onClick={() => setDense(d => !d)}>
-                        {dense ? "דחוס" : "רגיל"}
+                        {!dense ? "דחוס" : "רגיל"}
                     </Button>
                     <Button
                         icon={order === Order.Recent ? RiSortAlphabetAsc : RiSortAsc}
