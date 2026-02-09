@@ -13,10 +13,10 @@ export function SearchBox({
 }) {
     const router = useRouter()
 
-    return  <Flex className={"gap-2"}>
+    return  <Flex className={"gap-2 px-1 py-0.5 grow border-2 rounded-xl shadow focus-within:ring-2"}>
         <Tremor.TextInput
             color={"amber"}
-            className={"w-full"}
+            className={"grow border-0 ring-0 focus:ring-0 focus:border-0"}
             autoFocus
             placeholder={"חיפוש..."}
             value={query}
@@ -35,6 +35,6 @@ export function SearchBox({
         />
         <Icon icon={RiCloseLine} variant={"light"} onClick={() => {
             router.push('/').then(() => setQuery(undefined))
-        }}/>
+        }} className={"cursor-pointer"}/>
     </Flex>
 }
