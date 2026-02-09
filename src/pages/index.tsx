@@ -18,6 +18,8 @@ import {SearchBox} from "@/components/index-page/SearchBox";
 import {IndexHeader} from "@/components/index-page/IndexHeader";
 import {DistrictSelector} from "@/components/index-page/DistrictSelector";
 import {useAnalytics} from "@/firebase-messages/init";
+import {bgGreen} from "next/dist/lib/picocolors";
+import {gradientBg} from "@/utils/ui";
 
 const procedureRepo = remult.repo(Procedure);
 const userRepo = remult.repo(User);
@@ -157,7 +159,7 @@ export default function IndexPage() {
         setProcedures(procedures?.filter(p => p.id !== deletedProcedureId))
     }, [procedures]);
 
-    return <Tremor.Flex flexDirection={"col"} className={"max-w-4xl m-auto"}>
+    return <div className={`max-w-4xl m-auto`}>
         <IndexHeader
             setShowInactive={setShowInactive}
             showInactive={showInactive}
@@ -170,32 +172,32 @@ export default function IndexPage() {
 
         <Flex className={"p-4 flex-col"}>
 
-            <SearchBox query={query} setQuery={setQuery} setResults={setResults}/>
+            <Flex className={"justify-between items-center gap-2"}>
+                <SearchBox query={query} setQuery={setQuery} setResults={setResults}/>
+                <Flex className={"gap-2 justify-start items-center my-2"}>
+                    <Button icon={dense ? RiStackedView : RiCarouselView}
+                            variant={"light"} className={"gap-2"}
+                            onClick={() => setDense(d => !d)}>
+                        {dense ? "דחוס" : "רגיל"}
+                    </Button>
+                    <Button
+                        icon={order === Order.Recent ? RiSortAlphabetAsc : RiSortAsc}
+                        className={"cursor-pointer gap-2"} variant={"light"}
+                        onClick={() => {
+                            setOrder(order === Order.Recent ? Order.Alphabetical : Order.Recent)
+                        }}
+                    >
+                        {order === Order.Recent ? "א״ב" : "חדשים"}
+                    </Button>
+                </Flex>
+            </Flex>
+
 
             <DistrictSelector
                 allowedDistricts={allowedDistricts}
                 selectedDistrict={district}
                 setDistrict={setDistrict}
             />
-
-            <Flex className={"gap-2 justify-start items-center my-2"}>
-                <Button icon={dense ? RiStackedView : RiCarouselView}
-                      variant={"light"} className={"gap-2"}
-                      onClick={() => setDense(d => !d)}>
-                        {dense ? "דחוס" : "רגיל"}
-                </Button>
-                <Button
-                    icon={order === Order.Recent ? RiSortAlphabetAsc : RiSortAsc}
-                    className={"cursor-pointer gap-2"} variant={"light"}
-                    onClick={() => {
-                        setOrder(order === Order.Recent ? Order.Alphabetical : Order.Recent)
-                    }}
-                >
-                    {order === Order.Recent ? "א״ב" : "חדשים"}
-                </Button>
-            </Flex>
-
-
 
             {
                 // loading ? <Loading/> :
@@ -245,7 +247,7 @@ export default function IndexPage() {
                 onDelete={deleteProcedure}
             />
         }
-    </Tremor.Flex>
+    </div>
 }
 
 
