@@ -8,6 +8,17 @@ export enum UserRole {
     SuperAdmin = "system-admin",
 }
 
+export function userRoleToText(role: UserRole) {
+    switch (role) {
+        case UserRole.Admin:
+            return "מנהל";
+        case UserRole.Dispatcher:
+            return "מוקדן";
+        case UserRole.SuperAdmin:
+            return "מנהל מערכת";
+    }
+}
+
 export const AdminRoles = [UserRole.Admin, UserRole.SuperAdmin]
 
 @Entity<User>("users", {
@@ -94,6 +105,12 @@ export class User extends IdEntity {
     static async signIn(remult: Remult, email: string) {
         const user = await remult.repo(User).findFirst({email})
         if (user) return buildUserInfo(user)
+    }
+
+    static async hasFcmToken(remult: Remult) {
+        if (!remult.user) return false
+        const user = await remult.repo(User).findId(remult.user.id)
+        return !!user?.fcmToken
     }
 
     @BackendMethod({allowed: true})
