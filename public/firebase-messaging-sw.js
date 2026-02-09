@@ -25,7 +25,7 @@ messaging.onBackgroundMessage((payload) => {
     const notificationTitle = payload.notification?.title || payload.data?.title || "הודעה חדשה";
     const notificationOptions = {
         body: payload.notification?.body || payload.data?.body || "",
-        icon: "/logo.jpg",
+        icon: payload.notification?.icon || payload.data?.icon || "/transperent-192x192.png",
         data: {
             url: payload.data?.url || "/"
         },

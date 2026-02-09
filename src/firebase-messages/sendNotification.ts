@@ -1,6 +1,7 @@
 import admin from "@/firebase-messages/admin";
 import {repo, withRemult} from "remult";
 import {User} from "@/model/User";
+import * as process from "node:process";
 
 
 const userRepo = repo(User)
@@ -37,8 +38,7 @@ export const sendNotification = async (
                     Urgency: "high",
                 },
                 notification: {
-                    icon: "/logo.jpg",
-                    badge: "/badge.png",
+                    icon: process.env.BASE_URL +  "/transperent-192x192.png",
                     requireInteraction: true,
                 },
             },

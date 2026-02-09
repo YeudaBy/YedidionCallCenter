@@ -116,7 +116,7 @@ export default function AdminPage() {
                 icon: RiFolderUploadLine
             },
             {
-                action: broadcastNotification,
+                action: "/admin/broadcast",
                 label: "שידור הודעה",
                 icon: RiSendInsLine
             }
