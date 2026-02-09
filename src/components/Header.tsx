@@ -4,6 +4,8 @@ import * as Tremor from "@tremor/react";
 import {RiUserLine} from "@remixicon/react";
 import {ReactNode, useEffect, useRef, useState} from "react";
 import Image from "next/image";
+import {remult, repo} from "remult";
+import {User} from "@/model/User";
 
 export enum Headers {
     INDEX = "מוקדון - נהלי מוקד",
@@ -18,10 +20,23 @@ export function Header({headerText, buttons}: {
     buttons: Array<ReactNode>
 }) {
     const is_me = headerText === Headers.ME;
+    const [scrolled, setScrolled] = useState(false)
 
-    return <Flex className={"gap-1 p-2 items-center border-b-2 shadow justify-end sticky " +
-        `top-0 z-20 bg-tremor-background w-full bg-tremor-background/40 backdrop-blur-sm`}>
-        <Image src={"/transperent-192x192.png"} alt={"Yedidim Logo"} width={40} height={40} />
+    useEffect(() => {
+        const onScroll = () => {
+            setScrolled(window.scrollY > 0);
+        }
+        window.addEventListener('scroll', onScroll);
+        return () => {
+            window.removeEventListener('scroll', onScroll);
+        }
+    }, []);
+
+    console.log(scrolled)
+
+    return <Flex className={`gap-1 p-2 items-center ${scrolled ? "shadow-lg" : "border-b-2"} 
+        justify-end sticky transition-shadow ease-in-out
+        top-0 z-20 bg-tremor-background w-full bg-tremor-background/40 backdrop-blur-sm`}>
         <HeaderText text={headerText} />
         <>
             {buttons.map((button, index) => (
@@ -35,14 +50,22 @@ export function Header({headerText, buttons}: {
 }
 
 function MeButton() {
-    return <Link href={"/me"}>
+    const [hasFcmToken, setHasFcmToken] = useState(false);
+
+    useEffect(() => {
+        User.hasFcmToken(remult).then(setHasFcmToken);
+    }, []);
+
+    return <Link href={"/me"} className={"relative"}>
         <Tremor.Icon icon={RiUserLine} className={"cursor-pointer"}/>
+        {!hasFcmToken && <span className={"absolute -top-0 -right-0 w-2 h-2 rounded-full bg-red-500"}></span>}
     </Link>
 }
 
 function HeaderText({text}: {text: Headers}) {
     const is_index = text === Headers.INDEX;
-    const Content = () => <Text className={"xs:text-lg sm:text-2xl font-bold grow"}>
+    const Content = () => <Text className={"xs:text-lg sm:text-2xl font-bold grow flex items-center"}>
+        <Image src={"/transperent-192x192.png"} alt={"Yedidim Logo"} width={40} height={40} />
         {text}
     </Text>
 
