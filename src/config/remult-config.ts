@@ -22,10 +22,11 @@ export const api = remultNext({
         User, Procedure, Log
     ],
     ensureSchema: true,
-    admin: UserRole.SuperAdmin,
+    admin: true,
     controllers: [ApiController],
     getUser: async (req) => {
         const jwtToken = await getToken({req})
+        console.log("jwtToken", jwtToken)
         if (!jwtToken?.sub) return undefined
         return User.signIn(remult, jwtToken.sub)
     },
@@ -39,7 +40,6 @@ export const api = remultNext({
         connectionString: process.env.POSTGRES_URL,
     }),
     error: async (error) => {
-        console.log("API error:", error)
         criticalLog({
             type: "API_ERROR",
             errorCode: error.httpStatusCode.toString(),
