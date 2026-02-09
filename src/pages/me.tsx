@@ -1,13 +1,14 @@
 import {useEffect, useState} from "react";
-import {User, UserRole} from "@/model/User";
+import {User, UserRole, userRoleToText} from "@/model/User";
 import {remult} from "remult";
 import * as Tremor from "@tremor/react";
-import {Button, Card, Flex, Icon, Text, TextInput} from "@tremor/react";
+import {Button, Callout, Card, Flex, Icon, List, ListItem, Text, TextInput} from "@tremor/react";
 import {signOut} from "next-auth/react";
 import {ConfirmDeleteUserDialog} from "@/components/dialogs/ConfirmDeleteUserDialog";
-import {RiCheckLine} from "@remixicon/react";
+import {RiCheckLine, RiCloseLine} from "@remixicon/react";
 import {LoadingSpinner} from "@/components/Spinner";
 import {Header, Headers} from "@/components/Header";
+import {requestNotificationPermission, RequestTokenResult} from "@/firebase-messages/notifications-permission";
 
 const userRepo = remult.repo(User);
 const phoneRegex = /^[5-9]\d{8}$/;
@@ -18,17 +19,25 @@ export default function MePage() {
     const [phone, setPhone] = useState<string>()
     const [validPhone, setValidPhone] = useState(true)
     const [loading, setLoading] = useState(false)
+    const [error, setError] = useState("")
+
+    const loadUserData = async () => {
+        setLoading(true)
+        try {
+            if (!remult.user) return
+            const user = await userRepo.findFirst({id: remult.user.id})
+            setMe(user || undefined)
+        } catch (error) {
+            console.error("Error fetching user data:", error);
+            setError("Failed to load user data. Please refresh the page.");
+        } finally {
+            setLoading(false)
+        }
+    }
+
 
     useEffect(() => {
-        setLoading(true)
-        if (!remult.user) return
-        userRepo.findFirst({id: remult.user.id}).then(user => {
-            setMe(user || undefined)
-        }).catch(error => {
-            console.error("Error fetching user data:", error);
-        }).finally(() => {
-            setLoading(false)
-        })
+        void loadUserData()
     }, []);
 
     useEffect(() => {
@@ -50,35 +59,54 @@ export default function MePage() {
             await userRepo.update(me.id, {phone: Number(phone)});
         } catch (error) {
             console.error("Error updating phone number:", error);
+            setError("Failed to update phone number. Please try again.");
         } finally {
+            void loadUserData()
             setLoading(false)
         }
     }
 
-    return <Tremor.Flex flexDirection={"col"} className={"p-4 max-w-4xl m-auto"}>
+    const updateToken = async () => {
+        setLoading(true)
+        try {
+            const result = await requestNotificationPermission();
+            if (result !== RequestTokenResult.Success) {
+                console.error("Failed to update notification token:", result);
+                setError(result);
+            }
+        } catch (error) {
+            console.error("Error updating notification token:", error);
+            setError("Failed to update notification token. Please try again.");
+        } finally {
+            void loadUserData()
+            setLoading(false)
+        }
+    }
+
+    return <div className={`max-w-4xl h-screen m-auto`}>
         <Header headerText={Headers.ME} buttons={[]}/>
-        <Card className={""}>
-            <>
-                <Flex className={"gap-2"}>
+        <Card className={"max-w-md mx-auto mt-10 p-6 "}>
+            <List>
+                <Flex className={"gap-2 my-4"}>
                     <Tremor.Text className={"font-semibold text-xl grow text-right"}>
                         {me?.name}
                     </Tremor.Text>
                     <Tremor.Badge>
-                        {me?.roles.includes(UserRole.Dispatcher) ? me?.district || "--" : "מנהל"}
+                        {userRoleToText(me?.roles || UserRole.Dispatcher)}
                     </Tremor.Badge>
                     <Tremor.Badge color={"green"}>
-                        {me?.district ? me.district : "לא משויך למחוז"}
+                        {me?.district ? me.district : "לא משויך"}
                     </Tremor.Badge>
                 </Flex>
-                <Flex className={"gap-2 mt-4 flex-col items-start"}>
+                <ListItem className={"flex-wrap"}>
                     <Text className={"text-right text-sm text-gray-500"}>
                         דוא"ל:
                     </Text>
                     <Text className={"text-right font-semibold"}>
                         {me?.email}
                     </Text>
-                </Flex>
-                <Flex className={"my-8 mt-4 gap-2 flex-col items-start"}>
+                </ListItem>
+                <ListItem className={"flex-wrap"}>
                     <Text className={"text-right text-sm text-gray-500 mb-2"}>
                         מספר טלפון:
                     </Text>
@@ -115,17 +143,37 @@ export default function MePage() {
                                 <Text className={"text-right text-xs"}> ללא 0 בהתחלה (לדוגמה 531234567)</Text>
                             </form>
                     }
-                </Flex>
-            </>
+                </ListItem>
 
-            <Flex className={"gap-2 mt-10"}>
-                <Tremor.Button className={"grow"}
+                <ListItem className={"flex-wrap"}>
+                    <Text className={"text-right text-sm text-gray-500 mb-2"}>
+                        קבלת עדכונים:
+                    </Text>
+                    <Text className={"text-right font-semibold"}>
+                        {me?.fcmToken ? <Flex>
+                            <Icon icon={RiCheckLine} className={"text-green-500"}/>
+                            רשום
+                        </Flex> : <Flex>
+                            <Icon icon={RiCloseLine} className={"text-red-500"}/>
+                            לא רשום
+
+                            <Button variant={"light"} size={"xs"} className={"mr-8"}
+                                    onClick={updateToken}>
+                                עדכן
+                            </Button>
+                        </Flex>}
+                    </Text>
+                </ListItem>
+            </List>
+
+            <Flex className={"gap-6 mt-10 justify-end"}>
+                <Tremor.Button className={""} variant={"light"}
                                onClick={() => void signOut()}>
                     התנתק
                 </Tremor.Button>
 
                 <Tremor.Button onClick={() => setDeleteDialogOpen(true)}
-                               className={"grow"} color={"red"} variant={"secondary"}>
+                               className={""} color={"red"} variant={"light"}>
                     מחיקת חשבון
                 </Tremor.Button>
             </Flex>
@@ -135,6 +183,13 @@ export default function MePage() {
                     onClose={() => setDeleteDialogOpen(false)}
                     user={me}/>}
         </Card>
-    </Tremor.Flex>
+
+        {
+            error && <Callout color={"red"}
+                              className={"text-red-600 text-sm mt-14 w-full max-w-sm"} title={"Error"}>
+                {error}
+            </Callout>
+        }
+    </div>
 
 }
