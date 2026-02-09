@@ -6,6 +6,7 @@ import {ApiController} from "@/controllers/ApiController";
 import {getToken} from "next-auth/jwt";
 import {remult} from "remult";
 import {createPostgresDataProvider} from "remult/postgres";
+import {criticalLog} from "@/config/logger";
 
 
 const DEVELOPER_USER = {
@@ -21,7 +22,7 @@ export const api = remultNext({
         User, Procedure, Log
     ],
     ensureSchema: true,
-    admin: true,
+    admin: UserRole.SuperAdmin,
     controllers: [ApiController],
     getUser: async (req) => {
         const jwtToken = await getToken({req})
@@ -36,5 +37,15 @@ export const api = remultNext({
     logApiEndPoints: false,
     dataProvider: createPostgresDataProvider({
         connectionString: process.env.POSTGRES_URL,
-    })
+    }),
+    error: async (error) => {
+        console.log("API error:", error)
+        criticalLog({
+            type: "API_ERROR",
+            errorCode: error.httpStatusCode.toString(),
+            errorBody: JSON.stringify(error.responseBody),
+            entityName: error.entity?.dbName,
+            exception: error.exception
+        })
+    }
 })
