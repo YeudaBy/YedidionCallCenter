@@ -1,5 +1,5 @@
 import {ReactNode, useEffect, useState} from "react";
-import {signIn, useSession} from "next-auth/react";
+import {signIn, signOut, useSession} from "next-auth/react";
 import {remult} from "remult";
 import {User} from "@/model/User";
 import {Button, Card, Flex, Text} from "@tremor/react";
@@ -68,7 +68,9 @@ function NotAuthorized() {
     const router = useRouter();
 
     const goToLoginPage = () => {
-        router.push('/api/auth/signin');
+        signOut().then(() => {
+            router.push('/api/auth/signin');
+        })
     }
 
     return <Card className={"mx-auto my-12 w-fit flex flex-col items-center bg-tremor-brand-faint"}>
