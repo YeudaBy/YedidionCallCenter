@@ -1,11 +1,11 @@
 import {Head, Html, Main, NextScript} from 'next/document'
-import NotificationPermission from "@/components/NotificationPermission";
+import {gradientBg} from "@/utils/ui";
 
 export default function Document() {
     return (
         <Html lang="he" dir={"rtl"}>
             <Head/>
-            <body>
+            <body className={gradientBg}>
             <Main/>
             <NextScript/>
             </body>

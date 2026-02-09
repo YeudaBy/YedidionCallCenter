@@ -33,3 +33,6 @@ export function getLogTypeColor(logType: LogType): Color {
 export function cx(...args: ClassValue[]) {
     return twMerge(clsx(...args))
 }
+
+
+export const gradientBg = "bg-gradient-to-br from-white via-blue-50/50 to-green-50/50 --fixed-bg"
