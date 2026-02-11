@@ -5,13 +5,13 @@ import autoAnimate from "@formkit/auto-animate";
 import {District} from "@/model/District";
 import {remult} from "remult";
 import * as Tremor from "@tremor/react";
-import {Button, Flex, Icon, Text} from "@tremor/react";
+import {Flex, Icon, Text} from "@tremor/react";
 import {CloseDialogButton} from "@/components/CloseDialogButton";
 import {LoadingSpinner} from "@/components/Spinner";
 import {highlightedText} from "@/utils/highlightedText";
 import Image from "next/image";
 import {User} from "@/model/User";
-import {RiCopyleftLine, RiFileCopyLine, RiLink, RiPencilLine, RiWhatsappLine} from "@remixicon/react";
+import {RiFileCopyLine, RiLink, RiPencilLine, RiWhatsappLine} from "@remixicon/react";
 
 export function MainProcedureDialog({procedure, open, onClose, onEdit}: {
     procedure?: Procedure | true,

@@ -11,6 +11,7 @@ import {Button, Flex, Icon, MultiSelect, Switch} from "@tremor/react";
 import {UserRole} from "@/model/User";
 import Image from "next/image";
 import {useRouter} from "next/router";
+import {RoleGuard} from "@/components/auth/RoleGuard";
 
 const procedureRepo = remult.repo(Procedure);
 const logRepo = remult.repo(Log);
@@ -39,7 +40,7 @@ export function ProcedureEditorDialog({procedure, open, onClose, onAdd, onEdit, 
     }
 
     useEffect(() => {
-        if (!!procedure) {
+        if (procedure) {
             setTitle(procedure.title)
             setContent(procedure.procedure)
             setKeywords(procedure.keywords)
@@ -101,7 +102,7 @@ export function ProcedureEditorDialog({procedure, open, onClose, onAdd, onEdit, 
         onClose?.(false)
     }
 
-    return <>
+    return <RoleGuard allowedRoles={[UserRole.SuperAdmin]}>
         <Tremor.Dialog open={open} onClose={(val) => onClose(val)}>
             <Tremor.DialogPanel className={"gap-1.5 flex items-center flex-col"}>
                 <Flex className={"gap-1.5"}>
@@ -247,6 +248,6 @@ export function ProcedureEditorDialog({procedure, open, onClose, onAdd, onEdit, 
                 </Flex>
             </Tremor.DialogPanel>
         </Tremor.Dialog>
-    </>
+    </RoleGuard>
 }
 
