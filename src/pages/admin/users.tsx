@@ -100,21 +100,25 @@ export default function AdminUsersPage() {
 
         function getWhere(): EntityFilter<User> {
             return {
-                active: filter !== "inactive",
-                roles: filter === "admins" ? {$in: AdminRoles} :
-                    ["dispatchers", "unregistered"].includes(filter || "") ? UserRole.Dispatcher : undefined,
-                district: filter === "unregistered" ? {
-                    $ne: Object.values(District)
-                } : Object.entries(District).find(([k, _]) => k === filter)?.[1] as District,
-                name: query ? {
-                    $contains: query
-                } : undefined,
-                email: query ? {
-                    $contains: query
-                } : undefined,
-                phone: query ? {
-                    $contains: query.replace(/^0/, "")
-                } : undefined
+                $and: [
+                    {active: filter !== "inactive"},
+                    {
+                        roles: filter === "admins" ? {$in: AdminRoles} :
+                            ["dispatchers", "unregistered"].includes(filter || "") ? UserRole.Dispatcher : undefined
+                    },
+                    {
+                        district: filter === "unregistered" ? {
+                            $ne: Object.values(District)
+                        } : Object.entries(District).find(([k, _]) => k === filter)?.[1] as District
+                    },
+                    {
+                        $or: [
+                            {name: {$contains: query}},
+                            {email: {$contains: query}},
+                            {phoneString: {$contains: query}}
+                        ]
+                    }
+                ]
             }
         }
 

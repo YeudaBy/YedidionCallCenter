@@ -39,6 +39,9 @@ export class User extends IdEntity {
     @Fields.number()
     phone: number | undefined;
 
+    @Fields.string({sqlExpression: "LPAD(phone::text, 10, '0')"})
+    phoneString: string | undefined;
+
     @Fields.boolean()
     active: boolean = true;
 
