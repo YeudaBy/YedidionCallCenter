@@ -2,7 +2,7 @@ import {useCallback, useEffect, useState} from "react";
 import {Procedure, ProcedureType} from "@/model/Procedure";
 import {remult} from "remult";
 import * as Tremor from "@tremor/react";
-import {Button, Flex, Icon} from "@tremor/react";
+import {Button, Flex} from "@tremor/react";
 import {useRouter} from "next/router";
 import {LoadingBackdrop} from "@/components/Spinner";
 import {ProcedurePreview} from "@/components/ProcedurePreview";
@@ -18,8 +18,6 @@ import {SearchBox} from "@/components/index-page/SearchBox";
 import {IndexHeader} from "@/components/index-page/IndexHeader";
 import {DistrictSelector} from "@/components/index-page/DistrictSelector";
 import {useAnalytics} from "@/firebase-messages/init";
-import {bgGreen} from "next/dist/lib/picocolors";
-import {gradientBg} from "@/utils/ui";
 
 const procedureRepo = remult.repo(Procedure);
 const userRepo = remult.repo(User);
@@ -44,7 +42,7 @@ export default function IndexPage() {
     useAnalytics()
 
     const procedureTypeFilter = () => {
-        return User.isAdmin(remult) ? {} : {type: ProcedureType.Procedure}
+        return (User.isAdmin(remult) && showInactive) ? {} : {active: true}
     }
 
     useEffect(() => {
@@ -99,7 +97,6 @@ export default function IndexPage() {
             where: {
                 ...(["All", District.General].includes(district) ? {}
                     : {districts: {$contains: district}}),
-                active: true,
                 ...procedureTypeFilter()
             },
             orderBy: {
@@ -119,7 +116,11 @@ export default function IndexPage() {
         procedureRepo.find({
             where: {
                 $or: [
-                    {title: query},
+                    {
+                        title: {
+                            $contains: query
+                        }
+                    },
                     {
                         keywords: {
                             $contains: query
