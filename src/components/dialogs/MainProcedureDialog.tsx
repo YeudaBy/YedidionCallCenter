@@ -5,12 +5,13 @@ import autoAnimate from "@formkit/auto-animate";
 import {District} from "@/model/District";
 import {remult} from "remult";
 import * as Tremor from "@tremor/react";
+import {Button, Flex, Icon, Text} from "@tremor/react";
 import {CloseDialogButton} from "@/components/CloseDialogButton";
 import {LoadingSpinner} from "@/components/Spinner";
-import {Button, Divider, Flex, Text} from "@tremor/react";
 import {highlightedText} from "@/utils/highlightedText";
 import Image from "next/image";
 import {User} from "@/model/User";
+import {RiCopyleftLine, RiFileCopyLine, RiLink, RiPencilLine, RiWhatsappLine} from "@remixicon/react";
 
 export function MainProcedureDialog({procedure, open, onClose, onEdit}: {
     procedure?: Procedure | true,
@@ -99,17 +100,33 @@ export function MainProcedureDialog({procedure, open, onClose, onEdit}: {
                             </Tremor.Dialog>}
                     </Flex>
 
-                    <Flex alignItems={"center"} justifyContent={"center"} className={"gap-1"}>
-                        <Button
-                            className={"grow"}
-                            onClick={() => copy(sharedText())}>
-                            העתק
-                        </Button>
-                        <Button
-                            className={"grow"}
-                            onClick={() => share(sharedText())}>
-                            שתף
-                        </Button>
+                    <Flex alignItems={"center"} justifyContent={"start"} className={"gap-2"}>
+                        <Icon
+                            icon={RiWhatsappLine}
+                            size={"lg"}
+                            className={"cursor-pointer border-2 border-tremor-brand"}
+                            variant={"light"}
+                            onClick={() => share(sharedText())}/>
+                        <Icon
+                            icon={RiFileCopyLine}
+                            size={"lg"}
+                            className={"cursor-pointer"}
+                            variant={"outlined"}
+                            onClick={() => copy(sharedText())}/>
+                        <Icon
+                            icon={RiLink}
+                            size={"lg"}
+                            className={"cursor-pointer"}
+                            variant={"outlined"}
+                            onClick={() => copy(location.href)}/>
+                        {User.isSuperAdmin(remult) &&
+                            <Icon
+                                icon={RiPencilLine}
+                                variant={"shadow"}
+                                size={"lg"}
+                                className={"cursor-pointer"}
+                                onClick={() => onEdit(procedure)}/>
+                        }
                     </Flex>
 
                     <Flex
@@ -129,20 +146,6 @@ export function MainProcedureDialog({procedure, open, onClose, onEdit}: {
                                 key={d}>מוקד {d}</Tremor.Badge>
                         })}
                     </Flex>
-
-
-                    {User.isAdmin(remult) && <>
-                        <Divider className={"my-0.5"}/>
-
-                        <Flex justifyContent={"center"} className={"gap-1.5"}>
-                            <Tremor.Button
-                                variant={"secondary"}
-                                className={"grow"}
-                                onClick={() => onEdit(procedure)}>
-                                ערוך
-                            </Tremor.Button>
-                        </Flex>
-                    </>}
                 </>
             }
         </Tremor.DialogPanel>
