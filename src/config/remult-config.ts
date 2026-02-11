@@ -39,13 +39,13 @@ export const api = remultNext({
     dataProvider: createPostgresDataProvider({
         connectionString: process.env.POSTGRES_URL,
     }),
-    error: async (error) => {
-        criticalLog({
-            type: "API_ERROR",
-            errorCode: error.httpStatusCode.toString(),
-            errorBody: JSON.stringify(error.responseBody),
-            entityName: error.entity?.dbName,
-            exception: error.exception
-        })
-    }
+    // error: async (error) => {
+    //     criticalLog({
+    //         type: "API_ERROR",
+    //         errorCode: error.httpStatusCode.toString(),
+    //         errorBody: JSON.stringify(error.responseBody),
+    //         entityName: error.entity?.dbName,
+    //         exception: error.exception
+    //     })
+    // }
 })
