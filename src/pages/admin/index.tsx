@@ -91,11 +91,6 @@ export default function AdminPage() {
             label: "ניהול משתמשים (בטא)",
             icon: RiAB
         },
-        {
-            action: "/admin/beta/procedures",
-            label: "ניהול נהלים )בטא(",
-            icon: RiTimelineView
-        }
     ];
 
     if (isSuperAdmin) {
@@ -109,6 +104,12 @@ export default function AdminPage() {
                 action: exportProcedures,
                 label: "ייצוא נהלים",
                 icon: RiFolderDownloadLine
+            },
+
+            {
+                action: "/admin/beta/procedures",
+                label: "ניהול נהלים )בטא(",
+                icon: RiTimelineView
             },
             {
                 action: importProcedures,
