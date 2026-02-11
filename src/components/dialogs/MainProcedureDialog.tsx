@@ -1,6 +1,6 @@
 import {Procedure} from "@/model/Procedure";
 import {useRouter} from "next/router";
-import {useEffect, useRef, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import autoAnimate from "@formkit/auto-animate";
 import {District} from "@/model/District";
 import {remult} from "remult";
@@ -12,6 +12,9 @@ import {highlightedText} from "@/utils/highlightedText";
 import Image from "next/image";
 import {User} from "@/model/User";
 import {RiFileCopyLine, RiLink, RiPencilLine, RiWhatsappLine} from "@remixicon/react";
+import {cx, extractYouTubeId} from "@/utils/ui";
+import LiteYouTubeEmbed from 'react-lite-youtube-embed';
+import 'react-lite-youtube-embed/dist/LiteYouTubeEmbed.css';
 
 export function MainProcedureDialog({procedure, open, onClose, onEdit}: {
     procedure?: Procedure | true,
@@ -71,6 +74,15 @@ export function MainProcedureDialog({procedure, open, onClose, onEdit}: {
                         className={"scrollable p-2 py-3 rounded-r-xl w-full bg-blue-50"}>
                         {highlightedText(procedure.procedure)}
                     </Tremor.Text>
+
+                    {!!extractYouTubeId(procedure.youtubeUrl || "") && <div className={cx(
+                        "w-full"
+                    )}>
+                        <LiteYouTubeEmbed
+                            lazyLoad
+                            title={procedure.title}
+                            id={extractYouTubeId(procedure.youtubeUrl!)!}/>
+                    </div>}
 
                     <Flex className={"gap-1.5 justify-start"}>
                         {procedure.images?.map((image, i) => {

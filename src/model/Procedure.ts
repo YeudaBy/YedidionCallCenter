@@ -1,4 +1,4 @@
-import {Entity, Field, Fields, IdEntity} from "remult";
+import {Entity, Field, Fields} from "remult";
 import {District} from "./District";
 import {NanoIdField} from "@/utils/types";
 
@@ -49,6 +49,11 @@ export class Procedure {
 
     @Field(() => Array<string>)
     logs: string[] = [];
+
+    @Fields.string({
+        required: false
+    })
+    youtubeUrl?: string;
 
     parseToWaString() {
         return `${this.title}\n${this.procedure}`

@@ -36,3 +36,34 @@ export function cx(...args: ClassValue[]) {
 
 
 export const gradientBg = "bg-gradient-to-br from-white via-blue-50/50 to-green-50/50 --fixed-bg"
+
+export function extractYouTubeId(url: string): string | null {
+    try {
+        const parsedUrl = new URL(url)
+
+        // youtu.be/<id>
+        if (parsedUrl.hostname === "youtu.be") {
+            return parsedUrl.pathname.slice(1)
+        }
+
+        // youtube.com/watch?v=<id>
+        if (parsedUrl.searchParams.has("v")) {
+            return parsedUrl.searchParams.get("v")
+        }
+
+        // youtube.com/embed/<id>
+        if (parsedUrl.pathname.includes("/embed/")) {
+            return parsedUrl.pathname.split("/embed/")[1]
+        }
+
+        // youtube.com/shorts/<id>
+        if (parsedUrl.pathname.includes("/shorts/")) {
+            return parsedUrl.pathname.split("/shorts/")[1]
+        }
+
+        return null
+    } catch {
+        return null
+    }
+}
+

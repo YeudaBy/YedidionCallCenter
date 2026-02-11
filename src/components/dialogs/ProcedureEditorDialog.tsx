@@ -7,7 +7,7 @@ import {diff} from "@/utils/diff";
 import {CloseDialogButton} from "@/components/CloseDialogButton";
 import {RiCloseFill, RiListCheck} from "@remixicon/react";
 import * as Tremor from "@tremor/react";
-import {Button, Flex, Icon, MultiSelect, Switch} from "@tremor/react";
+import {Button, Flex, Icon, MultiSelect, Switch, TextInput} from "@tremor/react";
 import {UserRole} from "@/model/User";
 import Image from "next/image";
 import {useRouter} from "next/router";
@@ -32,6 +32,7 @@ export function ProcedureEditorDialog({procedure, open, onClose, onAdd, onEdit, 
     const [type, setType] = useState(ProcedureType.Procedure)
     const [districts, setDistricts] = useState<District[]>([District.General])
     const [images, setImages] = useState<string[]>()
+    const [youtubeUrl, setYoutubeUrl] = useState<string | undefined>()
 
     const router = useRouter()
 
@@ -48,6 +49,7 @@ export function ProcedureEditorDialog({procedure, open, onClose, onAdd, onEdit, 
             setType(procedure.type)
             setDistricts(procedure.districts)
             setImages(procedure.images)
+            setYoutubeUrl(procedure.youtubeUrl)
         }
     }, [procedure]);
 
@@ -62,6 +64,7 @@ export function ProcedureEditorDialog({procedure, open, onClose, onAdd, onEdit, 
                 keywords: keywords.map(k => k.trim()),
                 type: type,
                 images: images,
+                youtubeUrl: youtubeUrl
             })
             await logRepo.insert({
                 byUserId: remult.user?.id!,
@@ -79,6 +82,7 @@ export function ProcedureEditorDialog({procedure, open, onClose, onAdd, onEdit, 
                 keywords: keywords.map(k => k.trim()),
                 type: type,
                 images: images,
+                youtubeUrl: youtubeUrl
             })
             for (const e1 of [
                 diff(procedure.procedure, content || ""),
@@ -87,7 +91,8 @@ export function ProcedureEditorDialog({procedure, open, onClose, onAdd, onEdit, 
                 diff(procedure.type, type || ""),
                 diff(procedure.districts.join(", "), districts.join(", ") || ""),
                 diff(procedure.active.toString(), active.toString() || ""),
-                diff(procedure.images.join(", "), images?.join(", ") || "")
+                diff(procedure.images.join(", "), images?.join(", ") || ""),
+                diff(procedure.youtubeUrl || "", youtubeUrl || "")
             ].filter(Boolean).map(e => e as string)) {
                 await logRepo.insert({
                     byUserId: remult.user?.id!,
@@ -123,7 +128,7 @@ export function ProcedureEditorDialog({procedure, open, onClose, onAdd, onEdit, 
                 <MultiSelect
                     placeholder={"בחר/י מוקדים:"}
                     value={districts}
-                    // @ts-ignore
+                    // @ts-expect-error: Tremor typings are wrong for MultiSelect onChange
                     onChange={e => setDistricts(e)}
                 >
                     {Object.values(District).map(value => {
@@ -142,7 +147,7 @@ export function ProcedureEditorDialog({procedure, open, onClose, onAdd, onEdit, 
                 <Tremor.Select
                     value={type}
                     placeholder={"בחר/י סוג:"}
-                    // @ts-ignore
+                    // @ts-expect-error Tremor typings are wrong for Select onChange
                     onChange={e => setType(e)}
                 >
                     <Tremor.SelectItem value={ProcedureType.Procedure}>נוהל</Tremor.SelectItem>
@@ -209,6 +214,12 @@ export function ProcedureEditorDialog({procedure, open, onClose, onAdd, onEdit, 
                     {/*/>*/}
                 </Flex>
 
+                <TextInput
+                    value={youtubeUrl || ""}
+                    placeholder={"הוסף קישור ליוטיוב (אופציונלי)"}
+                    onValueChange={setYoutubeUrl}
+                    type={"url"}
+                />
 
                 <Flex alignItems={"center"} justifyContent={"start"} className={"gap-1"}>
                     <Switch
