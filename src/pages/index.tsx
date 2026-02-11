@@ -26,7 +26,7 @@ const logRepo = remult.repo(Log);
 
 export default function IndexPage() {
     const [procedures, setProcedures] = useState<Procedure[]>()
-    const [results, setResults] = useState<Procedure[]>()
+    const [searchResult, setSearchResult] = useState<Procedure[]>()
     const [query, setQuery] = useState<string>()
     const [loading, setLoading] = useState(false)
     const [current, setCurrent] = useState<Procedure | true | undefined>()
@@ -34,7 +34,6 @@ export default function IndexPage() {
     const [district, setDistrict] = useState<District | "All">("All")
     const [allowedDistricts, setAllowedDistricts] = useState<District[]>([District.General])
     const [showInactive, setShowInactive] = useState(false)
-    const [inactives, setInactives] = useState<Procedure[]>()
     const [order, setOrder] = useState<Order>(Order.Recent)
     const [deleteOpen, setDeleteOpen] = useState<Procedure>()
     const [dense, setDense] = useState(false)
@@ -46,7 +45,7 @@ export default function IndexPage() {
     }
 
     useEffect(() => {
-        if (!order) return
+        if (!order) setOrder(Order.Recent)
         setProcedures(() => {
             return procedures?.sort((a, b) => {
                 return order === Order.Recent ? b.updatedAt.getTime() - a.updatedAt.getTime()
@@ -109,7 +108,7 @@ export default function IndexPage() {
             .then(() => {
                 setLoading(false)
             })
-    }, [district]);
+    }, [district, showInactive]);
 
     useEffect(() => {
         if (!query) return
@@ -130,23 +129,9 @@ export default function IndexPage() {
                 ...procedureTypeFilter()
             }
         }).then(procedures => {
-            setResults(procedures)
+            setSearchResult(procedures)
         })
     }, [query]);
-
-    useEffect(() => {
-        if (!showInactive) return
-        setLoading(true)
-        procedureRepo.find({
-            where: {
-                active: false
-            }
-        }).then(procedures => {
-            setInactives(procedures)
-        }).finally(() => {
-            setLoading(false)
-        })
-    }, [showInactive]);
 
     const addNew = useCallback((newProcedure: Procedure) => {
         setProcedures([...procedures || [], newProcedure])
@@ -174,7 +159,7 @@ export default function IndexPage() {
         <Flex className={"p-4 flex-col"}>
 
             <Flex className={"justify-between items-center gap-2"}>
-                <SearchBox query={query} setQuery={setQuery} setResults={setResults}/>
+                <SearchBox query={query} setQuery={setQuery} setResults={setSearchResult}/>
                 <Flex className={"gap-2 justify-start items-center my-2"}>
                     <Button icon={dense ? RiStackedView : RiCarouselView}
                             variant={"light"} className={"gap-2"}
@@ -204,12 +189,9 @@ export default function IndexPage() {
                 // loading ? <Loading/> :
                 <Tremor.Grid className={"gap-2 w-full"} numItems={dense ? 2 : 1} numItemsSm={dense ? 3 : 2}
                              numItemsLg={dense ? 5 : 3}>
-                    {showInactive && inactives?.map(procedure => {
-                        return <ProcedurePreview dense={dense} procedure={procedure} key={procedure.id}/>
-                    })}
                     {!query ? procedures?.map(procedure => {
                         return <ProcedurePreview dense={dense} procedure={procedure} key={procedure.id}/>
-                    }) : results?.map(procedure => {
+                    }) : searchResult?.map(procedure => {
                         return <ProcedurePreview dense={dense} procedure={procedure} key={procedure.id}/>
                     })}
                 </Tremor.Grid>
