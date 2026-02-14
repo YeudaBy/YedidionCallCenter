@@ -2,13 +2,13 @@ import {Flex, Text} from "@tremor/react";
 import Link from "next/link";
 import * as Tremor from "@tremor/react";
 import {RiUserLine} from "@remixicon/react";
-import {ReactNode, useEffect, useRef, useState} from "react";
+import React, {ReactNode, useEffect, useState} from "react";
 import Image from "next/image";
-import {remult, repo} from "remult";
+import {remult} from "remult";
 import {User} from "@/model/User";
 
 export enum Headers {
-    INDEX = "מוקדון - נהלי מוקד",
+    INDEX = "מידע מוקד",
     ME = "הפרופיל שלי",
     ADMIN = "ניהול מערכת",
     USERS = "ניהול משתמשים",
@@ -32,8 +32,6 @@ export function Header({headerText, buttons}: {
             window.removeEventListener('scroll', onScroll);
         }
     }, []);
-
-    console.log(scrolled)
 
     return <Flex className={`gap-1 p-2 items-center ${scrolled ? "shadow-lg" : "border-b-2"} 
         justify-end sticky transition-shadow ease-in-out
