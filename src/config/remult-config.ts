@@ -9,6 +9,7 @@ import {createPostgresDataProvider} from "remult/postgres";
 import {Category} from "@/model/Category";
 import {ProcedureCategory} from "@/model/ProcedureCategory";
 import {KnowledgeBaseController} from "@/controllers/hierarchyController";
+import {SseSubscriptionServer} from "remult/server";
 
 
 const DEVELOPER_USER = {
@@ -41,13 +42,5 @@ export const api = remultNext({
     dataProvider: createPostgresDataProvider({
         connectionString: process.env.POSTGRES_URL,
     }),
-    // error: async (error) => {
-    //     criticalLog({
-    //         type: "API_ERROR",
-    //         errorCode: error.httpStatusCode.toString(),
-    //         errorBody: JSON.stringify(error.responseBody),
-    //         entityName: error.entity?.dbName,
-    //         exception: error.exception
-    //     })
-    // }
+    subscriptionServer: new SseSubscriptionServer()
 })
