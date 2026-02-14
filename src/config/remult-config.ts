@@ -4,12 +4,12 @@ import {Procedure} from "@/model/Procedure";
 import {Log} from "@/model/Log";
 import {ApiController} from "@/controllers/ApiController";
 import {getToken} from "next-auth/jwt";
-import {remult} from "remult";
+import {remult, SubscriptionServer} from "remult";
 import {createPostgresDataProvider} from "remult/postgres";
 import {Category} from "@/model/Category";
 import {ProcedureCategory} from "@/model/ProcedureCategory";
 import {KnowledgeBaseController} from "@/controllers/hierarchyController";
-import {SseSubscriptionServer} from "remult/server";
+import {DataProviderLiveQueryStorage, SseSubscriptionServer} from "remult/server";
 
 
 const DEVELOPER_USER = {
@@ -18,6 +18,11 @@ const DEVELOPER_USER = {
     roles: UserRole.SuperAdmin,
     active: true,
 }
+
+
+const dataProvider = createPostgresDataProvider({
+    connectionString: process.env.POSTGRES_URL,
+})
 
 
 export const api = remultNext({
@@ -39,8 +44,7 @@ export const api = remultNext({
         }
     },
     logApiEndPoints: false,
-    dataProvider: createPostgresDataProvider({
-        connectionString: process.env.POSTGRES_URL,
-    }),
-    subscriptionServer: new SseSubscriptionServer()
+    dataProvider: dataProvider,
+    subscriptionServer: new SseSubscriptionServer(),
+    liveQueryStorage: new DataProviderLiveQueryStorage(dataProvider)
 })
