@@ -1,8 +1,10 @@
+import { Category } from "#@/model/Category.js";
 import {LogType} from "@/model/Log";
 import {RiAddLine, RiChat1Line, RiDeleteBinLine, RiPencilLine} from "@remixicon/react";
 import {Color} from "@tremor/react/dist/lib/inputTypes";
 import clsx, {ClassValue} from "clsx";
 import {twMerge} from "tailwind-merge";
+import {Procedure} from "@/model/Procedure";
 
 export function getLogTypeIcon(logType: LogType) {
     switch (logType) {
@@ -67,3 +69,34 @@ export function extractYouTubeId(url: string): string | null {
     }
 }
 
+
+export interface CategoryNode extends Category {
+    children: CategoryNode[];
+    cleanProcedures: Procedure[];
+}
+
+export function buildTree(flatCategories: Category[]): CategoryNode[] {
+    const map = new Map<string, CategoryNode>();
+    const roots: CategoryNode[] = [];
+
+    flatCategories.forEach(cat => {
+        const cleanProcedures = cat.procedures?.map(pc => pc.procedure!) || [];
+
+        map.set(cat.id, {
+            ...cat,
+            children: [],
+            cleanProcedures
+        });
+    });
+
+    flatCategories.forEach(cat => {
+        const node = map.get(cat.id)!;
+        if (cat.parentCategoryId && map.has(cat.parentCategoryId)) {
+            map.get(cat.parentCategoryId)!.children.push(node);
+        } else {
+            roots.push(node);
+        }
+    });
+
+    return roots;
+}

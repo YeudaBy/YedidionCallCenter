@@ -6,7 +6,9 @@ import {ApiController} from "@/controllers/ApiController";
 import {getToken} from "next-auth/jwt";
 import {remult} from "remult";
 import {createPostgresDataProvider} from "remult/postgres";
-import {criticalLog} from "@/config/logger";
+import {Category} from "@/model/Category";
+import {ProcedureCategory} from "@/model/ProcedureCategory";
+import {KnowledgeBaseController} from "@/controllers/hierarchyController";
 
 
 const DEVELOPER_USER = {
@@ -19,14 +21,14 @@ const DEVELOPER_USER = {
 
 export const api = remultNext({
     entities: [
-        User, Procedure, Log
+        User, Procedure, Log, Category, ProcedureCategory
     ],
     ensureSchema: true,
     admin: true,
-    controllers: [ApiController],
+    controllers: [ApiController, KnowledgeBaseController],
     getUser: async (req) => {
         const jwtToken = await getToken({req})
-        console.log("jwtToken", jwtToken)
+        // console.log("jwtToken", jwtToken)
         if (!jwtToken?.sub) return undefined
         return User.signIn(remult, jwtToken.sub)
     },

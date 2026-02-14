@@ -1,6 +1,7 @@
-import {Entity, Field, Fields} from "remult";
+import {Entity, Field, Fields, Relations} from "remult";
 import {District} from "./District";
 import {NanoIdField} from "@/utils/types";
+import {ProcedureCategory} from "@/model/ProcedureCategory";
 
 
 const PROCEDURE_ID_LENGTH = 7;
@@ -54,6 +55,9 @@ export class Procedure {
         required: false
     })
     youtubeUrl?: string;
+
+    @Relations.toMany(() => ProcedureCategory, "procedureId")
+    categories?: ProcedureCategory[];
 
     parseToWaString() {
         return `${this.title}\n${this.procedure}`
