@@ -98,11 +98,19 @@ export class User extends IdEntity {
     }
 
     static isSuperAdmin(remult: Remult) {
-        return remult.user && remult.user.roles?.includes(UserRole.SuperAdmin)
+        if (!remult.user) return false
+        if (Array.isArray(remult.user.roles)) {
+            return remult.user.roles.includes(UserRole.SuperAdmin)
+        }
+        return remult.user.roles === UserRole.SuperAdmin
     }
 
     static isRegularAdmin(remult: Remult) {
-        return remult.user && remult.user.roles?.includes(UserRole.Admin)
+        if (!remult.user) return false
+        if (Array.isArray(remult.user.roles)) {
+            return remult.user.roles.includes(UserRole.Admin)
+        }
+        return remult.user.roles === UserRole.Admin
     }
 
     static async signIn(remult: Remult, email: string) {
