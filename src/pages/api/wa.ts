@@ -48,15 +48,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     if (!currentUser) return;
 
                     if (message.text?.body === "חדש") {
-                        const isSuperAdmin = currentUser.roles === UserRole.SuperAdmin
-                        const isAdmin = currentUser.roles === UserRole.Admin
+                        const isSuperAdmin = User.isSuperAdmin(remult)
+                        const isAdmin = User.isAdmin(remult)
 
                         if (!isSuperAdmin && !isAdmin) return;
                         await whatsappManager.sendInteractiveMessage(buildFlow(
                             message.from,
                             'תהליך הוספת מוקדן חדש',
                             `בלחיצה על הכפתור המצורף, תוכלו להוסיף מוקדנים חדשים למערכת הנהלים, לצורך שימוש באתר ובבוט.\n\nעריכת, מחיקת ואישור מוקדנים מתבצעת על ידי דף ניהול המשתמשים באתר\n\n${process.env.BASE_URL}/admin`,
-                            "בדיקה",
+                            "",
                             (isSuperAdmin ? process.env.WA_ADD_USER__SUPER_ADMIN_FLOW_ID : process.env.WA_ADD_USER__ADMIN_FLOW_ID) as string,
                             isSuperAdmin ? "add_user__super_admin" : "add_user__admin",
                             isSuperAdmin ? "ADD_NEW_SUPER_ADMIN" : "ADD_NEW"
@@ -83,12 +83,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         })
                         console.log(results)
                         if (!results.length) {
-                            await whatsappManager.sendTextMessage(buildMessage(
-                                message.from,
-                                'לא נמצאו תוצאות',
-                                true,
-                                message?.id
-                            ));
+                            const extraResults = await repo.find({
+                                limit: 10,
+                                where: {
+                                    procedure: {
+                                        $contains: message.text.body
+                                    }
+                                },
+                                orderBy: {
+                                    updatedAt: 'desc'
+                                }
+                            })
+                            if (!extraResults.length) {
+                                results.push(...extraResults)
+                            } else
+                                await whatsappManager.sendTextMessage(buildMessage(
+                                    message.from,
+                                    'לא נמצאו תוצאות העונות על החיפוש המבוקש :(\n\nנסו להכנס לאתר לחיפוש מתקדם יותר\n\n' + process.env.BASE_URL,
+                                    true,
+                                    message?.id
+                                ));
                             return;
                         }
                         await whatsappManager.sendInteractiveMessage(buildInteractiveList(
@@ -97,13 +111,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                 type: InteractiveType.LIST,
                                 header: {
                                     type: 'text',
-                                    text: 'תוצאות חיפוש:'
+                                    text: `${results.length} תוצאות נמצאו`
                                 },
                                 body: {
-                                    text: 'להלן תוצאות החיפוש למונח המבוקש'
+                                    text: `להלן תוצאות החיפוש עבור ${message.text.body}, בחרו את הנוהל הרלוונטי ביותר לצפייה:`
                                 },
                                 footer: {
-                                    text: 'מוקד ידידים 1230'
+                                    text: ''
                                 },
                                 action: {
                                     button: "בחר נוהל",
@@ -113,15 +127,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                             rows: results.map(p => ({
                                                 title: max24chars(p.title),
                                                 description: p.title.length > 24 ? p.title :
-                                                    p.updatedAt.toLocaleDateString(
-                                                        'he-IL',
-                                                        {
-                                                            year: 'numeric',
-                                                            month: 'numeric',
-                                                            day: 'numeric',
-                                                        }
-                                                    ),
-                                                id: p.id
+                                                    max24chars(p.procedure.replace(/\n/g, ' ')),
                                             }))
                                         }
                                     ]
@@ -142,7 +148,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                     if (!response) {
                                         await whatsappManager.sendTextMessage(buildMessage(message.from, "נכשל בקבלת הנתונים", false, message.id))
                                     } else {
-                                        const district = !!response.district ? District[response.district as keyof typeof District] : currentUser.district
+                                        const district = response.district ? District[response.district as keyof typeof District] : currentUser.district
                                         const newUser = await users.insert({
                                             phone: response.phone ? phoneToDb(response.phone) : undefined,
                                             name: response.name,
@@ -208,7 +214,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
             break
         default:
-            res.status(405).end() // Method Not Allowed
+            res.status(400).end() // Method Not Allowed
             break
     }
 }
