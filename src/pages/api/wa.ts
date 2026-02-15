@@ -223,9 +223,9 @@ async function handleAddNewRequest(remult: Remult, currentUser: User, message: W
     const isAdmin = true; // (remult.user!.roles as unknown as string) === UserRole.Admin
 
     console.log(currentUser.isAdmin, currentUser.isSuperAdmin)
+    console.log(currentUser)
 
     if (!isSuperAdmin || !isAdmin) {
-        console.log(currentUser)
         console.log(`User ${currentUser.name} (${currentUser.id}) attempted to add a new user without sufficient permissions.`);
         return
     }
@@ -237,7 +237,7 @@ async function handleAddNewRequest(remult: Remult, currentUser: User, message: W
         message.from,
         'תהליך הוספת מוקדן חדש',
         `בלחיצה על הכפתור המצורף, תוכלו להוסיף מוקדנים חדשים למערכת הנהלים, לצורך שימוש באתר ובבוט.\n\nעריכת, מחיקת ואישור מוקדנים מתבצעת על ידי דף ניהול המשתמשים באתר\n\n${process.env.BASE_URL}/admin`,
-        "",
+        "footer",
         flowId,
         flowName,
         screen
