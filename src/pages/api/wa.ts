@@ -1,10 +1,10 @@
 import {NextApiRequest, NextApiResponse} from "next";
-import {WaWebhook} from "@/model/wa/WaWebhook";
+import {WaMessage, WaWebhook} from "@/model/wa/WaWebhook";
 import {whatsappManager} from "@/utils/whatsappManager";
 import {buildReaction, Emoji} from "@/model/wa/WaReaction";
 import {buildMessage} from "@/model/wa/WaTextMessage";
 import {buildWaReadReceipts} from "@/model/wa/WaReadReceipts";
-import {withRemult} from "remult";
+import {Remult, withRemult} from "remult";
 import {Procedure, ProcedureType} from "@/model/Procedure";
 import {buildFlow, buildInteractiveList} from "@/model/wa/WaInteractiveList";
 import {User, UserRole} from "@/model/User";
@@ -41,157 +41,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
                 await withRemult(async (remult) => {
                     remult.apiClient.url = `${process.env.BASE_URL}/api`
-                    const repo = remult.repo(Procedure)
-                    const users = remult.repo(User)
 
-                    const currentUser = await users.findFirst({phone: parseInt(message?.from.slice(3))})
+                    const currentUser = await remult.repo(User).findFirst({phone: parseInt(message?.from.slice(3))})
                     if (!currentUser) return;
 
                     if (message.text?.body === "חדש") {
-                        const isSuperAdmin = User.isSuperAdmin(remult)
-                        const isAdmin = User.isAdmin(remult)
-
-                        if (!isSuperAdmin && !isAdmin) return;
-                        await whatsappManager.sendInteractiveMessage(buildFlow(
-                            message.from,
-                            'תהליך הוספת מוקדן חדש',
-                            `בלחיצה על הכפתור המצורף, תוכלו להוסיף מוקדנים חדשים למערכת הנהלים, לצורך שימוש באתר ובבוט.\n\nעריכת, מחיקת ואישור מוקדנים מתבצעת על ידי דף ניהול המשתמשים באתר\n\n${process.env.BASE_URL}/admin`,
-                            "",
-                            (isSuperAdmin ? process.env.WA_ADD_USER__SUPER_ADMIN_FLOW_ID : process.env.WA_ADD_USER__ADMIN_FLOW_ID) as string,
-                            isSuperAdmin ? "add_user__super_admin" : "add_user__admin",
-                            isSuperAdmin ? "ADD_NEW_SUPER_ADMIN" : "ADD_NEW"
-                        ))
-                        return
+                        await handleAddNewRequest(remult, currentUser, message)
                     }
 
                     if (message?.text) {
-                        const results = await repo.find({
-                            limit: 10,
-                            where: {
-                                $or: [
-                                    {title: message.text.body},
-                                    {
-                                        keywords: {
-                                            $contains: message.text.body
-                                        }
-                                    }
-                                ]
-                            },
-                            orderBy: {
-                                updatedAt: 'desc'
-                            }
-                        })
-                        console.log(results)
-                        if (!results.length) {
-                            const extraResults = await repo.find({
-                                limit: 10,
-                                where: {
-                                    procedure: {
-                                        $contains: message.text.body
-                                    }
-                                },
-                                orderBy: {
-                                    updatedAt: 'desc'
-                                }
-                            })
-                            if (!extraResults.length) {
-                                results.push(...extraResults)
-                            } else
-                                await whatsappManager.sendTextMessage(buildMessage(
-                                    message.from,
-                                    'לא נמצאו תוצאות העונות על החיפוש המבוקש :(\n\nנסו להכנס לאתר לחיפוש מתקדם יותר\n\n' + process.env.BASE_URL,
-                                    true,
-                                    message?.id
-                                ));
-                            return;
-                        }
-                        await whatsappManager.sendInteractiveMessage(buildInteractiveList(
-                            message.from,
-                            {
-                                type: InteractiveType.LIST,
-                                header: {
-                                    type: 'text',
-                                    text: `${results.length} תוצאות נמצאו`
-                                },
-                                body: {
-                                    text: `להלן תוצאות החיפוש עבור ${message.text.body}, בחרו את הנוהל הרלוונטי ביותר לצפייה:`
-                                },
-                                footer: {
-                                    text: ''
-                                },
-                                action: {
-                                    button: "בחר נוהל",
-                                    sections: [
-                                        {
-                                            title: 'כותרת',
-                                            rows: results.map(p => ({
-                                                id: p.id,
-                                                title: max24chars(p.title),
-                                                description: p.title.length > 24 ? p.title :
-                                                    max24chars(p.procedure.replace(/\n/g, ' ')),
-                                            }))
-                                        }
-                                    ]
-                                }
-                            }
-                        ))
+                        await handleSearch(remult, message)
                     } else if (message?.interactive) {
                         switch (message.interactive.type) {
-                            case "nfm_reply": {
-                                try {
-                                    const response = JSON.parse(message.interactive.nfm_reply!.response_json) as {
-                                        name: string,
-                                        email: string,
-                                        phone?: string | undefined,
-                                        district?: string | undefined
-                                    } | undefined
-                                    console.log(response)
-                                    if (!response) {
-                                        await whatsappManager.sendTextMessage(buildMessage(message.from, "נכשל בקבלת הנתונים", false, message.id))
-                                    } else {
-                                        const district = response.district ? District[response.district as keyof typeof District] : currentUser.district
-                                        const newUser = await users.insert({
-                                            phone: response.phone ? phoneToDb(response.phone) : undefined,
-                                            name: response.name,
-                                            email: response.email,
-                                            district: district,
-                                            roles: UserRole.Dispatcher
-                                        })
-                                        if (newUser) {
-                                            await whatsappManager.sendTextMessage(buildMessage(message.from, `המשתמש ${newUser.name} נוצר בהצלחה`, false, message.id))
-                                        } else {
-                                            await whatsappManager.sendTextMessage(buildMessage(message.from, "נכשל ביצירת המשתמש", false, message.id))
-                                        }
-                                    }
-                                    console.log(response)
-                                } catch (e) {
-                                    console.error('Error parsing JSON:', e)
-                                }
-                            }
+                            case "nfm_reply":
+                                await handleNewUserAdded(remult, message, currentUser);
                                 break
 
-                            case "list_reply": {
-                                const id = message?.interactive?.list_reply?.id;
-                                if (id) {
-                                    const p = await repo.findFirst({id})
-                                    console.log(p)
-                                    await whatsappManager.sendTextMessage(buildMessage(
-                                        message.from,
-                                        p ? formatProcedure(p) : 'לא נמצאו תוצאות',
-                                        true,
-                                        message.id
-                                    ));
-                                    if (p?.images) {
-                                        for (const image of p.images) {
-                                            await whatsappManager.sendMediaMessage(buildWaImageMessage(
-                                                message.from,
-                                                image,
-                                                p.title
-                                            ))
-                                        }
-                                    }
-                                }
-                            }
+                            case "list_reply":
+                                await viewProcedure(remult, message)
                                 break
                         }
                     }
@@ -218,6 +85,159 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             res.status(400).end() // Method Not Allowed
             break
     }
+}
+
+async function viewProcedure(remult: Remult, message: WaMessage) {
+    const id = message?.interactive?.list_reply?.id;
+    const procRepo = remult.repo(Procedure)
+
+    if (id) {
+        const p = await procRepo.findFirst({id})
+        console.log(p)
+        await whatsappManager.sendTextMessage(buildMessage(
+            message.from,
+            p ? formatProcedure(p) : 'לא נמצאו תוצאות',
+            true,
+            message.id
+        ));
+        if (p?.images) {
+            for (const image of p.images) {
+                await whatsappManager.sendMediaMessage(buildWaImageMessage(
+                    message.from,
+                    image,
+                    p.title
+                ))
+            }
+        }
+    }
+}
+
+async function handleNewUserAdded(remult: Remult, message: WaMessage, currentUser: User) {
+    const users = remult.repo(User)
+    try {
+        const response = JSON.parse(message.interactive!.nfm_reply!.response_json) as {
+            name: string,
+            email: string,
+            phone?: string | undefined,
+            district?: string | undefined
+        } | undefined
+        console.log(response)
+        if (!response) {
+            await whatsappManager.sendTextMessage(buildMessage(message.from, "נכשל בקבלת הנתונים", false, message.id))
+        } else {
+            const district = response.district ? District[response.district as keyof typeof District] : currentUser.district
+            const newUser = await users.insert({
+                phone: response.phone ? phoneToDb(response.phone) : undefined,
+                name: response.name,
+                email: response.email,
+                district: district,
+                roles: UserRole.Dispatcher
+            })
+            if (newUser) {
+                await whatsappManager.sendTextMessage(buildMessage(message.from, `המשתמש ${newUser.name} נוצר בהצלחה`, false, message.id))
+            } else {
+                await whatsappManager.sendTextMessage(buildMessage(message.from, "נכשל ביצירת המשתמש", false, message.id))
+            }
+        }
+        console.log(response)
+    } catch (e) {
+        console.error('Error parsing JSON:', e)
+    }
+}
+
+async function handleSearch(remult: Remult, message: WaMessage) {
+    const repo = remult.repo(Procedure)
+    const searchTerm = message.text!.body.trim()
+
+    const results = await repo.find({
+        limit: 10,
+        where: {
+            $or: [
+                {title: searchTerm},
+                {
+                    keywords: {
+                        $contains: searchTerm
+                    }
+                }
+            ]
+        },
+        orderBy: {
+            updatedAt: 'desc'
+        }
+    })
+    if (!results.length) {
+        const extraResults = await repo.find({
+            limit: 10,
+            where: {
+                procedure: {
+                    $contains: searchTerm
+                }
+            },
+            orderBy: {
+                updatedAt: 'desc'
+            }
+        })
+        if (!extraResults.length) {
+            results.push(...extraResults)
+        } else
+            await whatsappManager.sendTextMessage(buildMessage(
+                message.from,
+                'לא נמצאו תוצאות העונות על החיפוש המבוקש :(\n\nנסו להכנס לאתר לחיפוש מתקדם יותר\n\n' + process.env.BASE_URL,
+                true,
+                message?.id
+            ));
+        return;
+    }
+    await whatsappManager.sendInteractiveMessage(buildInteractiveList(
+        message.from,
+        {
+            type: InteractiveType.LIST,
+            body: {
+                text: `להלן תוצאות החיפוש עבור *${searchTerm}*, בחרו את הנוהל הרלוונטי ביותר לצפייה:`
+            },
+            footer: {
+                text: `${results.length} תוצאות נמצאו.`
+            },
+            action: {
+                button: "בחר נוהל",
+                sections: [
+                    {
+                        title: 'כותרת',
+                        rows: results.map(p => ({
+                            id: p.id,
+                            title: max24chars(p.title),
+                            description: p.title.length > 24 ? p.title :
+                                max24chars(p.procedure.replace(/\n/g, ' ')),
+                        }))
+                    }
+                ]
+            }
+        }
+    ))
+}
+
+async function handleAddNewRequest(remult: Remult, currentUser: User, message: WaMessage) {
+    const isSuperAdmin = User.isSuperAdmin(remult)
+    const isAdmin = User.isAdmin(remult)
+
+    if (!isSuperAdmin && !isAdmin) {
+        console.log(`User ${currentUser.name} (${currentUser.id}) attempted to add a new user without sufficient permissions.`);
+        return
+    }
+
+    const flowId = (isSuperAdmin ? process.env.WA_ADD_USER__SUPER_ADMIN_FLOW_ID : process.env.WA_ADD_USER__ADMIN_FLOW_ID) as string
+    const flowName = isSuperAdmin ? "add_user__super_admin" : "add_user__admin"
+    const screen = isSuperAdmin ? "ADD_NEW_SUPER_ADMIN" : "ADD_NEW"
+    await whatsappManager.sendInteractiveMessage(buildFlow(
+        message.from,
+        'תהליך הוספת מוקדן חדש',
+        `בלחיצה על הכפתור המצורף, תוכלו להוסיף מוקדנים חדשים למערכת הנהלים, לצורך שימוש באתר ובבוט.\n\nעריכת, מחיקת ואישור מוקדנים מתבצעת על ידי דף ניהול המשתמשים באתר\n\n${process.env.BASE_URL}/admin`,
+        "",
+        flowId,
+        flowName,
+        screen
+    ))
+    return
 }
 
 
