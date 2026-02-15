@@ -36,7 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 await whatsappManager.reactToTextMessage(buildReaction(
                     message.from,
                     message.id,
-                    Object.values(Emoji)[Math.floor(Math.random() * Object.values(Emoji).length)]
+                    Emoji.Like
                 ));
 
                 await withRemult(async (remult) => {
@@ -125,6 +125,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                         {
                                             title: 'כותרת',
                                             rows: results.map(p => ({
+                                                id: p.id,
                                                 title: max24chars(p.title),
                                                 description: p.title.length > 24 ? p.title :
                                                     max24chars(p.procedure.replace(/\n/g, ' ')),
