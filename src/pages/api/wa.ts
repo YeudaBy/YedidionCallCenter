@@ -47,6 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
                     if (message.text?.body === "חדש") {
                         await handleAddNewRequest(remult, currentUser, message)
+                        return
                     }
 
                     if (message?.text) {
@@ -220,7 +221,7 @@ async function handleAddNewRequest(remult: Remult, currentUser: User, message: W
     const isSuperAdmin = User.isSuperAdmin(remult)
     const isAdmin = User.isAdmin(remult)
 
-    if (!isSuperAdmin && !isAdmin) {
+    if (!isSuperAdmin || !isAdmin) {
         console.log(`User ${currentUser.name} (${currentUser.id}) attempted to add a new user without sufficient permissions.`);
         return
     }
