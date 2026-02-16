@@ -42,3 +42,8 @@ body {
     background-repeat: no-repeat;
     background-attachment: fixed;
 }
+
+.tremor-dialog-root > div {
+    backdrop-filter: blur(4px);
+    /*background: rgba(255, 255, 255, 0.4);*/
+}

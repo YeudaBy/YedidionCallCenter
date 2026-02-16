@@ -20,11 +20,10 @@ export function MainProcedureDialog({procedure, open, onClose, onEdit}: {
 
 
     return <Tremor.Dialog
-        open={open} className={"relative md:hidden"} onClose={() => onClose(false)}>
+        open={open} className={"relative"} onClose={() => onClose(false)}>
         <Tremor.DialogPanel
             ref={dialogRef}
             className={"gap-1.5 text-start flex items-center flex-col p-2 sm:p-3"}>
-            {/*<CloseDialogButton close={() => onClose(false)}/>*/}
             {procedure == true ?
                 <>
                     <LoadingSpinner className={"ml-4"}/>
