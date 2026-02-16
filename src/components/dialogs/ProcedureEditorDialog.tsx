@@ -15,6 +15,7 @@ import {useBlockRefresh} from "@/utils/ui";
 import {UserRole} from "@/model/SuperAdmin";
 import {KnowledgeBaseController} from "@/controllers/hierarchyController";
 import {Category} from "@/model/Category";
+import {toast} from "sonner";
 
 const procedureRepo = remult.repo(Procedure);
 const logRepo = remult.repo(Log);
@@ -124,6 +125,7 @@ export function ProcedureEditorDialog({procedure, open, onClose, onAdd, onEdit, 
                     log: savedProcedure.title,
                     type: LogType.Created
                 })
+                toast.success('נוהל נוסף בהצלחה')
                 onAdd?.(savedProcedure)
             } else {
                 savedProcedure = await procedureRepo.update(procedure.id!, {
@@ -153,6 +155,7 @@ export function ProcedureEditorDialog({procedure, open, onClose, onAdd, onEdit, 
                         type: LogType.Updated
                     })
                 }
+                toast.success('נוהל עודכן בהצלחה')
                 onEdit?.(savedProcedure)
             }
             if (savedProcedure) {
@@ -163,8 +166,8 @@ export function ProcedureEditorDialog({procedure, open, onClose, onAdd, onEdit, 
             }
             onClose?.(false)
         } catch (e) {
-            // todo handle error
             console.error(e)
+            toast.error('אירעה שגיאה בשמירת הנוהל')
         } finally {
             setLoading(false)
         }

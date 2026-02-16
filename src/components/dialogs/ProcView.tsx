@@ -1,6 +1,6 @@
 import {Procedure} from "@/model/Procedure";
 import {useRouter} from "next/router";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {District} from "@/model/District";
 import * as Tremor from "@tremor/react";
 import {Flex, Icon} from "@tremor/react";
@@ -9,9 +9,10 @@ import {cx, extractYouTubeId} from "@/utils/ui";
 import LiteYouTubeEmbed from "react-lite-youtube-embed";
 import Image from "next/image";
 import {CloseDialogButton} from "@/components/CloseDialogButton";
-import {RiCloseLine, RiFileCopyLine, RiLink, RiPencilLine, RiWhatsappLine} from "@remixicon/react";
+import {RiBookMarkedLine, RiCloseLine, RiFileCopyLine, RiLink, RiPencilLine, RiWhatsappLine} from "@remixicon/react";
 import {User} from "@/model/User";
-import {remult} from "remult";
+import {remult, repo} from "remult";
+import {toast} from "sonner";
 
 
 export type ProcViewProps = {
@@ -27,11 +28,13 @@ export function ProcView({procedure, onEdit, onClose}: ProcViewProps) {
 
     const copy = (text: string) => {
         navigator.clipboard.writeText(text)
+        toast.success("הטקסט הועתק ללוח")
     }
 
     const share = (text: string) => {
         const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`
         window.open(url, '_blank')
+        toast.success("נפתח בוואטסאפ")
     }
 
     const search = (text: string) => {

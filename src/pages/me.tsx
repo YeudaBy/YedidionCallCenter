@@ -2,7 +2,7 @@ import {useEffect, useState} from "react";
 import {User} from "@/model/User";
 import {remult} from "remult";
 import * as Tremor from "@tremor/react";
-import {Button, Callout, Card, Flex, Icon, List, ListItem, Text, TextInput} from "@tremor/react";
+import {Button, Card, Flex, Icon, List, ListItem, Text, TextInput} from "@tremor/react";
 import {signOut} from "next-auth/react";
 import {ConfirmDeleteUserDialog} from "@/components/dialogs/ConfirmDeleteUserDialog";
 import {RiCheckLine, RiCloseLine} from "@remixicon/react";
@@ -10,6 +10,7 @@ import {LoadingSpinner} from "@/components/Spinner";
 import {Header, Headers} from "@/components/Header";
 import {requestNotificationPermission, RequestTokenResult} from "@/firebase-messages/notifications-permission";
 import {UserRole, userRoleToText} from "@/model/SuperAdmin";
+import {toast} from "sonner";
 
 const userRepo = remult.repo(User);
 const phoneRegex = /^[5-9]\d{8}$/;
@@ -20,7 +21,6 @@ export default function MePage() {
     const [phone, setPhone] = useState<string>()
     const [validPhone, setValidPhone] = useState(true)
     const [loading, setLoading] = useState(false)
-    const [error, setError] = useState("")
 
     const loadUserData = async () => {
         setLoading(true)
@@ -30,12 +30,11 @@ export default function MePage() {
             setMe(user || undefined)
         } catch (error) {
             console.error("Error fetching user data:", error);
-            setError("Failed to load user data. Please refresh the page.");
+            toast.error("שגיאה בטעינת נתוני המשתמש. אנא נסה שוב.");
         } finally {
             setLoading(false)
         }
     }
-
 
     useEffect(() => {
         void loadUserData()
@@ -58,9 +57,10 @@ export default function MePage() {
         setLoading(true)
         try {
             await userRepo.update(me.id, {phone: Number(phone)});
+            toast.success("מספר הטלפון עודכן בהצלחה!");
         } catch (error) {
             console.error("Error updating phone number:", error);
-            setError("Failed to update phone number. Please try again.");
+            toast.error("שגיאה בעדכון מספר הטלפון. אנא נסה שוב.");
         } finally {
             void loadUserData()
             setLoading(false)
@@ -73,11 +73,13 @@ export default function MePage() {
             const result = await requestNotificationPermission();
             if (result !== RequestTokenResult.Success) {
                 console.error("Failed to update notification token:", result);
-                setError(result);
+                toast.error("שגיאה בעדכון הרשאת התראות. אנא נסה שוב.");
+            } else {
+                toast.success("הרשאת התראות עודכנה בהצלחה!");
             }
         } catch (error) {
             console.error("Error updating notification token:", error);
-            setError("Failed to update notification token. Please try again.");
+            toast.error("שגיאה בעדכון הרשאת התראות. אנא נסה שוב.");
         } finally {
             void loadUserData()
             setLoading(false)
@@ -184,13 +186,6 @@ export default function MePage() {
                     onClose={() => setDeleteDialogOpen(false)}
                     user={me}/>}
         </Card>
-
-        {
-            error && <Callout color={"red"}
-                              className={"text-red-600 text-sm mt-14 w-full max-w-sm"} title={"Error"}>
-                {error}
-            </Callout>
-        }
     </div>
 
 }

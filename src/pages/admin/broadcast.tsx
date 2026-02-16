@@ -6,11 +6,12 @@ import {District} from "@/model/District";
 import {RoleGuard} from "@/components/auth/RoleGuard";
 import {Header, Headers} from "@/components/Header";
 import * as Tremor from "@tremor/react";
-import {Button, Flex, List, ListItem, Text, Textarea, TextInput,} from "@tremor/react";
+import {Button, Flex, List, ListItem, Text, Textarea, TextInput} from "@tremor/react";
 import {cx} from "@/utils/ui";
 import {RiSendInsLine} from "@remixicon/react";
 import {Loading} from "@/components/Spinner";
 import {UserRole} from "@/model/SuperAdmin";
+import {toast} from "sonner";
 
 const userRepo = repo(User)
 // pattern for internal or external URLs (starting with http://, https://, or /)
@@ -27,34 +28,37 @@ export default function BroadcastPage() {
     const [title, setTitle] = useState("")
     const [body, setBody] = useState("")
     const [href, setHref] = useState("")
-
     const [loading, setLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
         if (!User.isSomeAdmin(remult)) {
             return
         }
 
-        if (uid) {
-            userRepo.findOne({where: {id: uid}}).then(user => {
-                if (user) {
-                    setUsers([user])
-                    setSelectedUsers([user])
-                }
-            })
-        } else {
-            userRepo.find({
-                where: {
-                    active: true,
-                    district: {
-                        $in: districts
-                    },
-                    fcmToken: {
-                        $ne: undefined
+        try {
+            if (uid) {
+                userRepo.findOne({where: {id: uid}}).then(user => {
+                    if (user) {
+                        setUsers([user])
+                        setSelectedUsers([user])
                     }
-                }
-            }).then(setUsers)
+                })
+            } else {
+                userRepo.find({
+                    where: {
+                        active: true,
+                        district: {
+                            $in: districts
+                        },
+                        fcmToken: {
+                            $ne: undefined
+                        }
+                    }
+                }).then(setUsers)
+            }
+        } catch (e) {
+            console.error(e)
+            toast.error("אירעה שגיאה בטעינת המשתמשים")
         }
     }, [districts]);
 
@@ -67,11 +71,16 @@ export default function BroadcastPage() {
             return;
         }
 
-        userRepo.findId(remult.user.id).then(user => {
-            if (user) {
-                setDistricts([user.district!])
-            }
-        })
+        try {
+            userRepo.findId(remult.user.id).then(user => {
+                if (user) {
+                    setDistricts([user.district!])
+                }
+            })
+        } catch (e) {
+            console.error(e)
+            toast.error("אירעה שגיאה בטעינת פרטי המשתמש")
+        }
     }, []);
 
     const selectUser = (user: User) => {
@@ -92,7 +101,6 @@ export default function BroadcastPage() {
 
     const sendBroadcast = async () => {
         setLoading(true)
-        setError(null)
         try {
             await fetch("/api/notification", {
                 method: "POST",
@@ -106,14 +114,14 @@ export default function BroadcastPage() {
                     recipients: selectedUsers.map(u => u.fcmToken).filter(Boolean)
                 })
             })
-            alert("ההודעה נשלחה בהצלחה!")
+            toast.success("ההודעה נשלחה בהצלחה!")
             setTitle("")
             setBody("")
             setHref("")
             setSelectedUsers([])
         } catch (e) {
             console.error(e)
-            setError("אירעה שגיאה בשליחת ההודעה")
+            toast.error("אירעה שגיאה בשליחת ההודעה")
         } finally {
             setLoading(false)
         }
@@ -123,8 +131,6 @@ export default function BroadcastPage() {
         <RoleGuard allowedRoles={[UserRole.SuperAdmin, UserRole.Admin]}>
             <Header headerText={Headers.BROADCAST} buttons={[]}/>
             <div className={"h-screen p-6"}>
-                {/*<Title className={"text-2xl text-center mb-4 font-semibold"}>שליחת הודעה</Title>*/}
-
                 {
                     loading && <Loading/>
                 }
@@ -198,8 +204,6 @@ export default function BroadcastPage() {
                         })}
                     </List>
                 </div>
-
-                {error && <div className={"mb-4 text-red-600"}>{error}</div>}
 
                 <Button onClick={sendBroadcast} icon={RiSendInsLine}
                         disabled={loading || selectedUsers.length === 0 || !title || !body}

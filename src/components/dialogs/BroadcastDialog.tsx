@@ -6,6 +6,7 @@ import {CloseDialogButton} from "@/components/CloseDialogButton";
 import {useEffect, useState} from "react";
 import {Loading} from "@/components/Spinner";
 import {District} from "@/model/District";
+import {toast} from "sonner";
 
 export function BroadcastDialog({onClose}: { onClose: () => void }) {
 
@@ -18,8 +19,8 @@ export function BroadcastDialog({onClose}: { onClose: () => void }) {
     const [districts, setDistricts] = useState<District[]>(Object.values(District))
 
     const [allTokens, setAllTokens] = useState<string[]>([])
-    const [error, setError] = useState("")
     const [loading, setLoading] = useState(true)
+
     useEffect(() => {
         repo(User).find({
             where: {
@@ -30,7 +31,7 @@ export function BroadcastDialog({onClose}: { onClose: () => void }) {
             setAllTokens(users.map(u => u.fcmToken!))
         }).catch(error => {
             console.error("Error fetching FCM tokens:", error);
-            setError("אירעה שגיאה בטעינת הטוקנים");
+            toast.error("אירעה שגיאה בשליפת המשתמשים: " + error.message);
         }).finally(() => {
             setLoading(false);
         })
@@ -61,10 +62,11 @@ export function BroadcastDialog({onClose}: { onClose: () => void }) {
             if (!response.ok) {
                 throw new Error(`Error: ${response.statusText}`);
             }
+            toast.success('ההודעה נשלחה בהצלחה!');
             onClose();
-        } catch (error: any) {
+        } catch (error) {
             console.error('Error sending broadcast:', error);
-            setError('אירעה שגיאה בשליחת ההודעה: ' + error.message);
+            toast.error('אירעה שגיאה בשליחת ההודעה');
         } finally {
             setLoading(false);
         }
@@ -85,11 +87,11 @@ export function BroadcastDialog({onClose}: { onClose: () => void }) {
 
                 <Tremor.MultiSelect className={"w-full"} value={districts}
                                     onValueChange={(values) => setDistricts(values as District[])}>
-                        {Object.values(District).map(district => (
-                            <Tremor.MultiSelectItem key={district} value={district}>
-                                {district}
-                            </Tremor.MultiSelectItem>
-                        ))}
+                    {Object.values(District).map(district => (
+                        <Tremor.MultiSelectItem key={district} value={district}>
+                            {district}
+                        </Tremor.MultiSelectItem>
+                    ))}
                 </Tremor.MultiSelect>
 
                 <Tremor.TextInput
@@ -114,10 +116,9 @@ export function BroadcastDialog({onClose}: { onClose: () => void }) {
                     onChange={(e) => setUrl(e.target.value)}
                 />
                 <Text className={"text-sm text-gray-500 mb-8"}>
-                   למעבר לדף הבית יש להשאיר "/"
+                    למעבר לדף הבית יש להשאיר "/"
                 </Text>
 
-                {error && <Text className={"text-red-600"}>{error}</Text>}
                 <Tremor.Button
                     variant={"primary"}
                     onClick={sendBroadcast}

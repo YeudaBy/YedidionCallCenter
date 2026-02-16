@@ -4,6 +4,7 @@ import * as Tremor from "@tremor/react";
 import {Flex, Text} from "@tremor/react";
 import {CloseDialogButton} from "@/components/CloseDialogButton";
 import {remult} from "remult";
+import {toast} from "sonner";
 
 export function ConfirmDeleteUserDialog({onClose, user}: { onClose: () => void, user: User }) {
 
@@ -12,6 +13,7 @@ export function ConfirmDeleteUserDialog({onClose, user}: { onClose: () => void, 
         console.log(`User ${user.name} has deleted by ${remult.user?.name}`)
         await remult.repo(User).delete(user?.id)
         await signOut()
+        toast.success("החשבון נמחק בהצלחה")
     }
 
     return <Tremor.Dialog open={true} onClose={onClose}>

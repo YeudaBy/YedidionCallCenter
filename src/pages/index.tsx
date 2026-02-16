@@ -19,14 +19,13 @@ import {useAnalytics} from "@/firebase-messages/init";
 import {NodeMenu} from "@/components/node/NodeMenu";
 import {ProcView} from "@/components/dialogs/ProcView";
 import {MainProcedureDialog} from "@/components/dialogs/MainProcedureDialog";
+import {toast} from "sonner";
 
 const procedureRepo = remult.repo(Procedure);
 const userRepo = remult.repo(User);
 const logRepo = remult.repo(Log);
 
-
 const MD_VIEW = "768px"
-
 
 export default function IndexPage() {
     const [procedures, setProcedures] = useState<Procedure[]>()
@@ -68,7 +67,6 @@ export default function IndexPage() {
         })
     }, [order, procedures]);
 
-
     const router = useRouter()
 
     useEffect(() => {
@@ -78,7 +76,10 @@ export default function IndexPage() {
             userRepo.findFirst({id: remult.user?.id})
                 .then(user => {
                     setAllowedDistricts([...(user?.district ? [user.district] : []), District.General])
-                })
+                }).catch(err => {
+                console.error("Error fetching user data:", err);
+                toast.error("שגיאה בטעינת נתוני המשתמש")
+            })
         }
     }, []);
 
@@ -90,7 +91,10 @@ export default function IndexPage() {
             .findFirst({id: q})
             .then(procedure => {
                 setCurrent(procedure)
-            })
+            }).catch(err => {
+            console.error("Error fetching procedure:", err);
+            toast.error("שגיאה בטעינת הנוהל")
+        })
             .finally(() => {
                 setLoading(false)
             })
@@ -116,10 +120,12 @@ export default function IndexPage() {
                 updatedAt: "desc"
             }
         })
-            .then(procedures => {
-                setProcedures(procedures)
+            .then(setProcedures)
+            .catch(err => {
+                console.error("Error fetching procedures:", err);
+                toast.error("שגיאה בטעינת הנהלים")
             })
-            .then(() => {
+            .finally(() => {
                 setLoading(false)
             })
     }, [district, showInactive]);
@@ -145,6 +151,9 @@ export default function IndexPage() {
             }
         }).then(procedures => {
             setSearchResult(procedures)
+        }).catch(err => {
+            console.error("Error searching procedures:", err);
+            toast.error("שגיאה בחיפוש הנהלים")
         })
     }, [query]);
 
@@ -161,7 +170,6 @@ export default function IndexPage() {
     }, [procedures]);
 
     const handleProcedureSelect = (procedureId: string) => {
-        console.log("Selected procedure ID:", procedureId);
         router.push(`/?id=${procedureId}`)
     }
 
@@ -302,19 +310,22 @@ function DeleteDialog({procedure, onClose, onDelete}: {
     onClose: (val: boolean) => void,
     onDelete: (procedureId: string) => void
 }) {
-    const [loading, setLoading] = useState(false)
-
     const deleteProcedure = async () => {
-        setLoading(true)
-        await procedureRepo.delete(procedure.id!)
-        await logRepo.insert({
-            byUserId: remult.user?.id!,
-            procedureId: procedure.id!,
-            log: [procedure.title, procedure.procedure].join(", "),
-            type: LogType.Deleted
-        })
-        onDelete(procedure.id!)
         onClose(false)
+        onDelete(procedure.id!)
+        try {
+            await procedureRepo.delete(procedure.id!)
+            await logRepo.insert({
+                byUserId: remult.user?.id,
+                procedureId: procedure.id!,
+                log: [procedure.title, procedure.procedure].join(", "),
+                type: LogType.Deleted
+            })
+            toast.success("הנוהל נמחק בהצלחה")
+        } catch (err) {
+            console.error("Error deleting procedure:", err);
+            toast.error("שגיאה במחיקת הנוהל")
+        }
     }
 
     return <Tremor.Dialog open={true} onClose={() => onClose(false)}>
@@ -328,6 +339,7 @@ function DeleteDialog({procedure, onClose, onDelete}: {
             <Tremor.Button
                 variant={"primary"}
                 color={"red"}
+                className={"gap-2"}
                 icon={RiDeleteBinLine}
                 onClick={() => {
                     deleteProcedure()
@@ -337,7 +349,3 @@ function DeleteDialog({procedure, onClose, onDelete}: {
         </Tremor.DialogPanel>
     </Tremor.Dialog>
 }
-
-
-
-

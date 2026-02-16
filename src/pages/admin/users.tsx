@@ -4,7 +4,6 @@ import {useEffect, useState} from "react";
 import {
     Badge,
     Button,
-    Callout,
     Card,
     Dialog,
     DialogPanel,
@@ -36,6 +35,7 @@ import Image from "next/image";
 import {Header, Headers} from "@/components/Header";
 import {RoleGuard} from "@/components/auth/RoleGuard";
 import {AdminRoles, UserRole} from "@/model/SuperAdmin";
+import {toast} from "sonner";
 
 const usersRepo = remult.repo(User)
 
@@ -85,7 +85,6 @@ const filters: { id: string, label: string, filter: (u: User) => boolean, color:
 export default function AdminUsersPage() {
     const [users, setUsers] = useState<User[]>([])
     const [loading, setLoading] = useState(false)
-    const [error, setError] = useState<Error | null>(null)
 
     const [query, setQuery] = useState<string>()
     const [filter, setFilter] = useState<"all" | "unregistered" | "inactive" | "admins" | "dispatchers" | District>()
@@ -135,7 +134,8 @@ export default function AdminUsersPage() {
         }).then(users => {
             setUsers(users)
         }).catch(e => {
-            setError(e)
+            console.error(e)
+            toast.error("אירעה שגיאה בטעינת המשתמשים")
         }).finally(() => {
             setLoading(false)
         })
@@ -146,6 +146,7 @@ export default function AdminUsersPage() {
             exportUsersToXLSX(users);
         } catch (e) {
             console.error("Error exporting users:", e);
+            toast.error("אירעה שגיאה בעת ייצוא המשתמשים")
         }
     }
 
@@ -189,22 +190,14 @@ export default function AdminUsersPage() {
                 </Flex>
 
                 {loading && <Loading/>}
-                {error && <div>Error: {error.message}</div>}
-                {User.isSomeAdmin(remult) ? <List>
+                <List>
                     {users?.map(user => (
                         <UserItem
                             user={user}
                             setUsers={setUsers}
                             key={user.id}/>
                     ))}
-                </List> : <Callout
-                    color={"red"}
-                    className={"my-3.5"}
-                    title={
-                        "שגיאת הרשאה"
-                    }>
-                    <Text>אין לך הרשאה לערוך משתמשים</Text>
-                </Callout>}
+                </List>
 
                 <AddUserDialog
                     open={showAddUser}
@@ -232,6 +225,9 @@ function AddUserDialog({open, onClose}: {
             if (u?.roles === UserRole.Admin) {
                 setDistrict(u.district)
             }
+        }).catch(e => {
+            console.error(e)
+            toast.error("אירעה שגיאה בטעינת פרטי המשתמש שלך")
         })
     }, []);
 
@@ -254,6 +250,9 @@ function AddUserDialog({open, onClose}: {
                 phone: validPhone()
             })
             onClose()
+        } catch (e) {
+            console.error(e)
+            toast.error("אירעה שגיאה בעת שמירת המשתמש")
         } finally {
             setLoading(false)
         }
@@ -344,7 +343,7 @@ function UserItem({user, setUsers}: {
     user: User,
     setUsers: (users: (prev: User[]) => User[]) => void
 }) {
-    const allowed = User.isSuperAdmin(remult) || !user.isAdmin
+    const allowed = User.isSuperAdmin(remult)  // todo allow also for district admin
 
     const onDelete = async () => {
         setUsers((prev: User[]) => prev.filter(u => u.id !== user.id))
@@ -391,18 +390,25 @@ function SendNotification({user}: { user: User }) {
 
     const sendNotification = async () => {
         setLoading(true)
-        await fetch("/api/notification", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                recipients: [user.fcmToken],
-                title: "בדיקת התראה",
-                body: "זוהי הודעת בדיקה למערכת ההתראות."
+        try {
+            await fetch("/api/notification", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    recipients: [user.fcmToken],
+                    title: "בדיקת התראה",
+                    body: "זוהי הודעת בדיקה למערכת ההתראות."
+                })
             })
-        })
-        setLoading(false)
+            toast.success("ההודעה נשלחה בהצלחה!")
+        } catch (e) {
+            console.error(e)
+            toast.error("אירעה שגיאה בשליחת ההודעה")
+        } finally {
+            setLoading(false)
+        }
     }
 
     return (
@@ -439,17 +445,24 @@ function EditUser({user: _user, onSave, onDelete}: {
 
     const save = async () => {
         setLoading(true)
-        const nu = {
-            name,
-            active,
-            district,
-            roles: userRoles,
-            phone: phone ? parseInt(phone.replace(/^0/, "")) : undefined
+        try {
+            const nu = {
+                name,
+                active,
+                district,
+                roles: userRoles,
+                phone: phone ? parseInt(phone.replace(/^0/, "")) : undefined
+            }
+            const newUser = await usersRepo.update(_user.id, nu)
+            toast.success("המשתמש עודכן בהצלחה")
+            onSave(newUser)
+        } catch (e) {
+            console.error(e)
+            toast.error("אירעה שגיאה בעת שמירת המשתמש")
+        } finally {
+            setLoading(false)
+            setOpen(false)
         }
-        const newUser = await usersRepo.update(_user.id, nu)
-        onSave(newUser)
-        setLoading(false)
-        setOpen(false)
     }
 
     return (
@@ -583,10 +596,17 @@ function DeleteUser({user, onDelete}: {
 
     const deleteUser = async () => {
         setLoading(true)
-        await usersRepo.delete(user)
-        onDelete()
-        setLoading(false)
-        setShow(false)
+        try {
+            await usersRepo.delete(user)
+            onDelete()
+            toast.success("המשתמש נמחק בהצלחה")
+        } catch (e) {
+            console.error(e)
+            toast.error("אירעה שגיאה בעת מחיקת המשתמש")
+        } finally {
+            setLoading(false)
+            setShow(false)
+        }
     }
 
     return (
@@ -646,6 +666,9 @@ function ImportDialog({open, onClose}: {
             } else {
                 setDistrict(District.General)
             }
+        }).catch(e => {
+            console.error(e)
+            toast.error("אירעה שגיאה בטעינת פרטי המשתמש שלך")
         })
     }, []);
 
@@ -688,10 +711,11 @@ function ImportDialog({open, onClose}: {
                 active: true,
                 district: district
             })))
+            toast.success(`נוספו ${validUsers.length} משתמשים בהצלחה`)
             onClose()
-            window.location.reload()
         } catch (e) {
             console.error(e)
+            toast.error("אירעה שגיאה בייבוא המשתמשים")
         } finally {
             setLoading(false)
             setFile(undefined)
