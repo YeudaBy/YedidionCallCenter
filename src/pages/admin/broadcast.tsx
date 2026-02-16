@@ -1,27 +1,16 @@
 import {useRouter} from "next/router";
 import {useEffect, useState} from "react";
 import {remult, repo} from "remult";
-import {User, UserRole} from "@/model/User";
+import {User} from "@/model/User";
 import {District} from "@/model/District";
 import {RoleGuard} from "@/components/auth/RoleGuard";
 import {Header, Headers} from "@/components/Header";
-import {
-    Button,
-    Flex,
-    List,
-    ListItem,
-    MultiSelect,
-    MultiSelectItem,
-    Select,
-    Text,
-    Textarea,
-    TextInput,
-    Title
-} from "@tremor/react";
-import {cx} from "@/utils/ui";
 import * as Tremor from "@tremor/react";
-import {RiSendInsFill, RiSendInsLine} from "@remixicon/react";
+import {Button, Flex, List, ListItem, Text, Textarea, TextInput,} from "@tremor/react";
+import {cx} from "@/utils/ui";
+import {RiSendInsLine} from "@remixicon/react";
 import {Loading} from "@/components/Spinner";
+import {UserRole} from "@/model/SuperAdmin";
 
 const userRepo = repo(User)
 // pattern for internal or external URLs (starting with http://, https://, or /)
@@ -54,8 +43,7 @@ export default function BroadcastPage() {
                     setSelectedUsers([user])
                 }
             })
-        }
-        else {
+        } else {
             userRepo.find({
                 where: {
                     active: true,
@@ -133,7 +121,7 @@ export default function BroadcastPage() {
 
     return (
         <RoleGuard allowedRoles={[UserRole.SuperAdmin, UserRole.Admin]}>
-            <Header headerText={Headers.BROADCAST} buttons={[]} />
+            <Header headerText={Headers.BROADCAST} buttons={[]}/>
             <div className={"h-screen p-6"}>
                 {/*<Title className={"text-2xl text-center mb-4 font-semibold"}>שליחת הודעה</Title>*/}
 
@@ -143,20 +131,20 @@ export default function BroadcastPage() {
 
                 <div className={"mb-4"}>
                     <label className={"block mb-1"}>כותרת:</label>
-                    <TextInput  placeholder={"הקלד..."}
-                        value={title} onValueChange={setTitle} className={"w-full"}/>
+                    <TextInput placeholder={"הקלד..."}
+                               value={title} onValueChange={setTitle} className={"w-full"}/>
                 </div>
 
                 <div className={"mb-4"}>
                     <label className={"block mb-1"}>תוכן ההודעה:</label>
                     <Textarea placeholder={"הקלד..."}
-                        value={body} onValueChange={setBody} className={"w-full"}/>
+                              value={body} onValueChange={setBody} className={"w-full"}/>
                 </div>
 
                 <div className={"mb-4"}>
                     <label className={"block mb-1"}>קישור (אופציונלי): <span className={"text-sm text-gray-500"}>(לדף הבית ניתן להזין ״/״ או להשאיר ריק)</span></label>
                     <TextInput placeholder={"/"} type={"url"} pattern={urlPattern.source}
-                        value={href} onValueChange={setHref} className={"w-full"}/>
+                               value={href} onValueChange={setHref} className={"w-full"}/>
                 </div>
 
                 {
@@ -193,7 +181,7 @@ export default function BroadcastPage() {
                             return (
                                 <ListItem key={user.id}
                                           className={cx("gap-2 mb-1 items-center rounded-xl px-2 justify-start cursor-pointer",
-                                          isSelected && "bg-tremor-brand-muted")}>
+                                              isSelected && "bg-tremor-brand-muted")}>
                                     <input type="checkbox" className={"hidden"}
                                            checked={!!selectedUsers.find(u => u.id === user.id)}
                                            onChange={() => selectUser(user)} id={`uid-${user.id}`}/>

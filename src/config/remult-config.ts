@@ -1,4 +1,4 @@
-import {User, UserRole} from "@/model/User";
+import {User} from "@/model/User";
 import {remultNext} from "remult/remult-next";
 import {Procedure} from "@/model/Procedure";
 import {Log} from "@/model/Log";
@@ -10,6 +10,7 @@ import {ProcedureCategory} from "@/model/ProcedureCategory";
 import {KnowledgeBaseController} from "@/controllers/hierarchyController";
 import {DataProviderLiveQueryStorage, SseSubscriptionServer} from "remult/server";
 import {NextApiRequest} from "next";
+import {UserRole} from "@/model/SuperAdmin";
 
 
 const DEVELOPER_USER = {

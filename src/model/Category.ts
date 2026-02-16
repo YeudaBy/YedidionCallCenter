@@ -3,7 +3,8 @@ import {NanoIdField} from "@/utils/types";
 import {District} from "@/model/District";
 import * as RemixIcon from "@remixicon/react"
 import {ProcedureCategory} from "@/model/ProcedureCategory";
-import {UserRole} from "@/model/User";
+
+import {UserRole} from "@/model/SuperAdmin";
 
 const CATEGORY_ID_LENGTH = 7;
 

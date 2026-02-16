@@ -1,5 +1,5 @@
 import {RoleGuard} from "@/components/auth/RoleGuard";
-import {User, UserRole} from "@/model/User";
+import {User} from "@/model/User";
 import {remult, repo} from "remult";
 import {Log, LogType} from "@/model/Log";
 import {useEffect, useState} from "react";
@@ -12,6 +12,7 @@ import Link from "next/link";
 import {RiCursorHand} from "@remixicon/react";
 import {useRouter} from "next/router";
 import {Loading} from "@/components/Spinner";
+import {UserRole} from "@/model/SuperAdmin";
 
 export type LogView = {
     createdAt: Date,

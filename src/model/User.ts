@@ -1,25 +1,8 @@
 import {BackendMethod, Entity, Fields, IdEntity, Remult, repo, UserInfo} from "remult";
 import {District} from "./District";
+import {Procedure} from "@/model/Procedure";
+import {AdminRoles, UserRole} from "@/model/SuperAdmin";
 
-
-export enum UserRole {
-    Admin = "admin",
-    Dispatcher = "dispacher",
-    SuperAdmin = "system-admin",
-}
-
-export function userRoleToText(role: UserRole) {
-    switch (role) {
-        case UserRole.Admin:
-            return "מנהל";
-        case UserRole.Dispatcher:
-            return "מוקדן";
-        case UserRole.SuperAdmin:
-            return "מנהל מערכת";
-    }
-}
-
-export const AdminRoles = [UserRole.Admin, UserRole.SuperAdmin]
 
 const userAllowed = (remult?: Remult) => {
     if (!remult || !remult.user) return false

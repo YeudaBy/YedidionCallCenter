@@ -1,5 +1,6 @@
 import {Entity, Fields, IdEntity} from "remult";
-import {UserRole} from "@/model/User";
+
+import {UserRole} from "@/model/SuperAdmin";
 
 export enum LogType {
     Created = "נוצר",

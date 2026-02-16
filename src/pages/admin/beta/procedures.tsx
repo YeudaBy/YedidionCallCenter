@@ -1,7 +1,7 @@
 import {remult, repo} from "remult";
 import {Procedure} from "@/model/Procedure";
 import React, {useCallback, useEffect, useMemo, useState} from "react";
-import {User, UserRole} from "@/model/User";
+import {User} from "@/model/User";
 import {RoleGuard} from "@/components/auth/RoleGuard";
 import {
     Badge,
@@ -36,6 +36,7 @@ import {CheckIcon, PencilIcon, XIcon} from "@heroicons/react/solid";
 import {useAutoAnimate} from "@formkit/auto-animate/react";
 import {cx} from "@/utils/ui";
 import {RiArrowDownSLine, RiArrowUpSLine} from "@remixicon/react";
+import {UserRole} from "@/model/SuperAdmin";
 
 
 const procedureRepo = repo(Procedure);

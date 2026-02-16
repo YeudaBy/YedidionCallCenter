@@ -1,5 +1,5 @@
 import {EntityFilter, remult} from "remult";
-import {AdminRoles, User, UserRole} from "@/model/User";
+import {User} from "@/model/User";
 import {useEffect, useState} from "react";
 import {
     Badge,
@@ -35,6 +35,7 @@ import {exportUsersToXLSX, importFromXLSX} from "@/utils/xlsx";
 import Image from "next/image";
 import {Header, Headers} from "@/components/Header";
 import {RoleGuard} from "@/components/auth/RoleGuard";
+import {AdminRoles, UserRole} from "@/model/SuperAdmin";
 
 const usersRepo = remult.repo(User)
 

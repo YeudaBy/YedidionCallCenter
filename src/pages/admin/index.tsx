@@ -10,13 +10,14 @@ import {
     RiUserSettingsLine
 } from "@remixicon/react";
 import Link from "next/link";
-import {User, UserRole} from "@/model/User";
+import {User} from "@/model/User";
 import {remult, repo} from "remult";
 import {Procedure} from "@/model/Procedure";
 import {exportProceduresToXLSX, importProceduresFromXLSX} from "@/utils/xlsx";
 import {Log, LogType} from "@/model/Log";
 import {BroadcastDialog} from "@/components/dialogs/BroadcastDialog";
 import {RoleGuard} from "@/components/auth/RoleGuard";
+import {UserRole} from "@/model/SuperAdmin";
 
 const procedureRepo = repo(Procedure);
 const logRepo = repo(Log);

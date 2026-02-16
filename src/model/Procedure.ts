@@ -2,7 +2,8 @@ import {Allow, Entity, Field, Fields, Relations} from "remult";
 import {District} from "./District";
 import {NanoIdField} from "@/utils/types";
 import {ProcedureCategory} from "@/model/ProcedureCategory";
-import {AdminRoles, UserRole} from "@/model/User";
+
+import {AdminRoles, UserRole} from "@/model/SuperAdmin";
 
 
 const PROCEDURE_ID_LENGTH = 7;

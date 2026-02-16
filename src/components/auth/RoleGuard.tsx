@@ -1,9 +1,9 @@
 import React from "react";
-import {UserRole} from "@/model/User";
 import {remult} from "remult";
 import {Button, Callout, Card, Text} from "@tremor/react";
 import {RiFingerprintLine} from "@remixicon/react";
 import { useRouter } from "next/router";
+import {UserRole} from "@/model/SuperAdmin";
 
 
 export function RoleGuard({ children, allowedRoles }: {

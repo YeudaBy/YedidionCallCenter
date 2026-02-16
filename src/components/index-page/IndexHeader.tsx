@@ -1,4 +1,4 @@
-import {User, UserRole} from "@/model/User";
+import {User} from "@/model/User";
 import {remult, repo} from "remult";
 import * as Tremor from "@tremor/react";
 import {
@@ -11,6 +11,7 @@ import {ReactNode, useEffect, useState} from "react";
 import { useRouter } from "next/router";
 import {Header, Headers} from "@/components/Header";
 import {District} from "@/model/District";
+import {UserRole} from "@/model/SuperAdmin";
 const userRepo = repo(User)
 
 export function IndexHeader({

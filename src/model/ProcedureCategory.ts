@@ -1,7 +1,8 @@
 import {Allow, Entity, Fields, Relations} from "remult";
 import {Procedure} from "@/model/Procedure";
 import {Category} from "@/model/Category";
-import {UserRole} from "@/model/User";
+
+import {UserRole} from "@/model/SuperAdmin";
 
 @Entity("procedureCategories", {
     allowApiRead: Allow.authenticated,

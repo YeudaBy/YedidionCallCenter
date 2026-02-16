@@ -8,11 +8,11 @@ import {CloseDialogButton} from "@/components/CloseDialogButton";
 import {RiCloseFill, RiListCheck} from "@remixicon/react";
 import * as Tremor from "@tremor/react";
 import {Button, Flex, Icon, MultiSelect, Switch, TextInput} from "@tremor/react";
-import {UserRole} from "@/model/User";
 import Image from "next/image";
 import {useRouter} from "next/router";
 import {RoleGuard} from "@/components/auth/RoleGuard";
 import {useBlockRefresh} from "@/utils/ui";
+import {UserRole} from "@/model/SuperAdmin";
 
 const procedureRepo = remult.repo(Procedure);
 const logRepo = remult.repo(Log);

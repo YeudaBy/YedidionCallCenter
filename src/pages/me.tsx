@@ -1,5 +1,5 @@
 import {useEffect, useState} from "react";
-import {User, UserRole, userRoleToText} from "@/model/User";
+import {User} from "@/model/User";
 import {remult} from "remult";
 import * as Tremor from "@tremor/react";
 import {Button, Callout, Card, Flex, Icon, List, ListItem, Text, TextInput} from "@tremor/react";
@@ -9,6 +9,7 @@ import {RiCheckLine, RiCloseLine} from "@remixicon/react";
 import {LoadingSpinner} from "@/components/Spinner";
 import {Header, Headers} from "@/components/Header";
 import {requestNotificationPermission, RequestTokenResult} from "@/firebase-messages/notifications-permission";
+import {UserRole, userRoleToText} from "@/model/SuperAdmin";
 
 const userRepo = remult.repo(User);
 const phoneRegex = /^[5-9]\d{8}$/;

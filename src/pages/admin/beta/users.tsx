@@ -1,6 +1,6 @@
 import React, {useCallback, useEffect, useMemo, useState} from "react";
 import {remult, repo} from "remult";
-import {User, UserRole} from "@/model/User";
+import {User} from "@/model/User";
 import {
     Badge,
     Button,
@@ -36,6 +36,7 @@ import {useAutoAnimate} from "@formkit/auto-animate/react";
 import {RiArrowDownSLine, RiArrowUpSLine} from "@remixicon/react";
 import {cx} from "@/utils/ui";
 import {RoleGuard} from "@/components/auth/RoleGuard";
+import {UserRole} from "@/model/SuperAdmin";
 
 interface Filters {
     name: string;
