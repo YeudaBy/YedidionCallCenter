@@ -223,10 +223,10 @@ async function handleAddNewRequest(remult: Remult, currentUser: User, message: W
     console.log({currentUser, roles: currentUser.roles})
 
     console.log(currentUser.roles == UserRole.SuperAdmin)
-    const isAdmin = currentUser.isRegularAdmin
-    const isSuperAdmin = currentUser.isSuperAdmin
+    const isAdmin = currentUser.roles == UserRole.Admin
+    const isSuperAdmin = currentUser.roles == UserRole.SuperAdmin
 
-    if (!isSuperAdmin || !isAdmin) {
+    if (!isSuperAdmin && !isAdmin) {
         console.log(`User ${currentUser.name} (${currentUser.id}) attempted to add a new user without sufficient permissions.`);
         return
     }
