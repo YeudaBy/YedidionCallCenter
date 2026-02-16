@@ -1,14 +1,14 @@
 import GoogleProvider from "next-auth/providers/google";
-import NextAuth, {AuthOptions, getServerSession, Session} from "next-auth";
+import NextAuth, {AuthOptions, Session} from "next-auth";
 import api from "@/pages/api/[...remult]";
 import {User} from "@/model/User";
-import {GetServerSidePropsContext, NextApiRequest, NextApiResponse} from "next";
+import {JWT} from "next-auth/jwt";
+import {AdapterUser} from "next-auth/adapters";
 
 export const authOptions: AuthOptions = {
     secret: process.env.SECRET,
     pages: {
         signIn: '/auth/signin',
-
     },
     providers: [
         GoogleProvider({
@@ -25,25 +25,23 @@ export const authOptions: AuthOptions = {
     ],
 
     callbacks: {
-        // @ts-ignore
-        session: async (session: Session, token) => {
-            const remult = await api.getRemult({} as any)
-            // @ts-ignore
-            const email = session.session.user?.email
-            if (session.user) {
-                return session
-            }
+        session: async ({session}: { session: Session, token: JWT, user: AdapterUser }):
+            Promise<Session> => {
+            const email = session.user?.email;
+
             if (email) {
-                const user = await User.getByEmail(remult, email)
-                if (user) {
-                    session.user = user
-                    remult.user = user
+                const remult = await api.getRemult();
+                const dbUser = await User.getByEmail(remult, email);
+
+                if (dbUser) {
+                    session.user = {
+                        ...session.user,
+                        ...dbUser
+                    };
+                    remult.user = dbUser;
                 }
             }
-            return {
-                ...session,
-                user: await User.getByEmail(remult, email)
-            }
+            return session;
         }
     },
     session: {
@@ -53,13 +51,3 @@ export const authOptions: AuthOptions = {
 }
 
 export default NextAuth(authOptions)
-
-
-export function auth(
-    ...args:
-        | [GetServerSidePropsContext["req"], GetServerSidePropsContext["res"]]
-        | [NextApiRequest, NextApiResponse]
-        | []
-) {
-    return getServerSession(...args, authOptions)
-}

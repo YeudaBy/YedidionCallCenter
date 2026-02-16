@@ -12,6 +12,7 @@ import {UserRole} from "@/model/User";
 import Image from "next/image";
 import {useRouter} from "next/router";
 import {RoleGuard} from "@/components/auth/RoleGuard";
+import {useBlockRefresh} from "@/utils/ui";
 
 const procedureRepo = remult.repo(Procedure);
 const logRepo = remult.repo(Log);
@@ -35,6 +36,7 @@ export function ProcedureEditorDialog({procedure, open, onClose, onAdd, onEdit, 
     const [youtubeUrl, setYoutubeUrl] = useState<string | undefined>()
 
     const router = useRouter()
+    useBlockRefresh()
 
     const goToLogs = () => {
         router.push(`/admin/logs?pid=${procedure?.id}`)

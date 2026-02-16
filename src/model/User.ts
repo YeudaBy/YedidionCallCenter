@@ -27,9 +27,9 @@ const userAllowed = (remult?: Remult) => {
 }
 
 @Entity<User>("users", {
-    allowApiCrud: userAllowed,
     allowApiRead: true,
     allowApiInsert: true,
+    allowApiCrud: userAllowed,
 })
 export class User extends IdEntity {
 
@@ -70,11 +70,18 @@ export class User extends IdEntity {
     @Fields.string({required: false})
     fcmToken?: string = undefined;
 
-    get userInfo(): UserInfo {
+    asUserInfo(): UserInfo {
+        return User.asUserInfo(this)!
+    }
+
+    static asUserInfo(user: User | undefined): UserInfo | undefined {
+        if (!user) return undefined
         return {
-            name: this.email,
-            id: this.id,
-            roles: [this.roles],
+            name: user.email,
+            id: user.id,
+            email: user.email,
+            district: user.district,
+            roles: Array.isArray(user.roles) ? user.roles : [user.roles]
         }
     }
 
@@ -127,21 +134,21 @@ export class User extends IdEntity {
     }
 
     @BackendMethod({allowed: true})
-    static async getByEmail(remult: Remult, email: string) {
+    static async getByEmail(remult: Remult, email: string): Promise<UserInfo | undefined> {
         const user = await remult.repo(User).findFirst({email})
-        if (user) return buildUserInfo(user)
+        if (user) return user.asUserInfo()
+    }
+
+    @BackendMethod({allowed: true})
+    static async getByPhone(remult: Remult, phone: number): Promise<UserInfo | undefined> {
+        const user = await remult.repo(User).findFirst({phone})
+        if (user) return user.asUserInfo()
     }
 
     static async hasFcmToken(remult: Remult) {
         if (!remult.user) return false
         const user = await remult.repo(User).findId(remult.user.id)
         return !!user?.fcmToken
-    }
-
-    @BackendMethod({allowed: true})
-    static async getByPhone(remult: Remult, phone: number) {
-        const user = await remult.repo(User).findFirst({phone})
-        if (user) return buildUserInfo(user)
     }
 
     @BackendMethod({allowed: true})
@@ -152,9 +159,4 @@ export class User extends IdEntity {
         }
         return user
     }
-}
-
-
-function buildUserInfo(u: User): UserInfo {
-    return {id: u.id, name: u.name, roles: [u.roles]}
 }

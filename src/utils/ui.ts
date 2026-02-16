@@ -5,6 +5,7 @@ import {Color} from "@tremor/react/dist/lib/inputTypes";
 import clsx, {ClassValue} from "clsx";
 import {twMerge} from "tailwind-merge";
 import {Procedure} from "@/model/Procedure";
+import {useEffect} from "react";
 
 export function getLogTypeIcon(logType: LogType) {
     switch (logType) {
@@ -99,4 +100,20 @@ export function buildTree(flatCategories: Category[]): CategoryNode[] {
     });
 
     return roots;
+}
+
+
+export const useBlockRefresh = () => {
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            e.preventDefault();
+            e.returnValue = '';
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, []);
 }

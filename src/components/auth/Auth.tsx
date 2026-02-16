@@ -34,8 +34,7 @@ export function Auth({children}: { children: ReactNode }) {
                     return;
 
                 case "authenticated": {
-                    /// @ts-expect-error - session data is not typed
-                    const s = session.data?.session?.user as { email?: string, name?: string }
+                    const s = session.data.user
                     if (!s || !s.email || !s.name) {
                         console.error("Session data is missing email or name", s);
                         await signOut();
@@ -47,7 +46,7 @@ export function Auth({children}: { children: ReactNode }) {
                         console.log("user from session", user)
                         if (User.isAllowed(user)) {
                             console.log("Activating user")
-                            remult.user = user.userInfo;
+                            remult.user = User.asUserInfo(user);
                             setSignedUp(true)
                         } else {
                             console.log("User not active yet");
