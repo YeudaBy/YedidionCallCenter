@@ -1,16 +1,16 @@
-import {Entity, Fields, Relations} from "remult";
+import {Allow, Entity, Fields, Relations} from "remult";
 import {NanoIdField} from "@/utils/types";
 import {District} from "@/model/District";
 import * as RemixIcon from "@remixicon/react"
 import {ProcedureCategory} from "@/model/ProcedureCategory";
+import {UserRole} from "@/model/User";
 
 const CATEGORY_ID_LENGTH = 7;
 
 
 @Entity<Category>("category", {
-    allowApiCrud: () => {
-        return true
-    }
+    allowApiCrud: UserRole.SuperAdmin,
+    allowApiRead: Allow.authenticated
 })
 export class Category {
     @NanoIdField(CATEGORY_ID_LENGTH)

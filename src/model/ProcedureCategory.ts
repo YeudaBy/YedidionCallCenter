@@ -1,9 +1,11 @@
-import {Entity, Fields, Relations} from "remult";
+import {Allow, Entity, Fields, Relations} from "remult";
 import {Procedure} from "@/model/Procedure";
 import {Category} from "@/model/Category";
+import {UserRole} from "@/model/User";
 
 @Entity("procedureCategories", {
-    allowApiCrud: true,
+    allowApiRead: Allow.authenticated,
+    allowApiCrud: UserRole.SuperAdmin,
     id: { procedureId: true, categoryId: true }
 })
 export class ProcedureCategory {

@@ -1,4 +1,4 @@
-import {BackendMethod, Entity, Fields, IdEntity, Remult, UserInfo} from "remult";
+import {BackendMethod, Entity, Fields, IdEntity, Remult, repo, UserInfo} from "remult";
 import {District} from "./District";
 
 
@@ -21,37 +21,50 @@ export function userRoleToText(role: UserRole) {
 
 export const AdminRoles = [UserRole.Admin, UserRole.SuperAdmin]
 
+const userAllowed = (remult?: Remult) => {
+    if (!remult || !remult.user) return false
+    return User.isSomeAdmin(remult)
+}
+
 @Entity<User>("users", {
-    allowApiCrud: true,
-    // allowApiRead: true,
-    // allowApiUpdate: true,
-    // allowApiDelete: () => !!remult.user?.roles?.length && AdminRoles.includes(remult.user.roles[0] as UserRole),
-    // allowApiInsert: () => !!remult.user?.roles?.length && AdminRoles.includes(remult.user.roles[0] as UserRole),
+    allowApiCrud: userAllowed,
+    allowApiRead: true,
+    allowApiInsert: true,
 })
 export class User extends IdEntity {
 
-    @Fields.string()
+    @Fields.string({allowApiUpdate: AdminRoles})
     name!: string;
 
-    @Fields.string()
+    @Fields.string({allowApiUpdate: AdminRoles})
     email!: string;
 
-    @Fields.number()
+    @Fields.number({
+        allowApiUpdate: (entity?: User, c?: Remult) => {
+            if (!c || !c?.user) return false
+            if (User.isSomeAdmin(c)) return true
+            // allow user to update their own phone number
+            return entity?.id === c.user.id
+        },
+    })
     phone: number | undefined;
 
-    @Fields.string({sqlExpression: "LPAD(phone::text, 10, '0')"})
+    @Fields.string({
+        sqlExpression: "LPAD(phone::text, 10, '0')",
+        allowApiUpdate: false,
+    })
     phoneString: string | undefined;
 
-    @Fields.boolean()
+    @Fields.boolean({allowApiUpdate: AdminRoles})
     active: boolean = true;
 
-    @Fields.createdAt()
+    @Fields.createdAt({allowApiUpdate: false})
     createdAt!: Date;
 
-    @Fields.object()
+    @Fields.object({allowApiUpdate: AdminRoles})
     district?: District;
 
-    @Fields.object()
+    @Fields.object({allowApiUpdate: UserRole.SuperAdmin})
     roles: UserRole = UserRole.Dispatcher;
 
     @Fields.string({required: false})
@@ -89,8 +102,8 @@ export class User extends IdEntity {
         return this.phone ? `0${this.phone}` : undefined
     }
 
-    get isAllowed() {
-        return (!!this.district || this?.isAdmin) && !this?.active
+    static isAllowed(obj: User | undefined) {
+        return (!!obj?.district || obj?.roles == UserRole.SuperAdmin) && obj.active
     }
 
     static isSomeAdmin(remult: Remult) {
@@ -129,6 +142,15 @@ export class User extends IdEntity {
     static async getByPhone(remult: Remult, phone: number) {
         const user = await remult.repo(User).findFirst({phone})
         if (user) return buildUserInfo(user)
+    }
+
+    @BackendMethod({allowed: true})
+    static async createFromSession(email: string, name: string): Promise<User> {
+        let user = await repo(User).findFirst({email})
+        if (!user) {
+            user = await repo(User).insert({email, name})
+        }
+        return user
     }
 }
 

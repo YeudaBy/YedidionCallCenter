@@ -6,10 +6,8 @@ import {Button, Card, Flex, Text} from "@tremor/react";
 import {LoadingSpinner} from "@/components/Spinner";
 import {messaging, onMessage} from "@/firebase-messages/messaging";
 import Image from "next/image";
-import { useRouter } from "next/router";
+import {useRouter} from "next/router";
 import {RiRestartLine} from "@remixicon/react";
-
-const userRepo = remult.repo(User);
 
 export function Auth({children}: { children: ReactNode }) {
     const session = useSession();
@@ -25,33 +23,41 @@ export function Auth({children}: { children: ReactNode }) {
     useEffect(() => {
         if (isInAuthPages) return;
 
-        console.log(session.status)
-        if (session.status === "unauthenticated") {
-            signIn();
-        } else if (session.status === "loading") {
-            setSignedUp(null)
-        } else if (session.status === "authenticated") {
-            // @ts-ignore
-            const s = session.data?.session?.user as any
-            userRepo.findFirst({email: s?.email || "0"})
-                .then(user => {
-                    if (!user) {
-                        console.log(s)
-                        userRepo.insert({
-                            email: s?.email || "-",
-                            name: s?.name || "-|-"
-                        }).then(console.log)
-                    } else {
-                        console.log("exists", user)
+        (async () => {
+            switch (session.status) {
+                case "unauthenticated":
+                    await signIn();
+                    return;
+
+                case "loading":
+                    setSignedUp(null);
+                    return;
+
+                case "authenticated": {
+                    /// @ts-expect-error - session data is not typed
+                    const s = session.data?.session?.user as { email?: string, name?: string }
+                    if (!s || !s.email || !s.name) {
+                        console.error("Session data is missing email or name", s);
+                        await signOut();
+                        await signIn();
+                        return;
                     }
-                    if ((!!user?.district || user?.isAdmin) && user?.active !== false) {
-                        remult.user = user.userInfo;
-                        setSignedUp(true)
-                    } else {
-                        setSignedUp(false);
-                    }
-                })
-        }
+
+                    User.createFromSession(s.email, s.name).then(user => {
+                        console.log("user from session", user)
+                        if (User.isAllowed(user)) {
+                            console.log("Activating user")
+                            remult.user = user.userInfo;
+                            setSignedUp(true)
+                        } else {
+                            console.log("User not active yet");
+                            setSignedUp(false);
+                        }
+                    })
+                }
+            }
+        })();
+
     }, [session]);
 
     if (signedUp || isInAuthPages) return <>{children}</>;
@@ -88,7 +94,7 @@ function NotAuthorized() {
         </Text>
 
         <Button icon={RiRestartLine}
-            className={"mt-6 gap-2"} onClick={goToLoginPage} variant={"light"}>
+                className={"mt-6 gap-2"} onClick={goToLoginPage} variant={"light"}>
             התחבר מחדש
         </Button>
     </Card>;

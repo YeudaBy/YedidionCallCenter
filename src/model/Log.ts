@@ -1,4 +1,5 @@
 import {Entity, Fields, IdEntity} from "remult";
+import {UserRole} from "@/model/User";
 
 export enum LogType {
     Created = "נוצר",
@@ -9,9 +10,8 @@ export enum LogType {
 }
 
 @Entity("log", {
-    allowApiCrud: () => {
-        return true
-    }
+    allowApiRead: UserRole.SuperAdmin,
+    allowApiCrud: true
 })
 export class Log extends IdEntity {
     @Fields.createdAt()
@@ -20,8 +20,11 @@ export class Log extends IdEntity {
     @Fields.string()
     byUserId!: string;
 
-    @Fields.string()
+    @Fields.string({required: false})
     procedureId!: string;
+
+    @Fields.string({required: false})
+    userId!: string;
 
     @Fields.string()
     log!: string;

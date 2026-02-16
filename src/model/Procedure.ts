@@ -1,16 +1,18 @@
-import {Entity, Field, Fields, Relations} from "remult";
+import {Allow, Entity, Field, Fields, Relations} from "remult";
 import {District} from "./District";
 import {NanoIdField} from "@/utils/types";
 import {ProcedureCategory} from "@/model/ProcedureCategory";
+import {AdminRoles, UserRole} from "@/model/User";
 
 
 const PROCEDURE_ID_LENGTH = 7;
 
 
 @Entity("procedure", {
-    allowApiCrud: () => {
-        return true
-    }
+    allowApiRead: Allow.authenticated,
+    allowApiDelete: UserRole.SuperAdmin,
+    allowApiUpdate: AdminRoles,
+    allowApiInsert: AdminRoles,
 })
 export class Procedure {
     @NanoIdField(PROCEDURE_ID_LENGTH)
@@ -58,10 +60,6 @@ export class Procedure {
 
     @Relations.toMany(() => ProcedureCategory, "procedureId")
     categories?: ProcedureCategory[];
-
-    parseToWaString() {
-        return `${this.title}\n${this.procedure}`
-    }
 }
 
 export enum ProcedureType {
