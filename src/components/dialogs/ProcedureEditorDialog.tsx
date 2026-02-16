@@ -13,9 +13,16 @@ import {useRouter} from "next/router";
 import {RoleGuard} from "@/components/auth/RoleGuard";
 import {useBlockRefresh} from "@/utils/ui";
 import {UserRole} from "@/model/SuperAdmin";
+import {KnowledgeBaseController} from "@/controllers/hierarchyController";
+import {Category} from "@/model/Category";
 
 const procedureRepo = remult.repo(Procedure);
 const logRepo = remult.repo(Log);
+
+interface CategoryOption {
+    id: string;
+    pathString: string;
+}
 
 export function ProcedureEditorDialog({procedure, open, onClose, onAdd, onEdit, setOpenDelete}: {
     open: boolean,
@@ -35,6 +42,9 @@ export function ProcedureEditorDialog({procedure, open, onClose, onAdd, onEdit, 
     const [images, setImages] = useState<string[]>()
     const [youtubeUrl, setYoutubeUrl] = useState<string | undefined>()
 
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+    const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([]);
+
     const router = useRouter()
     useBlockRefresh()
 
@@ -43,6 +53,10 @@ export function ProcedureEditorDialog({procedure, open, onClose, onAdd, onEdit, 
     }
 
     useEffect(() => {
+        if (open) {
+            fetchCategories();
+        }
+
         if (procedure) {
             setTitle(procedure.title)
             setContent(procedure.procedure)
@@ -52,61 +66,108 @@ export function ProcedureEditorDialog({procedure, open, onClose, onAdd, onEdit, 
             setDistricts(procedure.districts)
             setImages(procedure.images)
             setYoutubeUrl(procedure.youtubeUrl)
+
+            if (procedure.categories) {
+                setSelectedCategories(procedure.categories.map(pc => pc.categoryId));
+            }
+        } else {
+            setTitle("")
+            setContent("")
+            setKeywords([])
+            setActive(true)
+            setType(ProcedureType.Procedure)
+            setDistricts([District.General])
+            setImages([])
+            setYoutubeUrl(undefined)
+            setSelectedCategories([]);
         }
-    }, [procedure]);
+    }, [procedure, open]);
+
+    const fetchCategories = async () => {
+        const allCategories = await KnowledgeBaseController.getKnowledgeBaseSnapshot();
+
+        const buildPathString = (cat: Category, allCats: Category[]): string => {
+            if (!cat.parentCategoryId) return cat.title;
+            const parent = allCats.find(c => c.id === cat.parentCategoryId);
+            if (!parent) return cat.title;
+            return `${buildPathString(parent, allCats)} > ${cat.title}`;
+        };
+
+        const options: CategoryOption[] = allCategories.map(cat => ({
+            id: cat.id,
+            pathString: buildPathString(cat, allCategories)
+        }));
+
+        options.sort((a, b) => a.pathString.localeCompare(b.pathString));
+        setCategoryOptions(options);
+    };
 
     const addProcedure = async () => {
         setLoading(true)
-        if (!procedure) {
-            const newObj = await procedureRepo.insert({
-                title: title,
-                procedure: content,
-                active: active,
-                districts: districts,
-                keywords: keywords.map(k => k.trim()),
-                type: type,
-                images: images,
-                youtubeUrl: youtubeUrl
-            })
-            await logRepo.insert({
-                byUserId: remult.user?.id!,
-                procedureId: newObj.id!,
-                log: newObj.title,
-                type: LogType.Created
-            })
-            onAdd?.(newObj)
-        } else {
-            const updatedObj = await procedureRepo.update(procedure.id!, {
-                title: title,
-                procedure: content,
-                active: active,
-                districts: districts,
-                keywords: keywords.map(k => k.trim()),
-                type: type,
-                images: images,
-                youtubeUrl: youtubeUrl
-            })
-            for (const e1 of [
-                diff(procedure.procedure, content || ""),
-                diff(procedure.title, title || ""),
-                diff(procedure.keywords.join(", "), keywords.join(", ") || ""),
-                diff(procedure.type, type || ""),
-                diff(procedure.districts.join(", "), districts.join(", ") || ""),
-                diff(procedure.active.toString(), active.toString() || ""),
-                diff(procedure.images.join(", "), images?.join(", ") || ""),
-                diff(procedure.youtubeUrl || "", youtubeUrl || "")
-            ].filter(Boolean).map(e => e as string)) {
-                await logRepo.insert({
-                    byUserId: remult.user?.id!,
-                    procedureId: procedure.id!,
-                    log: e1,
-                    type: LogType.Updated
+        let savedProcedure;
+
+        try {
+            if (!procedure) {
+                savedProcedure = await procedureRepo.insert({
+                    title: title,
+                    procedure: content,
+                    active: active,
+                    districts: districts,
+                    keywords: keywords.map(k => k.trim()),
+                    type: type,
+                    images: images,
+                    youtubeUrl: youtubeUrl
                 })
+                await logRepo.insert({
+                    byUserId: remult.user?.id,
+                    procedureId: savedProcedure.id!,
+                    log: savedProcedure.title,
+                    type: LogType.Created
+                })
+                onAdd?.(savedProcedure)
+            } else {
+                savedProcedure = await procedureRepo.update(procedure.id!, {
+                    title: title,
+                    procedure: content,
+                    active: active,
+                    districts: districts,
+                    keywords: keywords.map(k => k.trim()),
+                    type: type,
+                    images: images,
+                    youtubeUrl: youtubeUrl
+                })
+                for (const e1 of [
+                    diff(procedure.procedure, content || ""),
+                    diff(procedure.title, title || ""),
+                    diff(procedure.keywords.join(", "), keywords.join(", ") || ""),
+                    diff(procedure.type, type || ""),
+                    diff(procedure.districts.join(", "), districts.join(", ") || ""),
+                    diff(procedure.active.toString(), active.toString() || ""),
+                    diff(procedure.images.join(", "), images?.join(", ") || ""),
+                    diff(procedure.youtubeUrl || "", youtubeUrl || "")
+                ].filter(Boolean).map(e => e as string)) {
+                    await logRepo.insert({
+                        byUserId: remult.user?.id,
+                        procedureId: procedure.id!,
+                        log: e1,
+                        type: LogType.Updated
+                    })
+                }
+                onEdit?.(savedProcedure)
             }
-            onEdit?.(updatedObj)
+            if (savedProcedure) {
+                await KnowledgeBaseController.updateProcedureCategories(
+                    savedProcedure.id,
+                    selectedCategories
+                );
+            }
+            onClose?.(false)
+        } catch (e) {
+            // todo handle error
+            console.error(e)
+        } finally {
+            setLoading(false)
         }
-        setLoading(false)
-        onClose?.(false)
     }
 
     return <RoleGuard allowedRoles={[UserRole.SuperAdmin]}>
@@ -179,6 +240,28 @@ export function ProcedureEditorDialog({procedure, open, onClose, onAdd, onEdit, 
                 <Tremor.Text className={"text-xs text-start self-start mb-1"}>
                     יש להפריד בין מילות מפתח בפסיק (לדוגמה: נזק, תקלה, תקן)
                 </Tremor.Text>
+
+                <div className="w-full mt-2">
+                    <MultiSelect
+                        placeholder={"שיוך לקטגוריות (אופציונלי):"}
+                        value={selectedCategories}
+                        className="w-full"
+                        onValueChange={setSelectedCategories}
+                    >
+                        {categoryOptions.map(option => (
+                            <Tremor.MultiSelectItem
+                                key={option.id}
+                                value={option.id}
+                                className={"gap-2"}
+                            >
+                                {option.pathString}
+                            </Tremor.MultiSelectItem>
+                        ))}
+                    </MultiSelect>
+                    <Tremor.Text className={"text-xs text-start self-start mt-1 mb-2 text-gray-500"}>
+                        ניתן לשייך נוהל למספר תיקיות במקביל.
+                    </Tremor.Text>
+                </div>
 
                 <Flex className={"p-1 items-center justify-end gap-2 border-2 border-dashed"}>
                     {images?.map((image, i) => {
