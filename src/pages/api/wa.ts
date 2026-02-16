@@ -220,9 +220,9 @@ async function handleSearch(remult: Remult, message: WaMessage) {
 
 async function handleAddNewRequest(remult: Remult, currentUser: User, message: WaMessage) {
 
-    console.log(currentUser.isAdmin, currentUser.isSuperAdmin)
-    console.log(currentUser)
+    console.log({currentUser, roles: currentUser.roles})
 
+    console.log(currentUser.roles == UserRole.SuperAdmin)
     const isAdmin = currentUser.isRegularAdmin
     const isSuperAdmin = currentUser.isSuperAdmin
 
