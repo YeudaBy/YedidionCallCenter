@@ -1,11 +1,11 @@
 import type {GetServerSidePropsContext, InferGetServerSidePropsType,} from "next"
 import {getProviders, signIn} from "next-auth/react"
 import {getServerSession} from "next-auth/next"
-import {authOptions} from "../api/auth/[...nextauth]"
 import {Button, Card, Flex, Switch, Text} from "@tremor/react";
 import Image from "next/image";
 import {RiGoogleFill} from "@remixicon/react";
 import {useState} from "react";
+import {authOptions} from "@/config/nextauth-config";
 
 export default function SignIn({
                                    providers,
