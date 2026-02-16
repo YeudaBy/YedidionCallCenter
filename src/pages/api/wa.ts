@@ -7,10 +7,11 @@ import {buildWaReadReceipts} from "@/model/wa/WaReadReceipts";
 import {Remult, withRemult} from "remult";
 import {Procedure, ProcedureType} from "@/model/Procedure";
 import {buildFlow, buildInteractiveList} from "@/model/wa/WaInteractiveList";
-import {User, UserRole} from "@/model/User";
+import {User} from "@/model/User";
 import {InteractiveType} from "@/model/wa/WhatsApp";
 import {District} from "@/model/District";
 import {buildWaImageMessage} from "@/model/wa/WaImageMessage";
+import {UserRole} from "@/model/SuperAdmin";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     switch (req.method) {
@@ -218,12 +219,12 @@ async function handleSearch(remult: Remult, message: WaMessage) {
 }
 
 async function handleAddNewRequest(remult: Remult, currentUser: User, message: WaMessage) {
-    // DONT CHANGE TO REGULAR ROLE CHECK!!! TODO
-    const isSuperAdmin = true; // (remult.user!.roles as unknown as  string) === UserRole.SuperAdmin
-    const isAdmin = true; // (remult.user!.roles as unknown as string) === UserRole.Admin
 
     console.log(currentUser.isAdmin, currentUser.isSuperAdmin)
     console.log(currentUser)
+
+    const isAdmin = currentUser.isRegularAdmin
+    const isSuperAdmin = currentUser.isSuperAdmin
 
     if (!isSuperAdmin || !isAdmin) {
         console.log(`User ${currentUser.name} (${currentUser.id}) attempted to add a new user without sufficient permissions.`);
