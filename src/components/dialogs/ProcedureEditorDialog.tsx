@@ -53,10 +53,10 @@ export function ProcedureEditorDialog({procedure, open, onClose, onAdd, onEdit, 
     }
 
     useEffect(() => {
-        if (open) {
-            fetchCategories();
-        }
+        fetchCategories()
+    }, [open]);
 
+    useEffect(() => {
         if (procedure) {
             setTitle(procedure.title)
             setContent(procedure.procedure)
@@ -67,9 +67,9 @@ export function ProcedureEditorDialog({procedure, open, onClose, onAdd, onEdit, 
             setImages(procedure.images)
             setYoutubeUrl(procedure.youtubeUrl)
 
-            if (procedure.categories) {
-                setSelectedCategories(procedure.categories.map(pc => pc.categoryId));
-            }
+            procedureRepo.relations(procedure).categories.find().then(cats => {
+                setSelectedCategories(cats.map(c => c.categoryId))
+            })
         } else {
             setTitle("")
             setContent("")
@@ -81,7 +81,7 @@ export function ProcedureEditorDialog({procedure, open, onClose, onAdd, onEdit, 
             setYoutubeUrl(undefined)
             setSelectedCategories([]);
         }
-    }, [procedure, open]);
+    }, [procedure]);
 
     const fetchCategories = async () => {
         const allCategories = await KnowledgeBaseController.getKnowledgeBaseSnapshot();
