@@ -14,6 +14,9 @@ export function NodeMenu({onProcedureSelect}: { onProcedureSelect: (procId: stri
         remult.repo(Category).find({
             include: {
                 procedures: {include: {procedure: true}}
+            },
+            orderBy: {
+                importance: "desc",
             }
         }).then(flatList => {
             const tree = buildTree(flatList);
@@ -27,7 +30,7 @@ export function NodeMenu({onProcedureSelect}: { onProcedureSelect: (procId: stri
                 loading ? <>
                         <Text className={"text-center text-lg mt-2"}>טוען קטגוריות...</Text>
                     </>
-                    : <div className="tree-view border-2 rounded-xl">
+                    : <div className="tree-view border-2 rounded-xl p-4 md:p-0">
                         {treeData.map(rootNode => (
                             <CategoryItem
                                 key={rootNode.id}

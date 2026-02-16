@@ -29,8 +29,13 @@ export class Category {
     })
     active: boolean = true;
 
+    @Fields.boolean({
+        defaultValue: () => false,
+    })
+    defaultOpen: boolean = false;
+
     @Fields.number({
-            defaultValue: () => 0,
+        defaultValue: () => 0,
     })
     importance: number = 0;
 

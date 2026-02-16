@@ -1,10 +1,11 @@
 import {useState} from 'react';
 import {CategoryNode, cx} from "@/utils/ui";
 import * as RemixIcon from "@remixicon/react";
-import {RiArrowDownSLine, RiArticleLine, RiFolderLine} from "@remixicon/react";
+import {RiArrowDownSLine, RiFolderLine} from "@remixicon/react";
 import {Icon, List, ListItem, Text} from "@tremor/react";
 import {User} from "@/model/User";
 import {remult} from "remult";
+import {Box} from "@radix-ui/themes";
 
 
 function getIconByName(iconName?: string) {
@@ -19,7 +20,7 @@ export const CategoryItem = ({node, onProcedureSelect}: {
     node: CategoryNode,
     onProcedureSelect: (procId: string) => void
 }) => {
-    const [isOpen, setIsOpen] = useState(false);
+    const [isOpen, setIsOpen] = useState(node.defaultOpen);
 
     const hasChildren = node.children.length > 0;
     const hasProcedures = node.cleanProcedures.length > 0;
@@ -28,29 +29,29 @@ export const CategoryItem = ({node, onProcedureSelect}: {
 
 
     return (
-        <List className="mr-2 overflow-x-hidden w-4/5">
+        <List className="overflow-x-hidden">
             <ListItem
                 onClick={() => !isEmpty && setIsOpen(!isOpen)}
                 style={{cursor: isEmpty ? 'default' : 'pointer'}}
-                className={cx("items-center justify-start border-0 gap-2",
+                className={cx("items-center justify-start border-0 gap-0",
                     (!showEmpty && isEmpty) ? "hidden" : "",
                     (showEmpty && isEmpty ? " opacity-50" : ""))}
             >
-                {!isEmpty && <Icon icon={RiArrowDownSLine}
-                                   style={{transform: !isOpen ? 'rotate(90deg)' : 'rotate(0)'}}
-                                   className={"transition-transform duration-200"}
+                {<Icon icon={isEmpty ? Box : RiArrowDownSLine} size={"sm"}
+                       style={{transform: !isOpen ? 'rotate(90deg)' : 'rotate(0)'}}
+                       className={"transition-transform duration-200"}
                 />}
 
-                <Icon icon={getIconByName(node.icon)}/>
+                <Icon size={"sm"} icon={getIconByName(node.icon)}/>
                 <Text className={"font-semibold"}>{node.title}</Text>
 
-                <span style={{fontSize: '0.8em', color: '#666'}}>
-            ({node.children.length + node.cleanProcedures.length})
-                    </span>
+                <span className={"text-xs text-gray-600 mr-2"}>
+                    ({node.children.length + node.cleanProcedures.length})
+                </span>
             </ListItem>
 
             {isOpen && (
-                <List>
+                <List className={"mr-4"}>
                     {node.children.map(childNode => (
                         <CategoryItem
                             key={childNode.id}
@@ -66,7 +67,7 @@ export const CategoryItem = ({node, onProcedureSelect}: {
                                 onProcedureSelect(proc.id)
                             }}
                             className={"items-center justify-start cursor-pointer gap-2 mr-4"}>
-                            <Icon icon={RiArticleLine}/>
+                            {/*<Icon icon={RiArticleLine}/>*/}
                             {proc.title}
                         </ListItem>
                     ))}

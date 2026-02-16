@@ -2,20 +2,19 @@ import React, {useCallback, useEffect, useState} from "react";
 import {Procedure} from "@/model/Procedure";
 import {remult} from "remult";
 import * as Tremor from "@tremor/react";
-import {Button, Flex, Grid} from "@tremor/react";
+import {Flex, Grid} from "@tremor/react";
 import {useRouter} from "next/router";
 import {LoadingBackdrop} from "@/components/Spinner";
 import {ProcedurePreview} from "@/components/ProcedurePreview";
 import {District} from "@/model/District";
 import {User} from "@/model/User";
-import {RiCarouselView, RiDeleteBinLine, RiSortAlphabetAsc, RiSortAsc, RiStackedView} from "@remixicon/react";
+import {RiDeleteBinLine} from "@remixicon/react";
 import {CloseDialogButton} from "@/components/CloseDialogButton";
 import {Log, LogType} from "@/model/Log";
 import {Order} from "@/utils/types";
 import {ProcedureEditorDialog} from "@/components/dialogs/ProcedureEditorDialog";
 import {SearchBox} from "@/components/index-page/SearchBox";
 import {IndexHeader} from "@/components/index-page/IndexHeader";
-import {DistrictSelector} from "@/components/index-page/DistrictSelector";
 import {useAnalytics} from "@/firebase-messages/init";
 import {NodeMenu} from "@/components/node/NodeMenu";
 import {ProcView} from "@/components/dialogs/ProcView";
@@ -180,51 +179,49 @@ export default function IndexPage() {
         <Flex className={"p-4 flex-col"}>
             <Flex className={"justify-between items-center gap-2"}>
                 <SearchBox query={query} setQuery={setQuery} setResults={setSearchResult}/>
-                <Flex className={"gap-2 justify-start items-center my-2"}>
-                    <Button icon={dense ? RiStackedView : RiCarouselView}
-                            variant={"light"} className={"gap-2"}
-                            onClick={() => setDense(d => !d)}>
-                        {!dense ? "דחוס" : "רגיל"}
-                    </Button>
-                    <Button
-                        icon={order === Order.Recent ? RiSortAlphabetAsc : RiSortAsc}
-                        className={"cursor-pointer gap-2"} variant={"light"}
-                        onClick={() => {
-                            setOrder(order === Order.Recent ? Order.Alphabetical : Order.Recent)
-                        }}
-                    >
-                        {order === Order.Recent ? "א״ב" : "חדשים"}
-                    </Button>
-                </Flex>
-                {!isMobile && <DistrictSelector
-                    allowedDistricts={allowedDistricts}
-                    selectedDistrict={district}
-                    setDistrict={setDistrict}
-                />}
+                {/*<Flex className={"gap-2 justify-start items-center my-2"}>*/}
+                {/*    <Button icon={dense ? RiStackedView : RiCarouselView}*/}
+                {/*            variant={"light"} className={"gap-2"}*/}
+                {/*            onClick={() => setDense(d => !d)}>*/}
+                {/*        {!dense ? "דחוס" : "רגיל"}*/}
+                {/*    </Button>*/}
+                {/*    <Button*/}
+                {/*        icon={order === Order.Recent ? RiSortAlphabetAsc : RiSortAsc}*/}
+                {/*        className={"cursor-pointer gap-2"} variant={"light"}*/}
+                {/*        onClick={() => {*/}
+                {/*            setOrder(order === Order.Recent ? Order.Alphabetical : Order.Recent)*/}
+                {/*        }}*/}
+                {/*    >*/}
+                {/*        {order === Order.Recent ? "א״ב" : "חדשים"}*/}
+                {/*    </Button>*/}
+                {/*</Flex>*/}
+                {/*{!isMobile && <DistrictSelector*/}
+                {/*    allowedDistricts={allowedDistricts}*/}
+                {/*    selectedDistrict={district}*/}
+                {/*    setDistrict={setDistrict}*/}
+                {/*/>}*/}
             </Flex>
 
 
-            {isMobile && <DistrictSelector
-                allowedDistricts={allowedDistricts}
-                selectedDistrict={district}
-                setDistrict={setDistrict}
-            />}
+            {/*{isMobile && <DistrictSelector*/}
+            {/*    allowedDistricts={allowedDistricts}*/}
+            {/*    selectedDistrict={district}*/}
+            {/*    setDistrict={setDistrict}*/}
+            {/*/>}*/}
 
             {
                 isMobile ?
 
                     <Flex className={"gap-4 flex-col justify-start items-start"}>
 
-                        <div className={"w-full"}>
+                        <div className={"w-full my-4"}>
                             <NodeMenu onProcedureSelect={handleProcedureSelect}/>
                         </div>
 
                         <div className={"grow"}>
                             <Tremor.Grid className={"gap-2 w-full"} numItems={dense ? 2 : 1} numItemsSm={dense ? 3 : 2}
                                          numItemsLg={dense ? 5 : 3}>
-                                {!query ? procedures?.map(procedure => {
-                                    return <ProcedurePreview dense={dense} procedure={procedure} key={procedure.id}/>
-                                }) : searchResult?.map(procedure => {
+                                {!!query && searchResult?.map(procedure => {
                                     return <ProcedurePreview dense={dense} procedure={procedure} key={procedure.id}/>
                                 })}
                             </Tremor.Grid>
@@ -245,7 +242,7 @@ export default function IndexPage() {
                     </Flex>
                     :
                     <Flex className={"grow items-start justify-start gap-4 p-2"}>
-                        <div className={"w-1/5"}>
+                        <div className={"w-1/5 min-w-48"}>
                             <NodeMenu onProcedureSelect={handleProcedureSelect}/>
                         </div>
                         <div className={"grow w-4/5"}>
