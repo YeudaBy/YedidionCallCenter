@@ -25,7 +25,7 @@ export const requestNotificationPermission = async () => {
             "/firebase-messaging-sw.js"
         );
 
-        if (!registration) {
+        if (!registration || !registration.active) {
             return RequestTokenResult.ServiceWorkerRegistrationFailed;
         }
 
