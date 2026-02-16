@@ -8,7 +8,7 @@ import {remult} from "remult";
 import {Box} from "@radix-ui/themes";
 
 
-function getIconByName(iconName?: string) {
+export function getIconByName(iconName?: string) {
     if (!iconName) return RiFolderLine;
 
     const IconComponent = (RemixIcon as never)[iconName];

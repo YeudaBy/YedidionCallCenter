@@ -5,7 +5,7 @@ import * as Tremor from "@tremor/react";
 import {Text} from "@tremor/react";
 import {LoadingSpinner} from "@/components/Spinner";
 import 'react-lite-youtube-embed/dist/LiteYouTubeEmbed.css';
-import {ProcView} from "@/components/dialogs/ProcView";
+import {ProcView} from "@/components/ProcView";
 
 export function MainProcedureDialog({procedure, open, onClose, onEdit}: {
     procedure: Procedure | true,

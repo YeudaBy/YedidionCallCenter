@@ -1,4 +1,4 @@
-import {BackendMethod, Entity, Fields, IdEntity, Remult, repo, UserInfo} from "remult";
+import {BackendMethod, Entity, Fields, IdEntity, Relations, Remult, repo, UserInfo} from "remult";
 import {District} from "./District";
 import {Procedure} from "@/model/Procedure";
 import {AdminRoles, UserRole} from "@/model/SuperAdmin";
@@ -52,6 +52,12 @@ export class User extends IdEntity {
 
     @Fields.string({required: false})
     fcmToken?: string = undefined;
+
+    // favorite procedure relationship
+    @Relations.toMany(() => Procedure, {defaultIncluded: false, field: "id"})
+    favoriteProcedures: Procedure[] = [];
+
+    /*  Helper methods  */
 
     asUserInfo(): UserInfo {
         return User.asUserInfo(this)!

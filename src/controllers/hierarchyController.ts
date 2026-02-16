@@ -1,12 +1,13 @@
 import {Category} from "@/model/Category";
 import {Procedure} from "@/model/Procedure";
 import {ProcedureCategory} from "@/model/ProcedureCategory";
-import {BackendMethod, Controller, repo} from "remult";
+import {BackendMethod, Controller, remult, repo} from "remult";
+import {UserRole} from "@/model/SuperAdmin";
 
 @Controller("knowledgeBase")
 export class KnowledgeBaseController {
 
-    @BackendMethod({ allowed: true })
+    @BackendMethod({allowed: true})
     static async getCategoryPath(categoryId: string): Promise<Category[]> {
         const categoryRepo = repo(Category);
         const path: Category[] = [];
@@ -15,7 +16,7 @@ export class KnowledgeBaseController {
 
         while (currentId && !visited.has(currentId)) {
             visited.add(currentId);
-            const cat = await categoryRepo.findFirst({ id: currentId });
+            const cat = await categoryRepo.findFirst({id: currentId});
 
             if (!cat) break;
 
@@ -27,11 +28,11 @@ export class KnowledgeBaseController {
     }
 
 
-    @BackendMethod({ allowed: true })
+    @BackendMethod({allowed: true})
     static async updateProcedureCategories(procedureId: string, categoryIds: string[]): Promise<void> {
         const pcRepo = repo(ProcedureCategory);
 
-        const existingRelations = await pcRepo.find({ where: { procedureId } });
+        const existingRelations = await pcRepo.find({where: {procedureId}});
         for (const rel of existingRelations) {
             await pcRepo.delete(rel);
         }
@@ -46,13 +47,13 @@ export class KnowledgeBaseController {
         }
     }
 
-    @BackendMethod({ allowed: true })
+    @BackendMethod({allowed: true})
     static async getProceduresInBranch(rootCategoryId: string): Promise<Procedure[]> {
         const catRepo = repo(Category);
         const pcRepo = repo(ProcedureCategory);
 
         async function getAllChildIds(id: string): Promise<string[]> {
-            const children = await catRepo.find({ where: { parentCategoryId: id } });
+            const children = await catRepo.find({where: {parentCategoryId: id}});
             let ids = [id];
             for (const child of children) {
                 const childIds = await getAllChildIds(child.id);
@@ -64,8 +65,8 @@ export class KnowledgeBaseController {
         const branchCategoryIds = await getAllChildIds(rootCategoryId);
 
         const relations = await pcRepo.find({
-            where: { categoryId: branchCategoryIds },
-            include: { procedure: true }
+            where: {categoryId: branchCategoryIds},
+            include: {procedure: true}
         });
 
         const procedureMap = new Map<string, Procedure>();
@@ -79,8 +80,8 @@ export class KnowledgeBaseController {
     }
 
 
-    @BackendMethod({ allowed: true })
-    static async getKnowledgeBaseSnapshot() {
+    @BackendMethod({allowed: true})
+    static async getKnowledgeBaseSnapshot(): Promise<Category[]> {
         return await repo(Category).find({
             where: {active: true},
             orderBy: {importance: "desc"},
@@ -92,5 +93,14 @@ export class KnowledgeBaseController {
                 }
             }
         });
+    }
+
+    @BackendMethod({allowed: UserRole.SuperAdmin})
+    static async moveCategory(categoryId: string, newParentId: string | undefined) {
+        const repo = remult.repo(Category);
+
+        if (categoryId === newParentId) throw new Error("Category cannot be its own parent");
+
+        await repo.update(categoryId, {parentCategoryId: newParentId});
     }
 }

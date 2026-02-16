@@ -2,6 +2,7 @@
 
 import React, {ElementType, useEffect, useMemo, useState} from "react";
 import {Card, Icon, Metric, Text, TextInput, Title} from "@tremor/react";
+// @ts-expect-error react-window doesn't have good types for the render prop
 import {FixedSizeGrid as Grid} from "react-window";
 import {toast} from "sonner";
 

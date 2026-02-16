@@ -5,6 +5,7 @@ import {
     RiAB,
     RiFolderDownloadLine,
     RiFolderUploadLine,
+    RiMenu4Line,
     RiSendInsLine,
     RiTimelineView,
     RiUserSettingsLine
@@ -18,6 +19,7 @@ import {Log, LogType} from "@/model/Log";
 import {BroadcastDialog} from "@/components/dialogs/BroadcastDialog";
 import {RoleGuard} from "@/components/auth/RoleGuard";
 import {UserRole} from "@/model/SuperAdmin";
+import {toast} from "sonner";
 
 const procedureRepo = repo(Procedure);
 const logRepo = repo(Log);
@@ -36,45 +38,48 @@ export default function AdminPage() {
             procedureRepo.find().then(procedures => {
                 exportProceduresToXLSX(procedures);
             })
-        } catch (error: unknown) {
-            alert("אירעה שגיאה בעת ייצוא הנהלים: " + (error as Error).message);
+        } catch (error) {
+            console.error("Error exporting procedures:", error);
+            toast.error("אירעה שגיאה בעת ייצוא הנהלים");
         }
     }
 
-    const importProcedures = () => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.xlsx,.xls';
-        input.onchange = async (e) => {
-            const file = (e.target as HTMLInputElement).files?.[0];
-            if (file) {
-                importProceduresFromXLSX(file).then((results: Procedure[]) => {
-                    repo(Procedure).insert(results).then(() => {
-                        alert(`נוספו ${results.length} נהלים בהצלחה`);
-                        return results
-                    }).then(results => {
-                        results.map(async (procedure) => {
-                            const log = logRepo.create();
-                            log.type = LogType.Imported;
-                            log.procedureId = procedure.id!;
-                            log.log = `נוסף נוהל "${procedure.title}" באמצעות ייבוא קובץ XLSX`;
-                            log.byUserId = remult.user!.id;
-                            await logRepo.insert(log);
+    const importProcedures = () => {  // TODO review imported procedures
+        try {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.xlsx,.xls';
+            input.onchange = async (e) => {
+                const file = (e.target as HTMLInputElement).files?.[0];
+                if (file) {
+                    importProceduresFromXLSX(file).then((results: Procedure[]) => {
+                        repo(Procedure).insert(results).then(() => {
+                            toast.success(`הנהלים הובאו בהצלחה! ${results.length} נהלים נוספו.`);
+                            return results
+                        }).then(results => {
+                            results.map(async (procedure) => {
+                                const log = logRepo.create();
+                                log.type = LogType.Imported;
+                                log.procedureId = procedure.id!;
+                                log.log = `נוסף נוהל "${procedure.title}" באמצעות ייבוא קובץ XLSX`;
+                                log.byUserId = remult.user!.id;
+                                await logRepo.insert(log);
+                            })
+                        }).catch(error => {
+                            console.error("Error inserting imported procedures:", error);
+                            toast.error("אירעה שגיאה בעת שמירת הנהלים המיובאים");
                         })
-                    }).catch(error => {
-                        alert("אירעה שגיאה בעת הוספת הנהלים: " + error.message);
+                    }).catch((error) => {
+                        console.error("Error importing procedures from XLSX:", error);
+                        toast.error("אירעה שגיאה בעת עיבוד קובץ ה-XLSX");
                     })
-                }).catch((error: any) => {
-                    alert("אירעה שגיאה בעת קריאת הקובץ: " + error.message);
-                })
-            }
-        };
-        input.click();
-
-    }
-
-    const broadcastNotification = () => {
-        setBroadcastOpen(true);
+                }
+            };
+            input.click();
+        } catch (error) {
+            console.error("Error importing procedures:", error);
+            toast.error("אירעה שגיאה בעת ייבוא הנהלים");
+        }
     }
 
     const options: {
@@ -106,11 +111,15 @@ export default function AdminPage() {
                 label: "ייצוא נהלים",
                 icon: RiFolderDownloadLine
             },
-
             {
                 action: "/admin/beta/procedures",
                 label: "ניהול נהלים )בטא(",
                 icon: RiTimelineView
+            },
+            {
+                action: "/admin/category",
+                label: "ניהול קטגוריות",
+                icon: RiMenu4Line
             },
             {
                 action: importProcedures,

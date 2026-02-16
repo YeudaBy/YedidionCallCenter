@@ -17,7 +17,7 @@ import {SearchBox} from "@/components/index-page/SearchBox";
 import {IndexHeader} from "@/components/index-page/IndexHeader";
 import {useAnalytics} from "@/firebase-messages/init";
 import {NodeMenu} from "@/components/node/NodeMenu";
-import {ProcView} from "@/components/dialogs/ProcView";
+import {ProcView} from "@/components/ProcView";
 import {MainProcedureDialog} from "@/components/dialogs/MainProcedureDialog";
 import {toast} from "sonner";
 
