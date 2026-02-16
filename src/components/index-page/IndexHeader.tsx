@@ -42,7 +42,7 @@ export function IndexHeader({
                 icon={RiAddLine} onClick={openCreateModal}/>,
         )
     }
-    if (User.isAdmin(remult)) {
+    if (User.isSomeAdmin(remult)) {
         headerButtons.push(
             <Tremor.Icon
                 variant={"shadow"}

@@ -24,7 +24,7 @@ export const CategoryItem = ({node, onProcedureSelect}: {
     const hasChildren = node.children.length > 0;
     const hasProcedures = node.cleanProcedures.length > 0;
     const isEmpty = !hasChildren && !hasProcedures;
-    const showEmpty = (User.isAdmin(remult) || false)
+    const showEmpty = (User.isSomeAdmin(remult) || false)
 
 
     return (

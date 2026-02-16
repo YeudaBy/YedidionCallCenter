@@ -43,7 +43,7 @@ export default function BroadcastPage() {
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
-        if (!User.isAdmin(remult)) {
+        if (!User.isSomeAdmin(remult)) {
             return
         }
 

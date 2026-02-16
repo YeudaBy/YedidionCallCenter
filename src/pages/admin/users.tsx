@@ -94,7 +94,7 @@ export default function AdminUsersPage() {
     const [importOpen, setImportOpen] = useState(false)
 
     useEffect(() => {
-        if (!User.isAdmin(remult)) {
+        if (!User.isSomeAdmin(remult)) {
             return
         }
 
@@ -189,7 +189,7 @@ export default function AdminUsersPage() {
 
                 {loading && <Loading/>}
                 {error && <div>Error: {error.message}</div>}
-                {User.isAdmin(remult) ? <List>
+                {User.isSomeAdmin(remult) ? <List>
                     {users?.map(user => (
                         <UserItem
                             user={user}

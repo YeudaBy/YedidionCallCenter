@@ -9,7 +9,7 @@ export function ProcedurePreview({procedure, dense = false}: {
     procedure: Procedure,
     dense?: boolean
 }) {
-        return <Link href={(procedure.active || User.isAdmin(remult)) ? `/?id=${procedure.id}` : ""} passHref>
+        return <Link href={(procedure.active || User.isSomeAdmin(remult)) ? `/?id=${procedure.id}` : ""} passHref>
         <Card className={`p-2 cursor-pointer w-full h-full
         ${procedure.active ? "" : "bg-primary-100 cursor-not-allowed border-dashed border-2"}
         ${procedure.type === ProcedureType.Guideline ? "bg-tremor-brand-faint border-2 border-dotted border-tremor-brand-emphasis" : ""}`}>

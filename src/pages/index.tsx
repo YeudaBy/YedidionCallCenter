@@ -56,7 +56,7 @@ export default function IndexPage() {
     useAnalytics()
 
     const procedureTypeFilter = () => {
-        return (User.isAdmin(remult) && showInactive) ? {} : {active: true}
+        return (User.isSomeAdmin(remult) && showInactive) ? {} : {active: true}
     }
 
     useEffect(() => {
@@ -73,7 +73,7 @@ export default function IndexPage() {
     const router = useRouter()
 
     useEffect(() => {
-        if (User.isAdmin(remult)) {
+        if (User.isSomeAdmin(remult)) {
             setAllowedDistricts(Object.values(District))
         } else {
             userRepo.findFirst({id: remult.user?.id})

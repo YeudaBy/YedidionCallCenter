@@ -93,8 +93,8 @@ export class User extends IdEntity {
         return (!!this.district || this?.isAdmin) && !this?.active
     }
 
-    static isAdmin(remult: Remult) {
-        return remult.user && AdminRoles.includes(remult.user.roles![0] as UserRole)
+    static isSomeAdmin(remult: Remult) {
+        return this.isSuperAdmin(remult) || this.isRegularAdmin(remult)
     }
 
     static isSuperAdmin(remult: Remult) {
@@ -113,7 +113,8 @@ export class User extends IdEntity {
         return remult.user.roles === UserRole.Admin
     }
 
-    static async signIn(remult: Remult, email: string) {
+    @BackendMethod({allowed: true})
+    static async getByEmail(remult: Remult, email: string) {
         const user = await remult.repo(User).findFirst({email})
         if (user) return buildUserInfo(user)
     }

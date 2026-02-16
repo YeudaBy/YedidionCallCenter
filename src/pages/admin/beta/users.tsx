@@ -49,7 +49,7 @@ export default function UsersPage() {
     const [users, setUsers] = useState<User[]>([]);
 
     useEffect(() => {
-        if (!User.isAdmin(remult))  {
+        if (!User.isSomeAdmin(remult))  {
             return;
         }
         loadUsers();

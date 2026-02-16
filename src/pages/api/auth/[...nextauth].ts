@@ -34,7 +34,7 @@ export const authOptions: AuthOptions = {
                 return session
             }
             if (email) {
-                const user = await User.signIn(remult, email)
+                const user = await User.getByEmail(remult, email)
                 if (user) {
                     session.user = user
                     remult.user = user
@@ -42,7 +42,7 @@ export const authOptions: AuthOptions = {
             }
             return {
                 ...session,
-                user: await User.signIn(remult, email)
+                user: await User.getByEmail(remult, email)
             }
         }
     },
