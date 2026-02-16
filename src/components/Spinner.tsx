@@ -11,13 +11,13 @@ export function LoadingSpinner({className}: { className?: string }) {
 
 export function Loading() {
     return <Flex justifyContent={"center"} alignItems={"center"} flexDirection={"col"} className={"h-screen"}>
-        <LoadingSpinner className={"ml-4"}/>
-        <Text className={"text-3xl font-bold text-inherit"}>טוען...</Text>
+        <LoadingSpinner className={"m-2 ml-4"}/>
+        <Text className={"text-3xl font-bold"}>טוען...</Text>
     </Flex>
 }
 
 export function LoadingBackdrop() {
-    return <div className={"fixed text-gray-400 backdrop-blur-sm inset-0 bg-black bg-opacity-10 z-50"}>
+    return <div className={"fixed bg-tremor-background/40 backdrop-blur-sm inset-0 z-50"}>
         <Loading/>
     </div>
 }
