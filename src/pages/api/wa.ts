@@ -119,8 +119,8 @@ async function viewProcedure(remult: Remult, message: WaMessage) {
 }
 
 async function handleNotRegistered(remult: Remult, message: WaMessage) {
-    let messageText = "היי, מספר זה משמש מערכות פנימיות בארגון ׳ידידים - סיוע בדרכים׳.״"
-    messageText += "\n\nליצירת קשר עם מוקד ידידים - חייגו 1230 ללא סולמית, או צרו קשר דרך מוקד הוואטסאפ שלנו."
+    let messageText = "שלום וברכה!ֿ\n\n מספר זה משמש מערכות פנימיות בארגון ׳ידידים - סיוע בדרכים׳."
+    messageText += "\n\nליצירת קשר עם מוקד ידידים - חייגו *1230* ללא סולמית, או צרו קשר דרך מוקד הוואטסאפ שלנו."
     await whatsappManager.sendUrlButtonMessage(buildUrlButtonMessage(message.from, messageText,
         "מוקד ידידים", "https://wa.me/972772021230"))
 }
