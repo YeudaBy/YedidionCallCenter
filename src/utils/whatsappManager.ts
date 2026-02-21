@@ -3,6 +3,7 @@ import {WaReadReceipts} from "@/model/wa/WaReadReceipts";
 import {WaReaction} from "@/model/wa/WaReaction";
 import {WaImageMessage} from "@/model/wa/WaImageMessage";
 import {WaFlow, WaInteractiveList} from "@/model/wa/WaInteractiveList";
+import {WaUrlButtonMessage} from "@/model/wa/WaUrlButton";
 
 export interface IWhatsAppManager {
     getUserNumber(req: any): Promise<string>;
@@ -10,6 +11,8 @@ export interface IWhatsAppManager {
     getUserText(req: any): Promise<string>;
 
     sendTextMessage(object: WaTextMessage): Promise<string | undefined>;
+
+    sendUrlButtonMessage(object: WaUrlButtonMessage): Promise<void>;
 
     reactToTextMessage(object: WaReaction): Promise<void>;
 
@@ -48,6 +51,10 @@ class WhatsAppManager implements IWhatsAppManager {
     }
 
     async sendInteractiveMessage(object: WaInteractiveList | WaFlow): Promise<void> {
+        await this.post(object);
+    }
+
+    async sendUrlButtonMessage(object: WaUrlButtonMessage): Promise<void> {
         await this.post(object);
     }
 

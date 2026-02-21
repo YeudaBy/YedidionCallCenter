@@ -12,6 +12,7 @@ import {InteractiveType} from "@/model/wa/WhatsApp";
 import {District} from "@/model/District";
 import {buildWaImageMessage} from "@/model/wa/WaImageMessage";
 import {UserRole} from "@/model/SuperAdmin";
+import {buildUrlButtonMessage} from "@/model/wa/WaUrlButton";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     switch (req.method) {
@@ -44,7 +45,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     remult.apiClient.url = `${process.env.BASE_URL}/api`
 
                     const currentUser = await remult.repo(User).findFirst({phone: parseInt(message?.from.slice(3))})
-                    if (!currentUser) return;
+                    if (!currentUser) {
+                        await handleNotRegistered(remult, message)
+                        return
+                    }
 
                     if (message.text?.body === "חדש") {
                         await handleAddNewRequest(remult, currentUser, message)
@@ -112,6 +116,13 @@ async function viewProcedure(remult: Remult, message: WaMessage) {
             }
         }
     }
+}
+
+async function handleNotRegistered(remult: Remult, message: WaMessage) {
+    let messageText = "היי, מספר זה משמש מערכות פנימיות בארגון ׳ידידים - סיוע בדרכים׳.״"
+    messageText += "\n\nליצירת קשר עם מוקד ידידים - חייגו 1230 ללא סולמית, או צרו קשר דרך מוקד הוואטסאפ שלנו."
+    await whatsappManager.sendUrlButtonMessage(buildUrlButtonMessage(message.from, messageText,
+        "מוקד ידידים", "https://wa.me/972772021230"))
 }
 
 async function handleNewUserAdded(remult: Remult, message: WaMessage, currentUser: User) {
