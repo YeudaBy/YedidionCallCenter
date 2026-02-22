@@ -110,7 +110,7 @@ export function CategoryEditorDialog({category, open, onClose, onSave}: {
     };
 
     return (
-        <Dialog open={open} onClose={onClose} static={true}>
+        <Dialog open={open} onClose={onClose} static={false}>
             <DialogPanel className="max-w-md">
                 <Flex justifyContent="between" alignItems="center">
                     <Text className="text-xl font-bold">
@@ -135,9 +135,9 @@ export function CategoryEditorDialog({category, open, onClose, onSave}: {
 
                     <div>
                         <Text className="mb-1">מיקום בעץ (אבא):</Text>
-                        <Select
-                            value={parentCategoryId || "root"}
-                            onValueChange={(val) => setParentCategoryId(val === "root" ? undefined : val)}
+                        <Select className={"tremor-select"}
+                                value={parentCategoryId || "root"}
+                                onValueChange={(val) => setParentCategoryId(val === "root" ? undefined : val)}
                         >
                             <SelectItem value="root">--- ללא (קטגוריה ראשית) ---</SelectItem>
                             {parentOptions.map(opt => (
@@ -192,7 +192,7 @@ export function CategoryEditorDialog({category, open, onClose, onSave}: {
                         </Flex>
                     </Flex>
 
-                    <Flex className="gap-3">
+                    <Flex className="gap-3 pt-12">
                         <Button
                             className="grow"
                             loading={loading}

@@ -1,13 +1,14 @@
 import {CategoryNode, cx} from "@/utils/ui";
 import {Category} from "@/model/Category";
 import React, {useState} from "react";
-import {RiAddLine, RiArrowDownSLine, RiEditLine} from "@remixicon/react";
-import {Button, Icon, Text} from "@tremor/react";
+import {RiAddLine, RiArrowDownSLine, RiDeleteBinLine, RiPencilLine} from "@remixicon/react";
+import {Icon, Text} from "@tremor/react";
 import {getIconByName} from "@/components/node/CategoryItem";
 
-export const CategoryAdminItem = ({ node, onEdit, onRefresh }: {
+export const CategoryAdminItem = ({node, onEdit, onRefresh, onDelete}: {
     node: CategoryNode,
     onEdit: (cat: Category) => void,
+    onDelete: (cat: Category) => void,
     onRefresh: () => void
 }) => {
     const [isOpen, setIsOpen] = useState(node.defaultOpen);
@@ -20,7 +21,7 @@ export const CategoryAdminItem = ({ node, onEdit, onRefresh }: {
                         icon={RiArrowDownSLine}
                         className={cx("transition-transform", !isOpen && "-rotate-90")}
                     />
-                    <Icon icon={getIconByName(node.icon)} size="sm" variant="simple" />
+                    <Icon icon={getIconByName(node.icon)} size="sm" variant="simple"/>
                     <div>
                         <Text className="font-bold text-gray-800">{node.title}</Text>
                         <Text className="text-xs text-gray-400">עדיפות: {node.importance}</Text>
@@ -28,20 +29,24 @@ export const CategoryAdminItem = ({ node, onEdit, onRefresh }: {
                 </div>
 
                 <div className="flex gap-2">
-                    {/* כפתור הוספת תת-קטגוריה מהירה */}
-                    <Button
-                        size="xs"
-                        variant="secondary"
+                    <Icon
+                        variant="shadow"
                         icon={RiAddLine}
-                        onClick={() => onEdit({ parentCategoryId: node.id } as Category)}
-                    >
-                        תת-תיקייה
-                    </Button>
+                        className={"cursor-pointer"}
+                        onClick={() => onEdit({parentCategoryId: node.id} as Category)}
+                    />
 
-                    <Button
-                        size="xs"
-                        icon={RiEditLine}
+                    <Icon icon={RiDeleteBinLine}
+                          className={"cursor-pointer"}
+                          variant={"light"}
+                          color={"red"}
+                          onClick={() => onDelete(node)}/>
+
+                    <Icon
+                        variant={"light"}
+                        icon={RiPencilLine}
                         onClick={() => onEdit(node)}
+                        className={"cursor-pointer"}
                     />
                 </div>
             </div>
@@ -50,6 +55,7 @@ export const CategoryAdminItem = ({ node, onEdit, onRefresh }: {
                 <div className="mr-8 border-r-2 border-blue-50">
                     {node.children.map(child => (
                         <CategoryAdminItem
+                            onDelete={onDelete}
                             key={child.id}
                             node={child}
                             onEdit={onEdit}

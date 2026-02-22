@@ -14,6 +14,7 @@ export enum Headers {
     USERS = "ניהול משתמשים",
     LOGS = "יומני מערכת",
     BROADCAST = "שידור הודעה",
+    CATEGORIES = "קטגוריות",
 }
 
 export function Header({headerText, buttons}: {

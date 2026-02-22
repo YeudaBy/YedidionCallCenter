@@ -47,3 +47,7 @@ body {
     backdrop-filter: blur(4px);
     /*background: rgba(255, 255, 255, 0.4);*/
 }
+
+.tremor-select span {
+    text-align: start;
+}

@@ -86,106 +86,108 @@ export default function MePage() {
         }
     }
 
-    return <div className={`max-w-4xl h-screen m-auto`}>
+    return <div className={`m-auto`}>
         <Header headerText={Headers.ME} buttons={[]}/>
-        <Card className={"max-w-md mx-auto mt-10 p-6 "}>
-            <List>
-                <Flex className={"gap-2 my-4"}>
-                    <Tremor.Text className={"font-semibold text-xl grow text-right"}>
-                        {me?.name}
-                    </Tremor.Text>
-                    <Tremor.Badge>
-                        {userRoleToText(me?.roles || UserRole.Dispatcher)}
-                    </Tremor.Badge>
-                    <Tremor.Badge color={"green"}>
-                        {me?.district ? me.district : "לא משויך"}
-                    </Tremor.Badge>
+        <Flex className={"p-4 flex-col"}>
+            <Card className={"max-w-xl p-6 mx-auto"}>
+                <List>
+                    <Flex className={"gap-2 my-4"}>
+                        <Tremor.Text className={"font-semibold text-xl grow text-right"}>
+                            {me?.name}
+                        </Tremor.Text>
+                        <Tremor.Badge>
+                            {userRoleToText(me?.roles || UserRole.Dispatcher)}
+                        </Tremor.Badge>
+                        <Tremor.Badge color={"green"}>
+                            {me?.district ? me.district : "לא משויך"}
+                        </Tremor.Badge>
+                    </Flex>
+                    <ListItem className={"flex-wrap"}>
+                        <Text className={"text-right text-sm text-gray-500"}>
+                            דוא"ל:
+                        </Text>
+                        <Text className={"text-right font-semibold"}>
+                            {me?.email}
+                        </Text>
+                    </ListItem>
+                    <ListItem className={"flex-wrap"}>
+                        <Text className={"text-right text-sm text-gray-500 mb-2"}>
+                            מספר טלפון:
+                        </Text>
+                        {
+                            me?.phoneFormatted ?
+                                <Text className={"font-semibold"}>{me.phoneFormatted}</Text>
+                                : <form className={"w-full"}>
+                                    <Flex className={""}>
+                                        <TextInput
+                                            pattern={phoneRegex.source}
+                                            inputMode={"tel"}
+                                            enterKeyHint={"enter"}
+                                            value={phone}
+                                            onValueChange={setPhone}
+                                            placeholder={"הזינו את מספר הטלפון שלכם"}
+                                            className={"grow"}
+                                        />
+                                        <Button variant={"light"} disabled={!validPhone || loading || !phone}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    updatePhone()
+                                                }}>
+                                            {
+                                                loading ? <LoadingSpinner className={"scale-50"}/> :
+                                                    <Icon icon={RiCheckLine}/>
+                                            }
+                                        </Button>
+                                    </Flex>
+                                    {
+                                        !validPhone && <Text className={"text-red-600 text-xs text-right"}>
+                                            מספר טלפון לא תקין
+                                        </Text>
+                                    }
+                                    <Text className={"text-right text-xs"}> ללא 0 בהתחלה (לדוגמה 531234567)</Text>
+                                </form>
+                        }
+                    </ListItem>
+
+                    <ListItem className={"flex-wrap"}>
+                        <Text className={"text-right text-sm text-gray-500 mb-2"}>
+                            קבלת עדכונים:
+                        </Text>
+                        <Text className={"text-right font-semibold"}>
+                            {me?.fcmToken ? <Flex>
+                                <Icon icon={RiCheckLine} className={"text-green-500"}/>
+                                רשום
+                            </Flex> : <Flex>
+                                <Icon icon={RiCloseLine} className={"text-red-500"}/>
+                                לא רשום
+
+                                <Button variant={"light"} size={"xs"} className={"mr-8"}
+                                        onClick={updateToken}>
+                                    עדכן
+                                </Button>
+                            </Flex>}
+                        </Text>
+                    </ListItem>
+                </List>
+
+                <Flex className={"gap-6 mt-10 justify-end"}>
+                    <Tremor.Button className={""} variant={"light"}
+                                   onClick={() => void signOut()}>
+                        התנתק
+                    </Tremor.Button>
+
+                    <Tremor.Button onClick={() => setDeleteDialogOpen(true)}
+                                   className={""} color={"red"} variant={"light"}>
+                        מחיקת חשבון
+                    </Tremor.Button>
                 </Flex>
-                <ListItem className={"flex-wrap"}>
-                    <Text className={"text-right text-sm text-gray-500"}>
-                        דוא"ל:
-                    </Text>
-                    <Text className={"text-right font-semibold"}>
-                        {me?.email}
-                    </Text>
-                </ListItem>
-                <ListItem className={"flex-wrap"}>
-                    <Text className={"text-right text-sm text-gray-500 mb-2"}>
-                        מספר טלפון:
-                    </Text>
-                    {
-                        me?.phoneFormatted ?
-                            <Text className={"font-semibold"}>{me.phoneFormatted}</Text>
-                            : <form className={"w-full"}>
-                                <Flex className={""}>
-                                    <TextInput
-                                        pattern={phoneRegex.source}
-                                        inputMode={"tel"}
-                                        enterKeyHint={"enter"}
-                                        value={phone}
-                                        onValueChange={setPhone}
-                                        placeholder={"הזינו את מספר הטלפון שלכם"}
-                                        className={"grow"}
-                                    />
-                                    <Button variant={"light"} disabled={!validPhone || loading || !phone}
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                updatePhone()
-                                            }}>
-                                        {
-                                            loading ? <LoadingSpinner className={"scale-50"}/> :
-                                                <Icon icon={RiCheckLine}/>
-                                        }
-                                    </Button>
-                                </Flex>
-                                {
-                                    !validPhone && <Text className={"text-red-600 text-xs text-right"}>
-                                        מספר טלפון לא תקין
-                                    </Text>
-                                }
-                                <Text className={"text-right text-xs"}> ללא 0 בהתחלה (לדוגמה 531234567)</Text>
-                            </form>
-                    }
-                </ListItem>
 
-                <ListItem className={"flex-wrap"}>
-                    <Text className={"text-right text-sm text-gray-500 mb-2"}>
-                        קבלת עדכונים:
-                    </Text>
-                    <Text className={"text-right font-semibold"}>
-                        {me?.fcmToken ? <Flex>
-                            <Icon icon={RiCheckLine} className={"text-green-500"}/>
-                            רשום
-                        </Flex> : <Flex>
-                            <Icon icon={RiCloseLine} className={"text-red-500"}/>
-                            לא רשום
-
-                            <Button variant={"light"} size={"xs"} className={"mr-8"}
-                                    onClick={updateToken}>
-                                עדכן
-                            </Button>
-                        </Flex>}
-                    </Text>
-                </ListItem>
-            </List>
-
-            <Flex className={"gap-6 mt-10 justify-end"}>
-                <Tremor.Button className={""} variant={"light"}
-                               onClick={() => void signOut()}>
-                    התנתק
-                </Tremor.Button>
-
-                <Tremor.Button onClick={() => setDeleteDialogOpen(true)}
-                               className={""} color={"red"} variant={"light"}>
-                    מחיקת חשבון
-                </Tremor.Button>
-            </Flex>
-
-            {deleteDialogOpen && !!me &&
-                <ConfirmDeleteUserDialog
-                    onClose={() => setDeleteDialogOpen(false)}
-                    user={me}/>}
-        </Card>
+                {deleteDialogOpen && !!me &&
+                    <ConfirmDeleteUserDialog
+                        onClose={() => setDeleteDialogOpen(false)}
+                        user={me}/>}
+            </Card>
+        </Flex>
     </div>
 
 }

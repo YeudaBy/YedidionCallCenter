@@ -13,6 +13,7 @@ import {RiCursorHand} from "@remixicon/react";
 import {useRouter} from "next/router";
 import {Loading} from "@/components/Spinner";
 import {UserRole} from "@/model/SuperAdmin";
+import {toast} from "sonner";
 
 export type LogView = {
     createdAt: Date,
@@ -30,7 +31,6 @@ const procedureRepo = repo(Procedure)
 export default function LogsPage() {
     const [logs, setLogs] = useState<LogView[]>([])
     const [loading, setLoading] = useState(false)
-    const [error, setError] = useState("")
 
     const [procedureId, setProcedureId] = useState<string | undefined>()
     const [userId, setUserId] = useState<string | undefined>()
@@ -84,18 +84,16 @@ export default function LogsPage() {
                     setLogs(await Promise.all(logs.map(buildLog)))
                 }
             } catch (e: unknown) {
-                setError("אירעה שגיאה בטעינת היומנים")
+                toast.error("אירעה שגיאה בטעינת הלוגים")
                 console.error(e)
-            } finally {
-                setLoading(false)
             }
-        })()
+        })().then(() => setLoading(false))
     }, [procedureId, userId, router.query]);
 
     return (
         <RoleGuard allowedRoles={[UserRole.SuperAdmin]}>
-            <Header headerText={Headers.LOGS} buttons={[]} />
-            <Tremor.List>
+            <Header headerText={Headers.LOGS} buttons={[]}/>
+            <Tremor.List className={"m-auto max-w-2xl"}>
                 {loading && <Loading/>}
                 {logs.length === 0 && !loading && <Tremor.ListItem>
                     <Tremor.Text>לא נמצאו שינויים</Tremor.Text>

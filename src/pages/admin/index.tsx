@@ -135,8 +135,9 @@ export default function AdminPage() {
     }
 
     return <RoleGuard allowedRoles={[UserRole.Admin, UserRole.SuperAdmin]}>
+        <Header headerText={Headers.ADMIN} buttons={[]}/>
+
         <Flex flexDirection={"col"} className={"p-4 max-w-4xl m-auto"}>
-            <Header headerText={Headers.ADMIN} buttons={[]}/>
             <Grid numItems={2} numItemsMd={4} className={"gap-4 m-4"}>
                 {options.map((option, index) => (
                     <NavigationCard

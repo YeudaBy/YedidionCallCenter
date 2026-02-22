@@ -1,4 +1,4 @@
-import {EntityFilter, remult} from "remult";
+import {EntityFilter, remult, repo} from "remult";
 import {User} from "@/model/User";
 import {useEffect, useState} from "react";
 import {
@@ -36,6 +36,7 @@ import {Header, Headers} from "@/components/Header";
 import {RoleGuard} from "@/components/auth/RoleGuard";
 import {AdminRoles, UserRole} from "@/model/SuperAdmin";
 import {toast} from "sonner";
+import {cx} from "@/utils/ui";
 
 const usersRepo = remult.repo(User)
 
@@ -152,21 +153,20 @@ export default function AdminUsersPage() {
 
     return (
         <RoleGuard allowedRoles={[UserRole.Admin, UserRole.SuperAdmin]}>
+            <Header headerText={Headers.USERS} buttons={[
+                <Icon icon={RiAddLine} onClick={() => setShowAddUser(true)} variant={"shadow"}
+                      className={"cursor-pointer"} key={"add"}/>,
+                <Icon icon={RiFileUploadLine}
+                      onClick={() => setImportOpen(true)}
+                      variant={"shadow"}
+                      className={"cursor-pointer"} key={"import"}/>,
+                <Icon icon={RiFileDownloadLine}
+                      onClick={exportSelected}
+                      variant={"shadow"}
+                      className={"cursor-pointer"} key={"export"}/>,
+            ]}/>
+
             <Flex flexDirection={"col"} className={"p-4 max-w-4xl m-auto"}>
-                <Header headerText={Headers.USERS} buttons={[
-                    <Icon icon={RiAddLine} onClick={() => setShowAddUser(true)} variant={"shadow"}
-                          className={"cursor-pointer"} key={"add"}/>,
-                    <Icon icon={RiFileUploadLine}
-                          onClick={() => setImportOpen(true)}
-                          variant={"shadow"}
-                          className={"cursor-pointer"} key={"import"}/>,
-                    <Icon icon={RiFileDownloadLine}
-                          onClick={exportSelected}
-                          variant={"shadow"}
-                          className={"cursor-pointer"} key={"export"}/>,
-                ]}/>
-
-
                 <TextInput
                     placeholder={"חיפוש"}
                     value={query}
@@ -182,7 +182,10 @@ export default function AdminUsersPage() {
                                 key={d.id}
                                 color={d.color}
                                 onClick={() => setFilter(d.id as never)}
-                                className={`cursor-pointer`}>
+                                className={cx(
+                                    "cursor-pointer",
+                                    filter === d.id && `border-2 border-${d.color}-600 font-semibold`
+                                )}>
                                 {d.label}
                             </Badge>
                         ))
@@ -343,7 +346,32 @@ function UserItem({user, setUsers}: {
     user: User,
     setUsers: (users: (prev: User[]) => User[]) => void
 }) {
-    const allowed = User.isSuperAdmin(remult)  // todo allow also for district admin
+    const [editAllowed, setEditAllowed] = useState(false)
+
+    useEffect(() => {
+        // if user is admin, only super admin can edit
+        // if user is regular user, all super admin can edit
+        // also, admins from the same district can edit.
+        if (!remult.user) return
+
+        if (User.isSuperAdmin(remult)) {
+            setEditAllowed(true)
+            return;
+        }
+
+        if (!User.isRegularAdmin(remult)) return;
+
+        if (user.isSuperAdmin || user.isAdmin) return;
+
+        repo(User).findId(remult.user.id).then(u => {
+            if (u?.district === user.district) {
+                setEditAllowed(true)
+            }
+        }).catch(e => {
+            console.error(e)
+            toast.error("אירעה שגיאה בטעינת פרטי המשתמש שלך")
+        })
+    }, []);
 
     const onDelete = async () => {
         setUsers((prev: User[]) => prev.filter(u => u.id !== user.id))
@@ -370,7 +398,7 @@ function UserItem({user, setUsers}: {
                         className={"font-light opacity-75"}>{user.email}{!!user.phone && `∙ ${user.phoneFormatted}`}</Text>
                 </Flex>
             </Flex>
-            {allowed &&
+            {editAllowed &&
                 <Flex className={"w-fit gap-1"}>
                     {!!user.fcmToken && <SendNotification user={user}/>}
                     <EditUser
