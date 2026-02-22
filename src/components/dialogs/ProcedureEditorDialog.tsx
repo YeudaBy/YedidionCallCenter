@@ -16,6 +16,7 @@ import {UserRole} from "@/model/SuperAdmin";
 import {KnowledgeBaseController} from "@/controllers/hierarchyController";
 import {Category} from "@/model/Category";
 import {toast} from "sonner";
+import {ImageUploader} from "@/components/UploadImage";
 
 const procedureRepo = remult.repo(Procedure);
 const logRepo = remult.repo(Log);
@@ -266,40 +267,30 @@ export function ProcedureEditorDialog({procedure, open, onClose, onAdd, onEdit, 
                     </Tremor.Text>
                 </div>
 
-                <Flex className={"p-1 items-center justify-end gap-2 border-2 border-dashed"}>
-                    {images?.map((image, i) => {
-                        return <div key={i} className={"relative"}>
-                            <Image
-                                src={image}
-                                alt={image}
-                                height={70}
-                                width={70}
-                                className={"rounded-md border-2 border-blue-300"}
-                            />
+                <Flex className={"items-center flex-col justify-end gap-2"}>
+                    <Flex className={"justify-start gap-2 flex-wrap"}>
+                        {images?.map((image, i) => {
+                            return <div key={i} className={"relative"}>
+                                <Image
+                                    src={image}
+                                    alt={image}
+                                    height={70}
+                                    width={70}
+                                    className={"rounded-md border-2 border-blue-300"}
+                                />
 
-                            <Icon
-                                color={"red"}
-                                onClick={() => setImages(images.filter((_, j) => i !== j))}
-                                icon={RiCloseFill}
-                                className={"absolute top-0 start-0 w-full h-full flex justify-center items-center cursor-pointer rounded-xl bg-white/50 drop-shadow-xl"}
-                            />
-                        </div>
-                    })}
-                    {/*<UploadButton*/}
-                    {/*    endpoint={"imageUploader"}*/}
-                    {/*    className={"button:h-full"}*/}
-                    {/*    onClientUploadComplete={url => setImages([...(images || []), ...url.map(e => e.url)])}*/}
-                    {/*    content={{*/}
-                    {/*        button({ready, isUploading, uploadProgress, fileTypes}) {*/}
-                    {/*            return <p>*/}
-                    {/*                {ready ? 'בחר קובץ' : isUploading ? `מעלה ${uploadProgress}%` : 'המשך'}*/}
-                    {/*            </p>*/}
-                    {/*        },*/}
-                    {/*        allowedContent({fileTypes}) {*/}
-                    {/*            return <></>*/}
-                    {/*        }*/}
-                    {/*    }}*/}
-                    {/*/>*/}
+                                <Icon
+                                    color={"red"}
+                                    onClick={() => setImages(images.filter((_, j) => i !== j))}
+                                    icon={RiCloseFill}
+                                    className={"absolute top-0 start-0 w-full h-full flex justify-center items-center cursor-pointer rounded-xl bg-white/50 drop-shadow-xl"}
+                                />
+                            </div>
+                        })}
+                    </Flex>
+                    <ImageUploader
+                        onUploadSuccess={url => setImages([...(images || []), url])}
+                    />
                 </Flex>
 
                 <TextInput

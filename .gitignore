@@ -43,3 +43,4 @@ firebase-service-account.json
 
 test
 logs
+public/uploads/*

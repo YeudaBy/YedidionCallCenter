@@ -11,6 +11,7 @@ import {KnowledgeBaseController} from "@/controllers/hierarchyController";
 import {DataProviderLiveQueryStorage, SseSubscriptionServer} from "remult/server";
 import {NextApiRequest} from "next";
 import {UserRole} from "@/model/SuperAdmin";
+import {FilesController} from "@/controllers/FilesController";
 
 
 const DEVELOPER_USER = {
@@ -47,7 +48,7 @@ const entities = [
     User, Procedure, Log, Category, ProcedureCategory
 ]
 
-const controllers = [KnowledgeBaseController]
+const controllers = [KnowledgeBaseController, FilesController]
 
 export const api = remultNext({
     entities,
