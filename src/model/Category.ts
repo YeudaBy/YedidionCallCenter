@@ -11,7 +11,7 @@ const CATEGORY_ID_LENGTH = 7;
 
 @Entity<Category>("category", {
     allowApiCrud: UserRole.SuperAdmin,
-    allowApiRead: Allow.authenticated
+    allowApiRead: true,
 })
 export class Category {
     @NanoIdField(CATEGORY_ID_LENGTH)

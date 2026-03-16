@@ -10,7 +10,7 @@ const PROCEDURE_ID_LENGTH = 7;
 
 
 @Entity("procedure", {
-    allowApiRead: Allow.authenticated,
+    allowApiRead: true,
     allowApiDelete: UserRole.SuperAdmin,
     allowApiUpdate: AdminRoles,
     allowApiInsert: AdminRoles,
