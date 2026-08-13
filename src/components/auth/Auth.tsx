@@ -4,68 +4,69 @@ import {remult} from "remult";
 import {User} from "@/model/User";
 import {Button, Card, Flex, Text} from "@tremor/react";
 import {LoadingSpinner} from "@/components/Spinner";
-import {messaging, onMessage} from "@/firebase-messages/messaging";
 import Image from "next/image";
 import {useRouter} from "next/router";
 import {RiRestartLine} from "@remixicon/react";
+import {RegistrationForm} from "@/components/auth/RegistrationForm";
 
 export function Auth({children}: { children: ReactNode }) {
     const session = useSession();
     const router = useRouter();
-    const [signedUp, setSignedUp] = useState<boolean | null>(null)
+
+    const [authState, setAuthState] = useState<'loading' | 'authorized' | 'needs-registration' | 'pending-approval'>('loading');
+    const [tempUser, setTempUser] = useState<{ name: string } | null>(null);
 
     const isInAuthPages = router.pathname.startsWith("/auth");
-
-    useEffect(() => {
-        onMessage(messaging, console.log);
-    }, []);
 
     useEffect(() => {
         if (isInAuthPages) return;
 
         (async () => {
-            switch (session.status) {
-                case "unauthenticated":
-                    await signIn();
-                    return;
+            if (session.status === "unauthenticated") {
+                await signIn();
+                return;
+            }
 
-                case "loading":
-                    setSignedUp(null);
-                    return;
+            if (session.status === "authenticated") {
+                const s = session.data.user;
+                if (!s?.email) return;
 
-                case "authenticated": {
-                    const s = session.data.user
-                    if (!s || !s.email || !s.name) {
-                        console.error("Session data is missing email or name", s);
-                        await signOut();
-                        await signIn();
-                        return;
-                    }
+                const user = await User.createFromSession(s.email, s.name || "");
 
-                    User.createFromSession(s.email, s.name).then(user => {
-                        console.log("user from session", user)
-                        if (User.isAllowed(user)) {
-                            console.log("Activating user")
-                            remult.user = User.asUserInfo(user);
-                            setSignedUp(true)
-                        } else {
-                            console.log("User not active yet");
-                            setSignedUp(false);
-                        }
-                    })
+                if (User.isAllowed(user)) {
+                    remult.user = User.asUserInfo(user);
+                    setAuthState('authorized');
+                } else if (!user.district) {
+                    setTempUser({name: user.name || s.name || ""});
+                    setAuthState('needs-registration');
+                } else {
+                    setAuthState('pending-approval');
                 }
             }
         })();
+    }, [session, isInAuthPages]);
 
-    }, [session]);
+    if (isInAuthPages || authState === 'authorized') return <>{children}</>;
 
-    if (signedUp || isInAuthPages) return <>{children}</>;
-    if (signedUp === null) return <Card className={"m-auto mt-5 w-fit"}>
-        <Flex flexDirection={"col"} className={"gap-3"}>
-            <Text>מאמת פרטים</Text>
-            <LoadingSpinner/>
-        </Flex>
-    </Card>;
+    if (authState === 'loading') return (
+        <Card className={"m-auto mt-5 w-fit"}>
+            <Flex flexDirection={"col"} className={"gap-3"}>
+                <Text>מאמת פרטים...</Text>
+                <LoadingSpinner/>
+            </Flex>
+        </Card>
+    );
+
+    if (authState === 'needs-registration' && session.data?.user.email) return (
+        <RegistrationForm
+            initialName={tempUser?.name || ""}
+            email={session.data.user.email}
+            onComplete={() => {
+                setAuthState('pending-approval');
+            }}
+        />
+    );
+
     return <NotAuthorized/>;
 }
 

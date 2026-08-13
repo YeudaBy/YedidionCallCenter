@@ -47,6 +47,9 @@ export class User extends IdEntity {
     @Fields.object({allowApiUpdate: AdminRoles})
     district?: District;
 
+    @Fields.object({allowApiUpdate: AdminRoles})
+    pendingDistrict?: District; // todo
+
     @Fields.object({allowApiUpdate: UserRole.SuperAdmin})
     roles: UserRole = UserRole.Dispatcher;
 
@@ -147,5 +150,24 @@ export class User extends IdEntity {
             user = await repo(User).insert({email, name})
         }
         return user
+    }
+
+    @BackendMethod({allowed: true})
+    static async finishRegistration(
+        remult: Remult,
+        email: string,
+        name: string,
+        district: District
+    ) {
+
+        const userRepo = repo(User);
+        const user = await userRepo.findFirst({email});
+
+        if (!user) throw "משתמש לא נמצא";
+
+        user.name = name;
+        user.district = district
+
+        return await userRepo.save(user);
     }
 }
